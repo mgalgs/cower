@@ -1,11 +1,11 @@
 CC=gcc
 CFLAGS=-O2 -pipe
-DEBUG=-g
+DEBUG=
 OBJECTS=aur.o package.o curlhelper.o linkedList.o util.o
 
 all: cower
 
-cower: cower.c cower.h $(OBJECTS)
+cower: cower.c $(OBJECTS)
 	$(CC) $(CFLAGS) $< $(OBJECTS) -o $@ $(DEBUG) -ljansson -lcurl
 
 aur.o: aur.c aur.h
