@@ -5,11 +5,13 @@
 
 #include <jansson.h>
 
-#include "cower.h"
+#include "util.h"
 #include "linkedList.h"
 #include "curlhelper.h"
 #include "aur.h"
 #include "package.h"
+
+#define PKG_URL "http://aur.archlinux.org/packages/%s/%s.tar.gz\0"
 
 static llist *pkg_list;
 
@@ -73,18 +75,30 @@ int main(int argc, char **argv) {
 
     //printf("ret = %d\nOperMask = %d\nOptMask = %d\n", ret, oper_mask, opt_mask);
 
-    if (oper_mask & OPER_SEARCH) {
+    if (oper_mask & OPER_DOWNLOAD) { /* 8 */
         while (pkg_list != NULL) {
-            aur_pkg_search((char*)pkg_list->data, &opt_mask);
-            pkg_list = pkg_list->next;
+            struct aurpkg *found = aur_pkg_info((char*)pkg_list->data, &opt_mask);
+            if (found != NULL) {
+                char pkgURL[256];
+                snprintf(pkgURL, 256, PKG_URL, found->Name, found->Name);
+                //printf("Requested URL: %s\n", pkgURL);
+                get_taurball(pkgURL, NULL, &opt_mask);
+            }
+            llist_remove_node(&pkg_list);
         }
-    } else if (oper_mask && OPER_INFO) {
+    } else if (oper_mask & OPER_INFO) { /* 4 */
         while (pkg_list != NULL) {
             struct aurpkg *found = aur_pkg_info((char*)pkg_list->data, &opt_mask);
             if (found != NULL) print_package(found, &opt_mask);
-
-            pkg_list = pkg_list->next;
+            llist_remove_node(&pkg_list);
             free(found);
+        }
+    } else if (oper_mask & OPER_UPDATE) { /* 2 */
+        fprintf(stderr, "IOU: One Update function\n");
+    } else if (oper_mask & OPER_SEARCH) { /* 1 */
+        while (pkg_list != NULL) {
+            aur_pkg_search((char*)pkg_list->data, &opt_mask);
+            llist_remove_node(&pkg_list);
         }
     }
 

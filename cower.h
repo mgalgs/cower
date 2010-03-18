@@ -13,6 +13,7 @@ enum {
 enum {
     OPT_COLOR = 1,
     OPT_VERBOSE = 2,
+    OPT_FORCE = 4,
 };
 
 #endif /* _COWER_H */

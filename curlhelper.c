@@ -5,6 +5,7 @@
 #include <jansson.h>
 
 #include "curlhelper.h"
+#include "util.h"
 #include "aur.h"
 
 int newline_offset(const char *text) {
@@ -28,6 +29,46 @@ size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
     result->pos += size * nmemb;
 
     return size * nmemb;
+}
+
+int get_taurball(const char *url, char *target_dir, int *opt_mask) {
+    CURL *curl;
+    FILE *fd;
+    char *dir;
+    char *filename;
+    char buffer[256];
+
+    //if (target_dir == NULL) { /* Use pwd */
+        dir = get_current_dir_name();
+    //}
+
+    filename = strrchr(url, '/') + 1;
+    //printf("filename = %s\n", filename);
+
+    if (file_exists(filename) && ! (*opt_mask & OPT_FORCE)) {
+        fprintf(stderr, "Error: %s/%s already exists.\nUse -f to force this operation.\n",
+            dir, filename);
+    } else {
+        fd = fopen(filename, "w");
+        if (fd != NULL) {
+            curl = curl_easy_init();
+            curl_easy_setopt(curl, CURLOPT_URL, url);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, fd);
+            int result = curl_easy_perform(curl);
+
+            printf("%s downloaded to ",
+                *opt_mask & 1 ? colorize(filename, WHITE, buffer) : filename);
+            printf("%s\n",
+                *opt_mask & 1 ? colorize(dir, GREEN, buffer) : dir);
+
+            fclose(fd);
+        } else {
+            fprintf(stderr, "Error writing to path: %s\n", dir);
+        }
+
+        free(dir);
+        return 0;
+    }
 }
 
 char *request(const char *url) {

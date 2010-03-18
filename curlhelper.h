@@ -9,5 +9,6 @@ struct write_result {
 int newline_offset(const char *text);
 size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream);
 char *request(const char *url);
+int get_taurball(const char*, char*, int*);
 
 #endif /* _CURLHELPER_H */
