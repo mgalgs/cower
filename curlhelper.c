@@ -56,6 +56,9 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, fd);
             int result = curl_easy_perform(curl);
 
+            curl_easy_cleanup(curl);
+            curl_global_cleanup();
+
             printf("%s downloaded to ",
                 *opt_mask & 1 ? colorize(filename, WHITE, buffer) : filename);
             printf("%s\n",
@@ -66,9 +69,9 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
             fprintf(stderr, "Error writing to path: %s\n", dir);
         }
 
-        free(dir);
-        return 0;
     }
+    free(dir);
+    return 0;
 }
 
 char *request(const char *url) {
