@@ -5,7 +5,7 @@ What works:
 	> Single Package Info
 	> Downloading a taurball
 
-To do:
+TODO pile:
 	> Extract taurballs
 	> Specify alternate download directory
 	> Check for existance of package in repos
@@ -14,3 +14,7 @@ To do:
 	> Colorize error messages (probably split off into errormsg func in util.c)
 	> verbosity levels
 	> Find 174 byte leak
+
+Maybe pile:
+	> Static link jansson
+	> upload taurballs
