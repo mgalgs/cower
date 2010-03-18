@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
                 snprintf(pkgURL, 256, PKG_URL, found->Name, found->Name);
                 //printf("Requested URL: %s\n", pkgURL);
                 get_taurball(pkgURL, NULL, &opt_mask);
+                free(found);
             }
             llist_remove_node(&pkg_list);
         }
