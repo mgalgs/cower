@@ -2,23 +2,24 @@
 #include <string.h>
 #include <stdlib.h>
 #include <curl/curl.h>
+#include <jansson.h>
 
-#include "aur.h"
 #include "curlhelper.h"
+#include "aur.h"
 
 int newline_offset(const char *text) {
     const char *newline = strchr(text, '\n');
-    if(!newline)
+    if(!newline) {
         return strlen(text);
-    else
+    } else {
         return (int)(newline - text);
+    }
 }
 
 size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
     struct write_result *result = (struct write_result *)stream;
 
-    if(result->pos + size * nmemb >= BUFFER_SIZE - 1)
-    {
+    if(result->pos + size * nmemb >= BUFFER_SIZE - 1) {
         fprintf(stderr, "error: too small buffer\n");
         return 0;
     }
@@ -37,8 +38,7 @@ char *request(const char *url) {
 
     curl = curl_easy_init();
     data = malloc(BUFFER_SIZE);
-    if(!curl || !data)
-        return NULL;
+    if(!curl || !data) return NULL;
 
     struct write_result write_result = {
         .data = data,
