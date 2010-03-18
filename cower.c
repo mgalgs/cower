@@ -5,6 +5,7 @@
 
 #include <jansson.h>
 
+#include "cower.h"
 #include "linkedList.h"
 #include "curlhelper.h"
 #include "aur.h"
@@ -58,7 +59,7 @@ static int parseargs(int argc, char **argv, int *oper_mask, int *opt_mask) {
 
     while (optind < argc) {
         llist_add(&pkg_list, strdup(argv[optind]));
-        printf("Package argument found: %s\n", argv[optind]);
+        //printf("Package argument found: %s\n", argv[optind]);
         optind++;
     }
 }
@@ -70,7 +71,21 @@ int main(int argc, char **argv) {
 
     ret = parseargs(argc, argv, &oper_mask, &opt_mask);
 
-    printf("ret = %d\nOperMask = %d\nOptMask = %d\n", ret, oper_mask, opt_mask);
+    //printf("ret = %d\nOperMask = %d\nOptMask = %d\n", ret, oper_mask, opt_mask);
+
+    if (oper_mask & OPER_SEARCH) {
+        while (pkg_list != NULL) {
+            aur_pkg_search((char*)pkg_list->data, &opt_mask);
+            pkg_list = pkg_list->next;
+        }
+    } else if (oper_mask && OPER_INFO) {
+        while (pkg_list != NULL) {
+            struct aurpkg *found = aur_pkg_info((char*)pkg_list->data, &opt_mask);
+            if (found != NULL) print_package(found);
+
+            pkg_list = pkg_list->next;
+        }
+    }
 
     return 0;
 }

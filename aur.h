@@ -7,10 +7,10 @@
 #define BUFFER_SIZE     (256 * 1024) /* 256kB */
 
 /* Info */
-struct aurpkg *aur_pkg_info(char*);
+struct aurpkg *aur_pkg_info(char*, int*);
 
 /* Search */
 void print_search_results(json_t*);
-struct json_t *aur_pkg_search(char*);
+struct json_t *aur_pkg_search(char*, int*);
 
 #endif /* _AUR_H */

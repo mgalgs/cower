@@ -30,5 +30,5 @@ void print_package(struct aurpkg *pkg) {
     printf("URLPath: %s\n", pkg->URLPath);
     printf("License: %s\n", pkg->License);
     printf("NumVotes: %d\n", pkg->NumVotes);
-    printf("OutOfDate: %s\n", pkg->OutOfDate == 1 ? "Yes" : "No");
+    printf("OutOfDate: %s\n\n", pkg->OutOfDate == 1 ? "Yes" : "No");
 }
