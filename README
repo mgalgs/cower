@@ -1,1 +1,16 @@
 Ideally, this will act a lot like Slurpy. jansson and libcurl should be the only dependencies.
+
+What works:
+	> Search
+	> Single Package Info
+	> Downloading a taurball
+
+To do:
+	> Extract taurballs
+	> Specify alternate download directory
+	> Check for existance of package in repos
+	> Download dependencies
+	> Update function (with download)
+	> Colorize error messages (probably split off into errormsg func in util.c)
+	> verbosity levels
+	> Find 174 byte leak
