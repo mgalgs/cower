@@ -67,6 +67,8 @@ void print_search_results(json_t* search_res) {
 
         printf("aur/%s %s (%d)\n    %s\n", name, version, ood, desc);
     }
+
+    json_decref(pkg);
 }
 
 struct aurpkg *aur_pkg_info(char* req, int* opt_mask) {
@@ -102,10 +104,9 @@ struct aurpkg *aur_pkg_info(char* req, int* opt_mask) {
     struct aurpkg *pkg = malloc(sizeof(struct aurpkg));
     get_pkg_details(package, &pkg);
 
-    //json_decref(root);
+    json_decref(package);
+    json_decref(root);
 
     return pkg;
 }
-
-
 
