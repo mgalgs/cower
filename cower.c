@@ -81,11 +81,14 @@ int main(int argc, char **argv) {
     } else if (oper_mask && OPER_INFO) {
         while (pkg_list != NULL) {
             struct aurpkg *found = aur_pkg_info((char*)pkg_list->data, &opt_mask);
-            if (found != NULL) print_package(found);
+            if (found != NULL) print_package(found, &opt_mask);
 
             pkg_list = pkg_list->next;
+            free(found);
         }
     }
+
+    llist_delete(&pkg_list);
 
     return 0;
 }
