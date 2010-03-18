@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-O2 -pipe
 DEBUG=-g
-OBJECTS=aur.o package.o curlhelper.o linkedList.o
+OBJECTS=aur.o package.o curlhelper.o linkedList.o util.o
 
 all: cower
 
