@@ -21,6 +21,10 @@
 #include "util.h"
 
 char *colorize(const char* input, int color, char* buffer) {
+    /* A buffer has to be passed to this function to avoid
+     * memory loss. Regardless, it needs to return the buffer
+     * so that it can be used in-place.
+     */
     sprintf(buffer, "\033[1;3%dm%s\033[1;m", color, input);
     return buffer;
 }
