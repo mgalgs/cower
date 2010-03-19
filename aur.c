@@ -7,6 +7,7 @@
 #include <jansson.h>
 
 /* Local */
+#include "util.h"
 #include "aur.h"
 #include "curlhelper.h"
 #include "package.h"
@@ -45,18 +46,20 @@ struct json_t *aur_pkg_search(char* req, int* opt_mask) {
         return NULL;
     }
 
-    print_search_results(search_res);
+    print_search_results(search_res, opt_mask);
     json_decref(root);
 
     return NULL;
 }
 
-void print_search_results(json_t* search_res) {
+void print_search_results(json_t* search_res, int* opt_mask) {
     unsigned int i;
 
     json_t *pkg;
     const char *name, *version, *desc;
     int ood;
+    char buffer[256];
+
     for(i = 0; i < json_array_size(search_res); i++) {
         pkg = json_array_get(search_res, i);
 
@@ -65,7 +68,12 @@ void print_search_results(json_t* search_res) {
         desc = json_string_value(json_object_get(pkg, "Description"));
         ood = atoi(json_string_value(json_object_get(pkg, "OutOfDate")));
 
-        printf("aur/%s %s (%d)\n    %s\n", name, version, ood, desc);
+        printf("%s", *opt_mask & 1 ? colorize("aur/", MAGENTA, buffer) : "aur/");
+        printf("%s ", *opt_mask & 1 ? colorize(name, WHITE, buffer) : name);
+        printf("%s\n", *opt_mask & 1 ?
+            (ood ? colorize(version, RED, buffer) : colorize(version, GREEN, buffer)) :
+            version);
+        printf("    %s\n", desc);
     }
 }
 

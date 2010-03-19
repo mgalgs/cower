@@ -10,7 +10,7 @@
 struct aurpkg *aur_pkg_info(char*, int*);
 
 /* Search */
-void print_search_results(json_t*);
+void print_search_results(json_t*, int*);
 struct json_t *aur_pkg_search(char*, int*);
 
 #endif /* _AUR_H */
