@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
     } else if (oper_mask & OPER_INFO) { /* 4 */
         while (pkg_list != NULL) {
             struct aurpkg *found = aur_pkg_info((char*)pkg_list->data);
-            if (found != NULL) print_package(found, &opt_mask);
+            if (found != NULL) print_package(found);
             llist_remove_node(&pkg_list);
             free(found);
         }
