@@ -13,4 +13,7 @@ struct aurpkg *aur_pkg_info(char*, int*);
 void print_search_results(json_t*, int*);
 struct json_t *aur_pkg_search(char*, int*);
 
+/* Download */
+int get_taurball(const char*, char*, int*);
+
 #endif /* _AUR_H */

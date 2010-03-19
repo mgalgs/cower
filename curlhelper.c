@@ -2,8 +2,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <curl/curl.h>
-#include <unistd.h>
-#include <sys/wait.h>
 
 #include <jansson.h>
 
@@ -32,69 +30,6 @@ size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
     result->pos += size * nmemb;
 
     return size * nmemb;
-}
-
-int get_taurball(const char *url, char *target_dir, int *opt_mask) {
-    CURL *curl;
-    FILE *fd;
-    char *dir, *filename, *fullpath, buffer[256];
-    int result = 0;
-
-    if (target_dir == NULL) { /* Use pwd */
-        dir = getcwd(NULL, 0);
-    } else {
-        dir = target_dir;
-    }
-
-    filename = strrchr(url, '/') + 1;
-
-    /* Construct the full path */
-    fullpath = calloc(strlen(dir) + strlen(filename), 1);
-    fullpath = strncat(fullpath, dir, strlen(dir));
-    fullpath = strncat(fullpath, "/", 1);
-    fullpath = strncat(fullpath, filename, strlen(filename));
-
-    if (file_exists(filename) && ! (*opt_mask & OPT_FORCE)) {
-        fprintf(stderr, "Error: %s/%s already exists.\nUse -f to force this operation.\n",
-            dir, filename);
-        result = 5;
-    } else {
-        fd = fopen(filename, "w");
-        if (fd != NULL) {
-            curl = curl_easy_init();
-            curl_easy_setopt(curl, CURLOPT_URL, url);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, fd);
-            result = curl_easy_perform(curl);
-
-            curl_easy_cleanup(curl);
-            curl_global_cleanup();
-
-            filename[strlen(filename) - 7] = '\0'; /* hackity hack basename */
-            printf("%.*s", filename, *opt_mask & 1 ? colorize(filename, WHITE, buffer) : filename);
-            printf(" downloaded to ");
-            printf("%s\n",
-                *opt_mask & 1 ? colorize(dir, GREEN, buffer) : dir);
-
-            fclose(fd);
-
-            filename[strlen(filename)] = '.'; /* Replace the \0 with a . for extraction */
-
-            pid_t pid; pid = fork();
-            if (pid == 0) { /* Child process */
-                execlp("bsdtar", "bsdtar", "-xf", filename, NULL);
-            } else { /* Back in the parent, waiting for child to finish */
-                while (0 == waitpid(pid, NULL, WNOHANG));
-                unlink(fullpath);
-            }
-        } else {
-            fprintf(stderr, "Error writing to path: %s\n", dir);
-            result = 6;
-        }
-    }
-
-    free(fullpath);
-    free(dir);
-    return result;
 }
 
 char *request(const char *url) {
