@@ -6,9 +6,9 @@ Dependencies:
 	> bsdtar
 
 What works:
-	> Search
-	> Single Package Info
-	> Downloading and extraction of a taurball
+	> Search package(s)
+	> Info for package(s)
+	> Download and extract package(s)
 
 TODO pile:
 	> Specify alternate download directory
