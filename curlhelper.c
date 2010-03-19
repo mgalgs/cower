@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <curl/curl.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #include <jansson.h>
 
@@ -36,7 +37,7 @@ size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
 int get_taurball(const char *url, char *target_dir, int *opt_mask) {
     CURL *curl;
     FILE *fd;
-    char *dir, *filename, buffer[256];
+    char *dir, *filename, *fullpath, buffer[256];
     int result = 0;
 
     if (target_dir == NULL) { /* Use pwd */
@@ -47,6 +48,12 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
 
     filename = strrchr(url, '/') + 1;
     /* printf("filename = %s\n", filename); */
+
+    /* Construct the full path */
+    fullpath = calloc(strlen(dir) + strlen(filename), 1);
+    fullpath = strncat(fullpath, dir, strlen(dir));
+    fullpath = strncat(fullpath, "/", 1);
+    fullpath = strncat(fullpath, filename, strlen(filename));
 
     if (file_exists(filename) && ! (*opt_mask & OPT_FORCE)) {
         fprintf(stderr, "Error: %s/%s already exists.\nUse -f to force this operation.\n",
@@ -72,7 +79,14 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
             fclose(fd);
 
             filename[strlen(filename)] = '.'; /* Replace the \0 with a . for extraction */
-            execlp("bsdtar", "bsdtar", "-xf", filename, NULL);
+
+            pid_t pid; pid = fork();
+            if (pid == 0) {
+                execlp("bsdtar", "bsdtar", "-xf", filename, NULL);
+            } else {
+                while (0 == waitpid(pid, NULL, WNOHANG));
+                unlink(fullpath);
+            }
         } else {
             fprintf(stderr, "Error writing to path: %s\n", dir);
             result = 6;
@@ -80,6 +94,7 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
 
     }
 
+    free(fullpath);
     free(dir);
     return result;
 }
