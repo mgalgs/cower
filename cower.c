@@ -24,7 +24,6 @@
 
 #include "util.h"
 #include "linkedList.h"
-#include "curlhelper.h"
 #include "aur.h"
 #include "package.h"
 
