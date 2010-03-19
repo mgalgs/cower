@@ -10,8 +10,6 @@
 #include "util.h"
 #include "aur.h"
 
-extern int get_current_dir_name();
-
 int newline_offset(const char *text) {
     const char *newline = strchr(text, '\n');
     if(!newline) {
@@ -78,6 +76,10 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
         }
 
     }
+
+    filename[strlen(filename)] = '.'; /* Replace the \0 with a . for extraction */
+    execlp("bsdtar", "bsdtar", "-xf", filename, NULL);
+
     free(dir);
     return result;
 }
