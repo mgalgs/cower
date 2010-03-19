@@ -56,33 +56,33 @@ void get_pkg_details(json_t *package, struct aurpkg **aur_pkg) {
     (*aur_pkg)->License = strdup(json_string_value(json_object_get(package, "License")));
 }
 
-void print_package(struct aurpkg *pkg, int *opt_mask) {
+void print_package(struct aurpkg *pkg) {
     char buffer[256];
     char aurpage[256];
 
-    printf("Repository      : %s\n", *opt_mask & OPT_COLOR ?
+    printf("Repository      : %s\n", opt_mask & OPT_COLOR ?
         colorize("aur", MAGENTA, buffer) : "aur");
 
-    printf("Name            : %s\n", *opt_mask & OPT_COLOR ?
+    printf("Name            : %s\n", opt_mask & OPT_COLOR ?
         colorize(pkg->Name, WHITE, buffer) : pkg->Name);
 
-    printf("Version         : %s\n", *opt_mask & OPT_COLOR ?
+    printf("Version         : %s\n", opt_mask & OPT_COLOR ?
         pkg->OutOfDate ?
             colorize(pkg->Version, RED, buffer) :
                 colorize(pkg->Version, GREEN, buffer) : 
             pkg->Version);
 
-    printf("URL             : %s\n", *opt_mask & OPT_COLOR ?
+    printf("URL             : %s\n", opt_mask & OPT_COLOR ?
                 colorize(pkg->URL, CYAN, buffer) : pkg->URL);
 
     sprintf(aurpage, AURPAGE_FORMAT, pkg->ID);
-    printf("AUR Page        : %s\n", *opt_mask & OPT_COLOR ?
+    printf("AUR Page        : %s\n", opt_mask & OPT_COLOR ?
         colorize(aurpage, CYAN, buffer) : aurpage);
 
     printf("Category        : %s\n", pkg_category[pkg->CategoryID]);
     printf("License         : %s\n", pkg->License);
     printf("Number of Votes : %d\n", pkg->NumVotes);
-    printf("Out Of Date     : %s\n", *opt_mask & OPT_COLOR ?
+    printf("Out Of Date     : %s\n", opt_mask & OPT_COLOR ?
         pkg->OutOfDate ? colorize("Yes", RED, buffer) : colorize("No", GREEN, buffer) :
         pkg->OutOfDate ? "Yes" : "No" );
 

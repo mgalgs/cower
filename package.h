@@ -30,4 +30,6 @@ struct aurpkg {
 };
 
 void get_pkg_details(json_t*, struct aurpkg**);
-void print_package(struct aurpkg*, int*);
+void print_package(struct aurpkg*);
+
+extern int opt_mask;
