@@ -160,12 +160,15 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
     fullpath = strncat(fullpath, dir, strlen(dir));
     fullpath = strncat(fullpath, "/", 1);
     fullpath = strncat(fullpath, filename, strlen(filename));
+    fullpath[strlen(fullpath) - 7] = '\0'; /* Mask file extension */
 
-    if (file_exists(filename) && ! (*opt_mask & OPT_FORCE)) {
-        fprintf(stderr, "Error: %s/%s already exists.\nUse -f to force this operation.\n",
-            dir, filename);
+    if (file_exists(fullpath) && ! (*opt_mask & OPT_FORCE)) {
+        fprintf(stderr, "%s %s already exists.\nUse -f to force this operation.\n", 
+            *opt_mask & OPT_COLOR ? colorize("error:", RED, buffer) : "error:",
+            fullpath);
         result = 1;
     } else {
+        fullpath[strlen(fullpath)] = '.'; /* Unmask file extension */
         fd = fopen(filename, "w");
         if (fd != NULL) {
             curl = curl_easy_init();
