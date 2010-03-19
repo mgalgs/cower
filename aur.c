@@ -15,6 +15,7 @@
 struct json_t *aur_pkg_search(char* req, int* opt_mask) {
     char *text;
     char url[URL_SIZE];
+    char buffer[32];
 
     json_t *root;
     json_error_t error;
@@ -42,7 +43,9 @@ struct json_t *aur_pkg_search(char* req, int* opt_mask) {
 
     /* Valid results? */
     if(!json_is_array(search_res)) {
-        printf("not an array\n");
+        fprintf(stderr, "%s no results for \"%s\"\n", 
+            *opt_mask & 1 ? colorize("error:", RED, buffer) : "error:",
+            req);
         return NULL;
     }
 
@@ -84,6 +87,7 @@ struct aurpkg *aur_pkg_info(char* req, int* opt_mask) {
     json_t *root;
     json_error_t error;
     json_t *package;
+    char buffer[32];
 
     snprintf(url, URL_SIZE, URL_FORMAT, "info", req);
 
@@ -103,7 +107,9 @@ struct aurpkg *aur_pkg_info(char* req, int* opt_mask) {
 
     /* No result found */
     if(!json_is_object(package)) {
-        fprintf(stderr, "Error: no result found for %s\n\n", req);
+        fprintf(stderr, "%s package \"%s\" not found\n", 
+            *opt_mask & 1 ? colorize("error:", RED, buffer) : "error:",
+            req);
         return NULL;
     }
 
