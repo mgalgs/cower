@@ -98,25 +98,11 @@ void usage() {
     printf("  -d, --download          download PACKAGE(s)\n");
     printf("  -i, --info              show info for PACKAGE(s)\n");
     printf("  -s, --search            search for PACKAGE(s)\n");
-/*
-    printf("  -u, --update            check explicitly installed packages for available\n");
-    printf("                          updates\n");
-    printf("                             if passed with --download flag(s), perform download\n");
-    printf("                             operation for each package with an available update\n");
-*/
     printf("\n");
     printf(" General options:\n");
     printf("  -c, --color             use colored output\n");
     printf("  -f, --force             overwrite existing files when dowloading\n");
     printf("  -q, --quiet             show only package names in search results\n");
-/*
-    printf("  -t DIR, --save-to=DIR   target directory where files will be downloaded\n");
-    printf("  -v, --verbose           show info messages\n");
-    printf("                             if passed twice will also show debug messages\n");
-    printf("\n");
-    printf("  -h, --help              show this message\n");
-    printf("      --version           show version information \n");
-*/
     printf("\n");
 }
 
@@ -127,7 +113,6 @@ int main(int argc, char **argv) {
 
     ret = parseargs(argc, argv, &oper_mask, &opt_mask);
 
-    /* Biggest to smallest, else we have parsing issues */
     if (oper_mask & OPER_DOWNLOAD) { /* 8 */
         while (pkg_list != NULL) {
             struct aurpkg *found = aur_pkg_info((char*)pkg_list->data, &opt_mask);
