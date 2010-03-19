@@ -42,7 +42,8 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
     int result = 0;
 
     if (target_dir == NULL) { /* Use pwd */
-        dir = get_current_dir_name();
+        dir = getcwd(NULL, 0);
+        printf("cwd = %s\n", dir);
     } else {
         dir = target_dir;
     }
