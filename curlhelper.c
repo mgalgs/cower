@@ -70,15 +70,15 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
                 *opt_mask & 1 ? colorize(dir, GREEN, buffer) : dir);
 
             fclose(fd);
+
+            filename[strlen(filename)] = '.'; /* Replace the \0 with a . for extraction */
+            execlp("bsdtar", "bsdtar", "-xf", filename, NULL);
         } else {
             fprintf(stderr, "Error writing to path: %s\n", dir);
             result = 6;
         }
 
     }
-
-    filename[strlen(filename)] = '.'; /* Replace the \0 with a . for extraction */
-    execlp("bsdtar", "bsdtar", "-xf", filename, NULL);
 
     free(dir);
     return result;
