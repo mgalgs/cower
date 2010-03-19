@@ -16,6 +16,7 @@
  */
 
 #include <stdio.h>
+#include <sys/stat.h>
 
 #include "util.h"
 
@@ -24,10 +25,9 @@ char *colorize(const char* input, int color, char* buffer) {
     return buffer;
 }
 
-int file_exists(const char* filename) {
-    FILE *fd;
-    if ((fd = fopen(filename, "r"))) {
-        fclose(fd);
+int file_exists(const char* fd) {
+    struct stat st;
+    if (! stat(fd, &st)) {
         return 1;
     } else {
         return 0;
