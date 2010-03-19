@@ -16,9 +16,6 @@
  */
 
 #include <stdio.h>
-#include <string.h>
-#include <libtar.h>
-#include <zlib.h>
 
 #include "util.h"
 
@@ -37,6 +34,3 @@ int file_exists(const char* filename) {
     }
 }
 
-int unpack_taurball(char* taurball) {
-    return 0;
-}
