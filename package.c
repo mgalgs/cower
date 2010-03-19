@@ -60,29 +60,29 @@ void print_package(struct aurpkg *pkg, int *opt_mask) {
     char buffer[256];
     char aurpage[256];
 
-    printf("Repository      : %s\n", *opt_mask & 1 ?
+    printf("Repository      : %s\n", *opt_mask & OPT_COLOR ?
         colorize("aur", MAGENTA, buffer) : "aur");
 
-    printf("Name            : %s\n", *opt_mask & 1 ?
+    printf("Name            : %s\n", *opt_mask & OPT_COLOR ?
         colorize(pkg->Name, WHITE, buffer) : pkg->Name);
 
-    printf("Version         : %s\n", *opt_mask & 1 ?
+    printf("Version         : %s\n", *opt_mask & OPT_COLOR ?
         pkg->OutOfDate ?
             colorize(pkg->Version, RED, buffer) :
                 colorize(pkg->Version, GREEN, buffer) : 
             pkg->Version);
 
-    printf("URL             : %s\n", *opt_mask & 1 ?
+    printf("URL             : %s\n", *opt_mask & OPT_COLOR ?
                 colorize(pkg->URL, CYAN, buffer) : pkg->URL);
 
     sprintf(aurpage, AURPAGE_FORMAT, pkg->ID);
-    printf("AUR Page        : %s\n", *opt_mask & 1 ?
+    printf("AUR Page        : %s\n", *opt_mask & OPT_COLOR ?
         colorize(aurpage, CYAN, buffer) : aurpage);
 
     printf("Category        : %s\n", pkg_category[pkg->CategoryID]);
     printf("License         : %s\n", pkg->License);
     printf("Number of Votes : %d\n", pkg->NumVotes);
-    printf("Out Of Date     : %s\n", *opt_mask & 1 ?
+    printf("Out Of Date     : %s\n", *opt_mask & OPT_COLOR ?
         pkg->OutOfDate ? colorize("Yes", RED, buffer) : colorize("No", GREEN, buffer) :
         pkg->OutOfDate ? "Yes" : "No" );
 

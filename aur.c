@@ -64,7 +64,7 @@ struct json_t *aur_pkg_search(char* req, int* opt_mask) {
     /* Valid results? */
     if(!json_is_array(search_res)) {
         fprintf(stderr, "%s no results for \"%s\"\n", 
-            *opt_mask & 1 ? colorize("error:", RED, buffer) : "error:",
+            *opt_mask & OPT_COLOR ? colorize("error:", RED, buffer) : "error:",
             req);
         return NULL;
     }
@@ -91,9 +91,9 @@ void print_search_results(json_t* search_res, int* opt_mask) {
         desc = json_string_value(json_object_get(pkg, "Description"));
         ood = atoi(json_string_value(json_object_get(pkg, "OutOfDate")));
 
-        printf("%s", *opt_mask & 1 ? colorize("aur/", MAGENTA, buffer) : "aur/");
-        printf("%s ", *opt_mask & 1 ? colorize(name, WHITE, buffer) : name);
-        printf("%s\n", *opt_mask & 1 ?
+        printf("%s", *opt_mask & OPT_COLOR ? colorize("aur/", MAGENTA, buffer) : "aur/");
+        printf("%s ", *opt_mask & OPT_COLOR ? colorize(name, WHITE, buffer) : name);
+        printf("%s\n", *opt_mask & OPT_COLOR ?
             (ood ? colorize(version, RED, buffer) : colorize(version, GREEN, buffer)) :
             version);
         printf("    %s\n", desc);
@@ -128,7 +128,7 @@ struct aurpkg *aur_pkg_info(char* req, int* opt_mask) {
     /* No result found */
     if(!json_is_object(package)) {
         fprintf(stderr, "%s package \"%s\" not found\n", 
-            *opt_mask & 1 ? colorize("error:", RED, buffer) : "error:",
+            *opt_mask & OPT_COLOR ? colorize("error:", RED, buffer) : "error:",
             req);
         return NULL;
     }
@@ -177,10 +177,10 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
             curl_global_cleanup();
 
             filename[strlen(filename) - 7] = '\0'; /* hackity hack basename */
-            printf("%.*s", filename, *opt_mask & 1 ? colorize(filename, WHITE, buffer) : filename);
+            printf("%.*s", filename, *opt_mask & OPT_COLOR ? colorize(filename, WHITE, buffer) : filename);
             printf(" downloaded to ");
             printf("%s\n",
-                *opt_mask & 1 ? colorize(dir, GREEN, buffer) : dir);
+                *opt_mask & OPT_COLOR ? colorize(dir, GREEN, buffer) : dir);
 
             fclose(fd);
 

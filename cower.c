@@ -28,8 +28,6 @@
 #include "aur.h"
 #include "package.h"
 
-#define PKG_URL "http://aur.archlinux.org/packages/%s/%s.tar.gz"
-
 static llist *pkg_list;
 
 static int parseargs(int argc, char **argv, int *oper_mask, int *opt_mask) {
@@ -56,25 +54,25 @@ static int parseargs(int argc, char **argv, int *oper_mask, int *opt_mask) {
 
         switch (opt) {
             case 's':
-                *oper_mask |= 1;
+                *oper_mask |= OPER_SEARCH;
                 break;
             case 'u':
-                *oper_mask |= 2;
+                *oper_mask |= OPER_UPDATE;
                 break;
             case 'i':
-                *oper_mask |= 4;
+                *oper_mask |= OPER_INFO;
                 break;
             case 'd':
-                *oper_mask |= 8;
+                *oper_mask |= OPER_DOWNLOAD;
                 break;
             case 'c':
-                *opt_mask |= 1;
+                *opt_mask |= OPT_COLOR;
                 break;
             case 'v':
-                *opt_mask |= 2;
+                *opt_mask |= OPT_VERBOSE;
                 break;
             case 'f':
-                *opt_mask |= 4;
+                *opt_mask |= OPT_FORCE;
                 break;
             case '?': 
                 return 1;
@@ -83,6 +81,7 @@ static int parseargs(int argc, char **argv, int *oper_mask, int *opt_mask) {
         }
     }
 
+    /* Feed the remaining args into a linked list */
     while (optind < argc) {
         llist_add(&pkg_list, strdup(argv[optind]));
         optind++;
@@ -126,6 +125,7 @@ int main(int argc, char **argv) {
 
     ret = parseargs(argc, argv, &oper_mask, &opt_mask);
 
+    /* Biggest to smallest, else we have parsing issues */
     if (oper_mask & OPER_DOWNLOAD) { /* 8 */
         while (pkg_list != NULL) {
             struct aurpkg *found = aur_pkg_info((char*)pkg_list->data, &opt_mask);
