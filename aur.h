@@ -26,13 +26,13 @@
 #define BUFFER_SIZE     (256 * 1024) /* 256kB */
 
 /* Info */
-struct aurpkg *aur_pkg_info(char*, int*);
+struct aurpkg *aur_pkg_info(char*);
 
 /* Search */
-void print_search_results(json_t*, int*);
-struct json_t *aur_pkg_search(char*, int*);
+void print_search_results(json_t*);
+struct json_t *aur_pkg_search(char*);
 
 /* Download */
-int get_taurball(const char*, char*, int*);
+int get_taurball(const char*, char*);
 
 #endif /* _AUR_H */

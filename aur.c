@@ -32,7 +32,9 @@
 #include "curlhelper.h"
 #include "package.h"
 
-struct json_t *aur_pkg_search(char* req, int* opt_mask) {
+extern int opt_mask;
+
+struct json_t *aur_pkg_search(char* req) {
     char *text;
     char url[URL_SIZE];
     char buffer[32];
@@ -64,18 +66,18 @@ struct json_t *aur_pkg_search(char* req, int* opt_mask) {
     /* Valid results? */
     if(!json_is_array(search_res)) {
         fprintf(stderr, "%s no results for \"%s\"\n", 
-            *opt_mask & OPT_COLOR ? colorize("error:", RED, buffer) : "error:",
+            opt_mask & OPT_COLOR ? colorize("error:", RED, buffer) : "error:",
             req);
         return NULL;
     }
 
-    print_search_results(search_res, opt_mask);
+    print_search_results(search_res);
     json_decref(root);
 
     return NULL;
 }
 
-void print_search_results(json_t* search_res, int* opt_mask) {
+void print_search_results(json_t* search_res) {
     unsigned int i;
 
     json_t *pkg;
@@ -91,16 +93,16 @@ void print_search_results(json_t* search_res, int* opt_mask) {
         desc = json_string_value(json_object_get(pkg, "Description"));
         ood = atoi(json_string_value(json_object_get(pkg, "OutOfDate")));
 
-        printf("%s", *opt_mask & OPT_COLOR ? colorize("aur/", MAGENTA, buffer) : "aur/");
-        printf("%s ", *opt_mask & OPT_COLOR ? colorize(name, WHITE, buffer) : name);
-        printf("%s\n", *opt_mask & OPT_COLOR ?
+        printf("%s", opt_mask & OPT_COLOR ? colorize("aur/", MAGENTA, buffer) : "aur/");
+        printf("%s ", opt_mask & OPT_COLOR ? colorize(name, WHITE, buffer) : name);
+        printf("%s\n", opt_mask & OPT_COLOR ?
             (ood ? colorize(version, RED, buffer) : colorize(version, GREEN, buffer)) :
             version);
-        if(! (*opt_mask & OPT_QUIET)) printf("    %s\n", desc);
+        if(! (opt_mask & OPT_QUIET)) printf("    %s\n", desc);
     }
 }
 
-struct aurpkg *aur_pkg_info(char* req, int* opt_mask) {
+struct aurpkg *aur_pkg_info(char* req) {
     char *text;
     char url[URL_SIZE];
 
@@ -128,7 +130,7 @@ struct aurpkg *aur_pkg_info(char* req, int* opt_mask) {
     /* No result found */
     if(!json_is_object(package)) {
         fprintf(stderr, "%s package \"%s\" not found\n", 
-            *opt_mask & OPT_COLOR ? colorize("error:", RED, buffer) : "error:",
+            opt_mask & OPT_COLOR ? colorize("error:", RED, buffer) : "error:",
             req);
         return NULL;
     }
@@ -141,7 +143,7 @@ struct aurpkg *aur_pkg_info(char* req, int* opt_mask) {
     return pkg;
 }
 
-int get_taurball(const char *url, char *target_dir, int *opt_mask) {
+int get_taurball(const char *url, char *target_dir) {
     CURL *curl;
     FILE *fd;
     char *dir, *filename, *fullpath, buffer[256];
@@ -162,9 +164,9 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
     fullpath = strncat(fullpath, filename, strlen(filename));
     fullpath[strlen(fullpath) - 7] = '\0'; /* Mask file extension */
 
-    if (file_exists(fullpath) && ! (*opt_mask & OPT_FORCE)) {
+    if (file_exists(fullpath) && ! (opt_mask & OPT_FORCE)) {
         fprintf(stderr, "%s %s already exists.\nUse -f to force this operation.\n", 
-            *opt_mask & OPT_COLOR ? colorize("error:", RED, buffer) : "error:",
+            opt_mask & OPT_COLOR ? colorize("error:", RED, buffer) : "error:",
             fullpath);
         result = 1;
     } else {
@@ -180,10 +182,10 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
             curl_global_cleanup();
 
             filename[strlen(filename) - 7] = '\0'; /* hackity hack basename */
-            printf("%.*s", filename, *opt_mask & OPT_COLOR ? colorize(filename, WHITE, buffer) : filename);
+            printf("%.*s", filename, opt_mask & OPT_COLOR ? colorize(filename, WHITE, buffer) : filename);
             printf(" downloaded to ");
             printf("%s\n",
-                *opt_mask & OPT_COLOR ? colorize(dir, GREEN, buffer) : dir);
+                opt_mask & OPT_COLOR ? colorize(dir, GREEN, buffer) : dir);
 
             fclose(fd);
 
