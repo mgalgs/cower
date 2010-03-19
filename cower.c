@@ -85,10 +85,8 @@ static int parseargs(int argc, char **argv, int *oper_mask, int *opt_mask) {
     }
 
     /* Feed the remaining args into a linked list */
-    while (optind < argc) {
-        llist_add(&pkg_list, strdup(argv[optind]));
-        optind++;
-    }
+    while (optind < argc)
+        llist_add(&pkg_list, strdup(argv[optind++]));
 
     return 0;
 }
