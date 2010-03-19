@@ -1,20 +1,25 @@
-Ideally, this will act a lot like Slurpy. jansson and libcurl should be the only dependencies.
+Ideally, this will act a lot like Slurpy.
+
+Dependencies:
+	> jansson
+	> curl
+	> bsdtar
 
 What works:
 	> Search
 	> Single Package Info
-	> Downloading a taurball
+	> Downloading and extraction of a taurball
 
 TODO pile:
-	> Extract taurballs
 	> Specify alternate download directory
 	> Check for existance of package in repos
 	> Download dependencies
 	> Update function (with download)
-	> Colorize error messages (probably split off into errormsg func in util.c)
+	> Colorize error messages
 	> verbosity levels
 	> Find 174 byte leak
 
 Maybe pile:
 	> Static link jansson
 	> upload taurballs
+
