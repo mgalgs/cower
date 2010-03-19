@@ -65,8 +65,9 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
             curl_easy_cleanup(curl);
             curl_global_cleanup();
 
-            printf("%s downloaded to ",
-                *opt_mask & 1 ? colorize(filename, WHITE, buffer) : filename);
+            filename[strlen(filename) - 7] = '\0'; /* hackity hack basename */
+            printf("%.*s", filename, *opt_mask & 1 ? colorize(filename, WHITE, buffer) : filename);
+            printf(" downloaded to ");
             printf("%s\n",
                 *opt_mask & 1 ? colorize(dir, GREEN, buffer) : dir);
 
