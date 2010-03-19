@@ -149,7 +149,7 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
 
     if (target_dir == NULL) { /* Use pwd */
         dir = getcwd(NULL, 0);
-    } else {
+    } else { /* TODO: Implement the option for this */
         dir = target_dir;
     }
 
@@ -188,7 +188,7 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
 
             pid_t pid; pid = fork();
             if (pid == 0) { /* Child process */
-                execlp("bsdtar", "bsdtar", "-xf", filename, NULL);
+                execlp("bsdtar", "bsdtar", "-xf", fullpath, NULL);
             } else { /* Back in the parent, waiting for child to finish */
                 while (0 == waitpid(pid, NULL, WNOHANG));
                 unlink(fullpath);
