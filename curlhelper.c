@@ -23,7 +23,6 @@
 #include <jansson.h>
 
 #include "curlhelper.h"
-#include "util.h"
 #include "aur.h"
 
 int newline_offset(const char *text) {
