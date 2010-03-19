@@ -96,7 +96,7 @@ void print_search_results(json_t* search_res, int* opt_mask) {
         printf("%s\n", *opt_mask & OPT_COLOR ?
             (ood ? colorize(version, RED, buffer) : colorize(version, GREEN, buffer)) :
             version);
-        printf("    %s\n", desc);
+        if(! (*opt_mask & OPT_QUIET)) printf("    %s\n", desc);
     }
 }
 

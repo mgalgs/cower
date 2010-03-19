@@ -44,10 +44,11 @@ static int parseargs(int argc, char **argv, int *oper_mask, int *opt_mask) {
         {"color",       no_argument,        0, 'c'},
         {"verbose",     no_argument,        0, 'v'},
         {"force",       no_argument,        0, 'f'},
+        {"quiet",       no_argument,        0, 'q'},
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv, "suidcvf", opts, &option_index))) {
+    while ((opt = getopt_long(argc, argv, "suidcvfq", opts, &option_index))) {
         if (opt < 0) {
             break;
         }
@@ -73,6 +74,9 @@ static int parseargs(int argc, char **argv, int *oper_mask, int *opt_mask) {
                 break;
             case 'f':
                 *opt_mask |= OPT_FORCE;
+                break;
+            case 'q':
+                *opt_mask |= OPT_QUIET;
                 break;
             case '?': 
                 return 1;
@@ -107,6 +111,7 @@ void usage() {
     printf(" General options:\n");
     printf("  -c, --color             use colored output\n");
     printf("  -f, --force             overwrite existing files when dowloading\n");
+    printf("  -q, --quiet             show only package names in search results\n");
 /*
     printf("  -t DIR, --save-to=DIR   target directory where files will be downloaded\n");
     printf("  -v, --verbose           show info messages\n");

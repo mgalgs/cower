@@ -40,7 +40,8 @@ enum {
 enum {
     OPT_COLOR = 1,
     OPT_VERBOSE = 2,
-    OPT_FORCE = 4
+    OPT_FORCE = 4,
+    OPT_QUIET = 8
 };
 
 char *colorize(const char*, int, char*);
