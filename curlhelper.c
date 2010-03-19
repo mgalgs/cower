@@ -47,7 +47,6 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
     }
 
     filename = strrchr(url, '/') + 1;
-    /* printf("filename = %s\n", filename); */
 
     /* Construct the full path */
     fullpath = calloc(strlen(dir) + strlen(filename), 1);
@@ -81,9 +80,9 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
             filename[strlen(filename)] = '.'; /* Replace the \0 with a . for extraction */
 
             pid_t pid; pid = fork();
-            if (pid == 0) {
+            if (pid == 0) { /* Child process */
                 execlp("bsdtar", "bsdtar", "-xf", filename, NULL);
-            } else {
+            } else { /* Back in the parent, waiting for child to finish */
                 while (0 == waitpid(pid, NULL, WNOHANG));
                 unlink(fullpath);
             }
@@ -91,7 +90,6 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
             fprintf(stderr, "Error writing to path: %s\n", dir);
             result = 6;
         }
-
     }
 
     free(fullpath);

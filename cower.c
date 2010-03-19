@@ -68,7 +68,6 @@ static int parseargs(int argc, char **argv, int *oper_mask, int *opt_mask) {
 
     while (optind < argc) {
         llist_add(&pkg_list, strdup(argv[optind]));
-        /* printf("Package argument found: %s\n", argv[optind]); */
         optind++;
     }
 
@@ -82,15 +81,12 @@ int main(int argc, char **argv) {
 
     ret = parseargs(argc, argv, &oper_mask, &opt_mask);
 
-    /* printf("ret = %d\nOperMask = %d\nOptMask = %d\n", ret, oper_mask, opt_mask); */
-
     if (oper_mask & OPER_DOWNLOAD) { /* 8 */
         while (pkg_list != NULL) {
             struct aurpkg *found = aur_pkg_info((char*)pkg_list->data, &opt_mask);
             if (found != NULL) {
                 char pkgURL[256];
                 snprintf(pkgURL, 256, PKG_URL, found->Name, found->Name);
-                /* printf("Requested URL: %s\n", pkgURL); */
                 get_taurball(pkgURL, NULL, &opt_mask);
             }
             free(found);
