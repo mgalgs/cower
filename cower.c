@@ -19,17 +19,20 @@ static int parseargs(int argc, char **argv, int *oper_mask, int *opt_mask) {
     int opt;
     int option_index = 0;
     static struct option opts[] = {
+        /* Operations */
         {"search",      no_argument,        0, 's'},
         {"update",      no_argument,        0, 'u'},
         {"info",        no_argument,        0, 'i'},
         {"download",    no_argument,        0, 'd'},
+
+        /* Options */
         {"color",       no_argument,        0, 'c'},
         {"verbose",     no_argument,        0, 'v'},
         {"force",       no_argument,        0, 'f'},
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv, "suidcv", opts, &option_index))) {
+    while ((opt = getopt_long(argc, argv, "suidcvf", opts, &option_index))) {
         if (opt < 0) {
             break;
         }
