@@ -48,7 +48,7 @@ struct json_t *aur_pkg_search(char* req, int* opt_mask) {
     print_search_results(search_res);
     json_decref(root);
 
-    return NULL; //search_res;
+    return NULL;
 }
 
 void print_search_results(json_t* search_res) {

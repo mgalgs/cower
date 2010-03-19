@@ -11,7 +11,7 @@
 #include "aur.h"
 #include "package.h"
 
-#define PKG_URL "http://aur.archlinux.org/packages/%s/%s.tar.gz\0"
+#define PKG_URL "http://aur.archlinux.org/packages/%s/%s.tar.gz"
 
 static llist *pkg_list;
 
@@ -25,6 +25,7 @@ static int parseargs(int argc, char **argv, int *oper_mask, int *opt_mask) {
         {"download",    no_argument,        0, 'd'},
         {"color",       no_argument,        0, 'c'},
         {"verbose",     no_argument,        0, 'v'},
+        {"force",       no_argument,        0, 'f'},
         {0, 0, 0, 0}
     };
 
@@ -52,6 +53,9 @@ static int parseargs(int argc, char **argv, int *oper_mask, int *opt_mask) {
             case 'v':
                 *opt_mask |= 2;
                 break;
+            case 'f':
+                *opt_mask |= 4;
+                break;
             case '?': 
                 return 1;
             default: 
@@ -61,9 +65,11 @@ static int parseargs(int argc, char **argv, int *oper_mask, int *opt_mask) {
 
     while (optind < argc) {
         llist_add(&pkg_list, strdup(argv[optind]));
-        //printf("Package argument found: %s\n", argv[optind]);
+        /* printf("Package argument found: %s\n", argv[optind]); */
         optind++;
     }
+
+    return 0;
 }
 
 int main(int argc, char **argv) {
@@ -73,7 +79,7 @@ int main(int argc, char **argv) {
 
     ret = parseargs(argc, argv, &oper_mask, &opt_mask);
 
-    //printf("ret = %d\nOperMask = %d\nOptMask = %d\n", ret, oper_mask, opt_mask);
+    /* printf("ret = %d\nOperMask = %d\nOptMask = %d\n", ret, oper_mask, opt_mask); */
 
     if (oper_mask & OPER_DOWNLOAD) { /* 8 */
         while (pkg_list != NULL) {
@@ -81,7 +87,7 @@ int main(int argc, char **argv) {
             if (found != NULL) {
                 char pkgURL[256];
                 snprintf(pkgURL, 256, PKG_URL, found->Name, found->Name);
-                //printf("Requested URL: %s\n", pkgURL);
+                /* printf("Requested URL: %s\n", pkgURL); */
                 get_taurball(pkgURL, NULL, &opt_mask);
                 free(found);
             }

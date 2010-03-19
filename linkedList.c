@@ -64,7 +64,7 @@ void llist_delete(llist** l) {
     /* Iterate through list and free each node */
     while ((*l)->next != NULL) {
         llist_remove_node(l);
-        //*l = (*l)->next;
+        /* *l = (*l)->next; */
     }
 
     /* Free head of list */
