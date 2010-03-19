@@ -33,6 +33,11 @@ static char *pkg_category[] = { NULL, "None", "daemons", "devel",
                               "system", "x11", "xfce", "kernels" };
 
 void get_pkg_details(json_t *package, struct aurpkg **aur_pkg) {
+    /* We can't call json_integer_value because the json declares 
+     * all data as strings. However, some values are easier to 
+     * deal with as integers rather than strings so we convert
+     * them after fetching.
+     */
     (*aur_pkg)->ID =
         atoi(json_string_value(json_object_get(package, "ID")));
 
@@ -48,12 +53,27 @@ void get_pkg_details(json_t *package, struct aurpkg **aur_pkg) {
     (*aur_pkg)->LocationID =
         atoi(json_string_value(json_object_get(package, "LocationID")));
 
-    (*aur_pkg)->Name = strdup(json_string_value(json_object_get(package, "Name")));
-    (*aur_pkg)->Version = strdup(json_string_value(json_object_get(package, "Version")));
-    (*aur_pkg)->Description = strdup(json_string_value(json_object_get(package, "Description")));
-    (*aur_pkg)->URL = strdup(json_string_value(json_object_get(package, "URL")));
-    (*aur_pkg)->URLPath = strdup(json_string_value(json_object_get(package, "URLPath")));
-    (*aur_pkg)->License = strdup(json_string_value(json_object_get(package, "License")));
+
+    /* Other values which belong as strings need to be duplicated so that
+     * we can free the json_t pointer without harming our package struct.
+     */
+    (*aur_pkg)->Name =
+        strdup(json_string_value(json_object_get(package, "Name")));
+
+    (*aur_pkg)->Version =
+        strdup(json_string_value(json_object_get(package, "Version")));
+
+    (*aur_pkg)->Description =
+        strdup(json_string_value(json_object_get(package, "Description")));
+
+    (*aur_pkg)->URL =
+        strdup(json_string_value(json_object_get(package, "URL")));
+
+    (*aur_pkg)->URLPath =
+        strdup(json_string_value(json_object_get(package, "URLPath")));
+
+    (*aur_pkg)->License =
+        strdup(json_string_value(json_object_get(package, "License")));
 }
 
 void print_package(struct aurpkg *pkg) {
@@ -83,7 +103,8 @@ void print_package(struct aurpkg *pkg) {
     printf("License         : %s\n", pkg->License);
     printf("Number of Votes : %d\n", pkg->NumVotes);
     printf("Out Of Date     : %s\n", opt_mask & OPT_COLOR ?
-        pkg->OutOfDate ? colorize("Yes", RED, buffer) : colorize("No", GREEN, buffer) :
+        pkg->OutOfDate ? colorize("Yes", RED, buffer) : 
+            colorize("No", GREEN, buffer) :
         pkg->OutOfDate ? "Yes" : "No" );
 
     printf("Description     : %s\n\n", pkg->Description);
