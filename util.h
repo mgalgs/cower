@@ -45,4 +45,3 @@ enum {
 
 char *colorize(const char*, int, char*);
 int file_exists(const char*);
-int unpack_taurball(char*);
