@@ -164,7 +164,7 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
     if (file_exists(filename) && ! (*opt_mask & OPT_FORCE)) {
         fprintf(stderr, "Error: %s/%s already exists.\nUse -f to force this operation.\n",
             dir, filename);
-        result = 5;
+        result = 1;
     } else {
         fd = fopen(filename, "w");
         if (fd != NULL) {
@@ -184,18 +184,18 @@ int get_taurball(const char *url, char *target_dir, int *opt_mask) {
 
             fclose(fd);
 
-            filename[strlen(filename)] = '.'; /* Replace the \0 with a . for extraction */
-
             pid_t pid; pid = fork();
             if (pid == 0) { /* Child process */
-                execlp("bsdtar", "bsdtar", "-xf", fullpath, NULL);
+                result = execlp("bsdtar", "bsdtar", "-xf", fullpath, NULL);
             } else { /* Back in the parent, waiting for child to finish */
-                while (0 == waitpid(pid, NULL, WNOHANG));
-                unlink(fullpath);
+                while (! waitpid(pid, NULL, WNOHANG));
+                if (! result) { /* If we get here, bsdtar finished successfully */
+                    unlink(fullpath);
+                }
             }
         } else {
             fprintf(stderr, "Error writing to path: %s\n", dir);
-            result = 6;
+            result = 1;
         }
     }
 
