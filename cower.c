@@ -28,8 +28,9 @@
 #include "package.h"
 
 static llist *pkg_list;
+int oper_mask = 0,  opt_mask = 0; /* Runtime Config */
 
-static int parseargs(int argc, char **argv, int *oper_mask, int *opt_mask) {
+static int parseargs(int argc, char **argv) {
     int opt;
     int option_index = 0;
     static struct option opts[] = {
@@ -54,28 +55,28 @@ static int parseargs(int argc, char **argv, int *oper_mask, int *opt_mask) {
 
         switch (opt) {
             case 's':
-                *oper_mask |= OPER_SEARCH;
+                oper_mask |= OPER_SEARCH;
                 break;
             case 'u':
-                *oper_mask |= OPER_UPDATE;
+                oper_mask |= OPER_UPDATE;
                 break;
             case 'i':
-                *oper_mask |= OPER_INFO;
+                oper_mask |= OPER_INFO;
                 break;
             case 'd':
-                *oper_mask |= OPER_DOWNLOAD;
+                oper_mask |= OPER_DOWNLOAD;
                 break;
             case 'c':
-                *opt_mask |= OPT_COLOR;
+                opt_mask |= OPT_COLOR;
                 break;
             case 'v':
-                *opt_mask |= OPT_VERBOSE;
+                opt_mask |= OPT_VERBOSE;
                 break;
             case 'f':
-                *opt_mask |= OPT_FORCE;
+                opt_mask |= OPT_FORCE;
                 break;
             case 'q':
-                *opt_mask |= OPT_QUIET;
+                opt_mask |= OPT_QUIET;
                 break;
             case '?': 
                 return 1;
@@ -109,24 +110,23 @@ void usage() {
 int main(int argc, char **argv) {
 
     int ret = 0;
-    int oper_mask = 0, opt_mask = 0;
 
-    ret = parseargs(argc, argv, &oper_mask, &opt_mask);
+    ret = parseargs(argc, argv);
 
     if (oper_mask & OPER_DOWNLOAD) { /* 8 */
         while (pkg_list != NULL) {
-            struct aurpkg *found = aur_pkg_info((char*)pkg_list->data, &opt_mask);
+            struct aurpkg *found = aur_pkg_info((char*)pkg_list->data);
             if (found != NULL) {
                 char pkgURL[256];
                 snprintf(pkgURL, 256, PKG_URL, found->Name, found->Name);
-                get_taurball(pkgURL, NULL, &opt_mask);
+                get_taurball(pkgURL, NULL);
             }
             free(found);
             llist_remove_node(&pkg_list);
         }
     } else if (oper_mask & OPER_INFO) { /* 4 */
         while (pkg_list != NULL) {
-            struct aurpkg *found = aur_pkg_info((char*)pkg_list->data, &opt_mask);
+            struct aurpkg *found = aur_pkg_info((char*)pkg_list->data);
             if (found != NULL) print_package(found, &opt_mask);
             llist_remove_node(&pkg_list);
             free(found);
@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "IOU: One Update function\n");
     } else if (oper_mask & OPER_SEARCH) { /* 1 */
         while (pkg_list != NULL) {
-            aur_pkg_search((char*)pkg_list->data, &opt_mask);
+            aur_pkg_search((char*)pkg_list->data);
             llist_remove_node(&pkg_list);
         }
     } else {
