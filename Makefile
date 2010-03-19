@@ -18,7 +18,7 @@ package.o: package.c package.h
 	$(CC) $(CFLAGS) $< -c $(DEBUG)
 
 curlhelper.o: curlhelper.c curlhelper.h
-	$(CC) $(CFLAGS) $< -c $(DEBUG) -lcurl
+	$(CC) $(CFLAGS) $< -c $(DEBUG)
 
 linkedList.o: linkedList.c linkedList.h
 	$(CC) $(CFLAGS) $< -c $(DEBUG)
