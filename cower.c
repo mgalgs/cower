@@ -27,8 +27,8 @@
 #include "aur.h"
 #include "package.h"
 
-static llist *pkg_list;
-int oper_mask = 0,  opt_mask = 0; /* Runtime Config */
+static llist *pkg_list; /* Package argument list */
+int oper_mask = 0, opt_mask = 0; /* Runtime Config */
 
 static int parseargs(int argc, char **argv) {
     int opt;
@@ -93,24 +93,22 @@ static int parseargs(int argc, char **argv) {
 }
 
 void usage() {
-    printf("Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n");
-    printf("\n");
-    printf(" Operations:\n");
-    printf("  -d, --download          download PACKAGE(s)\n");
-    printf("  -i, --info              show info for PACKAGE(s)\n");
-    printf("  -s, --search            search for PACKAGE(s)\n");
-    printf("\n");
-    printf(" General options:\n");
-    printf("  -c, --color             use colored output\n");
-    printf("  -f, --force             overwrite existing files when dowloading\n");
-    printf("  -q, --quiet             show only package names in search results\n");
-    printf("\n");
+    printf("Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
+\n\
+ Operations:\n\
+  -d, --download          download PACKAGE(s)\n\
+  -i, --info              show info for PACKAGE(s)\n\
+  -s, --search            search for PACKAGE(s)\n\
+\n\
+ General options:\n\
+  -c, --color             use colored output\n\
+  -f, --force             overwrite existing files when dowloading\n\
+  -q, --quiet             show only package names in search results\n\n");
 }
 
 int main(int argc, char **argv) {
 
     int ret = 0;
-
     ret = parseargs(argc, argv);
 
     if (oper_mask & OPER_DOWNLOAD) { /* 8 */
