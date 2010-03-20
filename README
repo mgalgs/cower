@@ -17,7 +17,8 @@ TODO pile:
 	> Update function (with download)
 	> Colorize error messages
 	> verbosity levels
-	> Find 174 byte leak
+	> sort search results
+	> Find leaks
 
 Maybe pile:
 	> Static link jansson
