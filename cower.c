@@ -19,15 +19,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <alpm.h>
 
 #include <jansson.h>
 
 #include "util.h"
-#include "linkedList.h"
 #include "aur.h"
 #include "package.h"
 
-static llist *pkg_list; /* Package argument list */
+static alpm_list_t *targets; /* Package argument list */
 int oper_mask = 0, opt_mask = 0; /* Runtime Config */
 
 static int parseargs(int argc, char **argv) {
@@ -87,7 +87,7 @@ static int parseargs(int argc, char **argv) {
 
     /* Feed the remaining args into a linked list */
     while (optind < argc)
-        llist_add(&pkg_list, strdup(argv[optind++]));
+        targets = alpm_list_add(targets, argv[optind++]);
 
     return 0;
 }
@@ -112,35 +112,20 @@ int main(int argc, char **argv) {
     ret = parseargs(argc, argv);
 
     if (oper_mask & OPER_DOWNLOAD) { /* 8 */
-        while (pkg_list != NULL) {
-            struct aurpkg *found = aur_pkg_info((char*)pkg_list->data);
-            if (found != NULL) {
-                char pkgURL[256];
-                snprintf(pkgURL, 256, PKG_URL, found->Name, found->Name);
-                get_taurball(pkgURL, NULL);
-            }
-            free(found);
-            llist_remove_node(&pkg_list);
-        }
+        printf("IOU one download function.\n");
     } else if (oper_mask & OPER_INFO) { /* 4 */
-        while (pkg_list != NULL) {
-            struct aurpkg *found = aur_pkg_info((char*)pkg_list->data);
-            if (found != NULL) print_package(found);
-            llist_remove_node(&pkg_list);
-            free(found);
-        }
+        printf("IOU one info function.\n");
     } else if (oper_mask & OPER_UPDATE) { /* 2 */
-        fprintf(stderr, "IOU: One Update function\n");
+        printf("IOU one update function.\n");
     } else if (oper_mask & OPER_SEARCH) { /* 1 */
-        while (pkg_list != NULL) {
-            aur_pkg_search((char*)pkg_list->data);
-            llist_remove_node(&pkg_list);
-        }
+        printf("IOU one search function.\n");
     } else {
         usage();
-        return 1;
+        ret = 1;
     }
 
-    return 0;
+    alpm_list_free(targets);
+
+    return ret;
 }
 
