@@ -48,4 +48,5 @@ enum {
 int cfprint(int, const char*, int);
 int file_exists(const char*);
 void print_pkg_info(json_t*);
+void print_pkg_search(json_t*);
 

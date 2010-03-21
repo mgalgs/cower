@@ -108,6 +108,38 @@ void print_pkg_info(json_t *pkg) {
 
 }
 
+void print_pkg_search(json_t *search) {
+    json_t *pkg_array, *pkg;
+    unsigned int i;
+    const char *name, *ver, *desc, *ood;
+
+    pkg_array = json_object_get(search, "results");
+
+    for (i = 0; i < json_array_size(pkg_array); i++) {
+        pkg = json_array_get(pkg_array, i);
+
+        name = json_string_value(json_object_get(pkg, "Name"));
+        ver = json_string_value(json_object_get(pkg, "Version"));
+        desc = json_string_value(json_object_get(pkg, "Description"));
+        ood = json_string_value(json_object_get(pkg, "OutOfDate"));
+
+        /* Line 1 */
+        if (! (opt_mask & OPT_QUIET))
+            opt_mask & OPT_COLOR ? cfprint(1, "aur/", MAGENTA) : printf("aur/");
+        opt_mask & OPT_COLOR ? cfprint(1, name, WHITE) : printf(name);
+        putchar(' ');
+        opt_mask & OPT_COLOR ?
+            strcmp(ood, "0") ? cfprint(1, ver, RED) : cfprint(1, ver, GREEN) :
+            printf("%s", ver);
+        putchar('\n');
+
+        /* Line 2 */
+        if (! (opt_mask & OPT_QUIET))
+            printf("    %s\n", desc);
+
+    }
+}
+
 int file_exists(const char* fd) {
     struct stat st;
     if (! stat(fd, &st)) {
