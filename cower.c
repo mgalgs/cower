@@ -108,15 +108,30 @@ void usage() {
 
 int main(int argc, char **argv) {
 
-    int ret = 0;
+    int ret;
     ret = parseargs(argc, argv);
 
-    if (oper_mask & OPER_DOWNLOAD) { /* 8 */
+    alpm_list_t *i;
+
+    printf("oper_mask = %d\n", oper_mask);
+    for (i = targets; i; i = alpm_list_next(i)) {
+        char *pkg_arg;
+        pkg_arg = alpm_list_getdata(i);
+        printf("package argument: %s\n", pkg_arg);
+    }
+
+    /* Order matters somewhat. Update must come before download
+     * to ensure that we catch the possibility of a download flag
+     * being passed along with it.
+     */
+    if (oper_mask & OPER_UPDATE) { /* 8 */
+        printf("IOU one update function.\n");
+        if (oper_mask & OPER_DOWNLOAD)
+            printf("I'll even download your updates too. I promise!\n");
+    } else if (oper_mask & OPER_DOWNLOAD) { /* 4 */
         printf("IOU one download function.\n");
     } else if (oper_mask & OPER_INFO) { /* 4 */
         printf("IOU one info function.\n");
-    } else if (oper_mask & OPER_UPDATE) { /* 2 */
-        printf("IOU one update function.\n");
     } else if (oper_mask & OPER_SEARCH) { /* 1 */
         printf("IOU one search function.\n");
     } else {
