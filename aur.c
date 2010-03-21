@@ -19,18 +19,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/wait.h>
-#include <curl/curl.h>
+#include <unistd.h>
 
 /* Non-standard */
+#include <curl/curl.h>
 #include <jansson.h>
 
 /* Local */
-#include "util.h"
 #include "aur.h"
 #include "json.h"
-#include "package.h"
+#include "util.h"
 
 extern int opt_mask;
 
@@ -75,10 +74,10 @@ json_t *aur_rpc_query(int type, char* arg) {
     return root; /* This needs to be freed in the calling function */
 }
 
-int aur_get_tarball(const char *url, char *target_dir) {
+int aur_get_tarball(json_t *pkginfo, char *target_dir) {
     CURL *curl;
     FILE *fd;
-    char *dir, *filename, *fullpath, buffer[256];
+    char *dir, *filename, *fullpath, url[128], buffer[256];
     int result = 0;
 
     if (target_dir == NULL) { /* Use pwd */
@@ -87,14 +86,17 @@ int aur_get_tarball(const char *url, char *target_dir) {
         dir = target_dir;
     }
 
-    filename = strrchr(url, '/') + 1;
+    /* Build URL. Need this to get the taurball, durp */
+    snprintf(url, 128, AUR_PKG_URL,
+        json_string_value(json_object_get(pkginfo, "URLPath")));
 
-    /* Construct the full path */
-    fullpath = calloc(strlen(dir) + strlen(filename), 1);
+    /* Pointer to the 'basename' of the URL Path */
+    filename = strrchr(url, '/');
+
+    /* ...and the full path to the taurball! */
+    fullpath = calloc(strlen(dir) + strlen(filename), sizeof(char));
     fullpath = strncat(fullpath, dir, strlen(dir));
-    fullpath = strncat(fullpath, "/", 1);
     fullpath = strncat(fullpath, filename, strlen(filename));
-    fullpath[strlen(fullpath) - 7] = '\0'; /* Mask file extension */
 
     if (file_exists(fullpath) && ! (opt_mask & OPT_FORCE)) {
         fprintf(stderr, "%s %s already exists.\nUse -f to force this operation.\n", 
@@ -138,6 +140,7 @@ int aur_get_tarball(const char *url, char *target_dir) {
 
     free(fullpath);
     free(dir);
+
     return result;
 }
 

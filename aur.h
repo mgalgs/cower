@@ -22,6 +22,8 @@
 #define AUR_RPC_URL_SIZE    256
 #define JSON_BUFFER_SIZE    (256 * 1024) /* 256kB */
 
+#define AUR_PKG_URL         "http://aur.archlinux.org%s"
+
 #define AUR_RPC_QUERY_TYPE_INFO   1
 #define AUR_RPC_QUERY_TYPE_SEARCH 2
 
@@ -29,6 +31,6 @@
 json_t *aur_rpc_query(int, char*);
 
 /* Download */
-int aur_get_taurball(const char*, char*);
+int aur_get_taurball(json_t*, char*);
 
 #endif /* _AUR_H */
