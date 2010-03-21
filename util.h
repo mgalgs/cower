@@ -47,4 +47,5 @@ enum {
 
 char *colorize(const char*, int, char*);
 int file_exists(const char*);
+void print_pkg_info(json_t*);
 
