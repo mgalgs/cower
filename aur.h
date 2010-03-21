@@ -18,12 +18,12 @@
 #ifndef _AUR_H
 #define _AUR_H
 
-#define URL_FORMAT      "http://aur.archlinux.org/rpc.php?type=%s&arg=%s"
-#define URL_SIZE        256
+#define AUR_RPC_URL         "http://aur.archlinux.org/rpc.php?type=%s&arg=%s"
+#define AUR_RPC_URL_SIZE    256
+#define JSON_BUFFER_SIZE    (256 * 1024) /* 256kB */
 
-#define PKG_URL         "http://aur.archlinux.org/packages/%s/%s.tar.gz"
-
-#define BUFFER_SIZE     (256 * 1024) /* 256kB */
+#define AUR_RPC_QUERY_TYPE_INFO   1
+#define AUR_RPC_QUERY_TYPE_SEARCH 2
 
 /* Info */
 struct aurpkg *aur_pkg_info(char*);
