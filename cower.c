@@ -128,11 +128,12 @@ int main(int argc, char **argv) {
      * being passed along with it.
      */
     if (oper_mask & OPER_UPDATE) { /* 8 */
-        /* printf("IOU one update function.\n"); */
         alpm_quick_init();
-
+        alpm_list_t *foreign = alpm_query_search(NULL);
+        /* Do something with the list */
         if (oper_mask & OPER_DOWNLOAD)
             printf("I'll even download your updates too. I promise!\n");
+        alpm_list_free(foreign);
     } else if (oper_mask & OPER_DOWNLOAD) { /* 4 */
         printf("IOU one download function.\n");
     } else if (oper_mask & OPER_INFO) { /* 4 */
@@ -160,8 +161,8 @@ int main(int argc, char **argv) {
         ret = 1;
     }
 
+    /* Compulsory cleanup */
     alpm_list_free(targets);
-
     alpm_release();
 
     return ret;
