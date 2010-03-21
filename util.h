@@ -45,7 +45,7 @@ enum {
     OPT_QUIET = 8
 };
 
-int cprint(const char*, int);
+int cfprint(int, const char*, int);
 int file_exists(const char*);
 void print_pkg_info(json_t*);
 

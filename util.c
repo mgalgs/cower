@@ -34,9 +34,14 @@ static char *pkg_category[] = { NULL, "None", "daemons", "devel",
                               "system", "x11", "xfce", "kernels" };
 
 
-/* TODO: Figure out va macros and allow access to stderr */
-int cprint(const char* input, int color) {
-    return printf("\033[1;3%dm%s\033[1;m", color, input);
+/* TODO: Figure out va macros */
+int cfprint(int fd, const char* input, int color) {
+    if (fd == 1 || !fd) {
+        return printf("\033[1;3%dm%s\033[1;m", color, input);
+    } else if (fd == 2) {
+        return fprintf(stderr, "\033[1;3%dm%s\033[1;m", color, input);
+    } else
+        return 0;
 }
 
 void print_pkg_info(json_t *pkg) {
@@ -59,27 +64,27 @@ void print_pkg_info(json_t *pkg) {
 
     /* Print it all pretty like */
     printf("Repository      : ");
-    opt_mask & OPT_COLOR ? cprint("aur", MAGENTA) : printf("aur");
+    opt_mask & OPT_COLOR ? cfprint(1, "aur", MAGENTA) : printf("aur");
     putchar('\n');
 
     printf("Name:           : ");
-    opt_mask & OPT_COLOR ? cprint(name, WHITE) : printf(name);
+    opt_mask & OPT_COLOR ? cfprint(1, name, WHITE) : printf(name);
     putchar('\n');
 
     printf("Version         : ");
     opt_mask & OPT_COLOR ?
-        strcmp(ood, "0") ? cprint(ver, RED) : cprint(ver, GREEN) : printf(ver);
+        strcmp(ood, "0") ? cfprint(1, ver, RED) : cfprint(1, ver, GREEN) : printf(ver);
     putchar('\n');
 
     printf("URL             : ");
-    opt_mask & OPT_COLOR ?  cprint(url, CYAN) : printf(url);
+    opt_mask & OPT_COLOR ?  cfprint(1, url, CYAN) : printf(url);
     putchar('\n');
 
     snprintf(aurpage, 128, AUR_PKG_URL_FORMAT, id);
     printf("AUR Page        : ");
         if (opt_mask & OPT_COLOR) {
-            cprint(AUR_PKG_URL_FORMAT, CYAN);
-            cprint(id, CYAN);
+            cfprint(1, AUR_PKG_URL_FORMAT, CYAN);
+            cfprint(1, id, CYAN);
         } else {
             printf("%s", AUR_PKG_URL_FORMAT);
             printf("%s", id);
@@ -95,7 +100,7 @@ void print_pkg_info(json_t *pkg) {
     printf("Out Of Date     : ");
     opt_mask & OPT_COLOR ?
         strcmp(ood, "0") ?
-            cprint("Yes", RED) : cprint("No", GREEN) :
+            cfprint(1, "Yes", RED) : cfprint(1, "No", GREEN) :
             printf("%s", strcmp(ood, "0") ?  "Yes" : "No");
     putchar('\n');
 

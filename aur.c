@@ -63,8 +63,9 @@ json_t *aur_rpc_query(int type, const char* arg) {
     /* Check return type in JSON */
     return_type = json_object_get(root, "type");
     if (! strcmp(json_string_value(return_type), "error")) {
-        opt_mask & OPT_COLOR ? cprint("error:", RED) : printf("error:"),
-        printf(" no results for \"%s\"\n", arg);
+        opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
+            fprintf(stderr, "error:"),
+        fprintf(stderr, " no results for \"%s\"\n", arg);
         json_decref(root);
         return NULL;
     }
@@ -107,8 +108,9 @@ int aur_get_tarball(json_t *root, char *target_dir) {
     filename++; /* Get rid of the leading slash */
 
     if (file_exists(fullpath) && ! (opt_mask & OPT_FORCE)) {
-        opt_mask & OPT_COLOR ? cprint("error:", RED) : printf("error:");
-        printf(" %s already exists.\nUse -f to force this operation.\n", 
+        opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
+            fprintf(stderr, "error:");
+        fprintf(stderr, " %s already exists.\nUse -f to force this operation.\n", 
             fullpath);
         result = 1;
     } else {
@@ -122,9 +124,9 @@ int aur_get_tarball(json_t *root, char *target_dir) {
             curl_easy_cleanup(curl);
             curl_global_cleanup();
 
-            opt_mask & OPT_COLOR ? cprint(pkgname, WHITE) : printf(pkgname);
+            opt_mask & OPT_COLOR ? cfprint(1, pkgname, WHITE) : printf(pkgname);
             printf(" downloaded to ");
-            opt_mask & OPT_COLOR ? cprint(dir, GREEN) : printf(dir);
+            opt_mask & OPT_COLOR ? cfprint(1, dir, GREEN) : printf(dir);
             putchar('\n');
 
             fclose(fd);
