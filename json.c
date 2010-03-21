@@ -62,6 +62,7 @@ char *curl_get_json(const char *url) {
     if(status != 0) {
         fprintf(stderr, "curl error: unable to request data from %s\n", url);
         fprintf(stderr, "%s\n", curl_easy_strerror(status));
+        free(data);
         curl_easy_cleanup(curl);
         curl_global_cleanup();
         return NULL;
@@ -70,6 +71,7 @@ char *curl_get_json(const char *url) {
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
     if(code != 200) {
         fprintf(stderr, "curl error: server responded with code %ld\n", code);
+        free(data);
         curl_easy_cleanup(curl);
         curl_global_cleanup();
         return NULL;
