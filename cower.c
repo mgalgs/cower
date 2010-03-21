@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <curl/curl.h>
 #include <jansson.h>
 
 #include "alpmhelper.h"
@@ -111,16 +112,15 @@ int main(int argc, char **argv) {
     int ret;
     ret = parseargs(argc, argv);
 
+    /* DEBUG: Show masks and package args
     alpm_list_t *i;
-
-    /* DEBUG: Show masks and package args */
     printf("oper_mask = %d\n", oper_mask);
     printf("opt_mask = %d\n", opt_mask);
     for (i = targets; i; i = alpm_list_next(i)) {
         char *pkg_arg;
         pkg_arg = alpm_list_getdata(i);
         printf("package argument: %s\n", pkg_arg);
-    } /* END DEBUG */
+    } END DEBUG */
 
     /* Order matters somewhat. Update must come before download
      * to ensure that we catch the possibility of a download flag
@@ -134,9 +134,7 @@ int main(int argc, char **argv) {
         for (i = foreign; i; i = alpm_list_next(i)) {
             pmpkg_t *pmpkg = alpm_list_getdata(i);
             printf("Foreign pkg: %s\n", alpm_pkg_get_name(pmpkg));
-            /* Do a query against the AUR for each of these 
-             * and pull down a json_t. Compare the versions.
-             */
+            /* TODO: Finish me */
         }
         if (oper_mask & OPER_DOWNLOAD)
             printf("I'll even download your updates too. I promise!\n");
@@ -168,22 +166,14 @@ int main(int argc, char **argv) {
             }
         }
     } else if (oper_mask & OPER_SEARCH) { /* 1 */
+        /* TODO: Aggregate all searches, sort, and print at once */
         alpm_list_t *i;
         for (i = targets; i; i = alpm_list_next(i)) {
             json_t *search = 
                 aur_rpc_query(AUR_RPC_QUERY_TYPE_SEARCH, alpm_list_getdata(i));
-            /* Do something with the json. Ideally, we'll aggregate all searches
-             * together and then print all at once.
-             */
-            /* "Do something" for now = Print it */
+
             if (search) {
-                json_t *pkg_array = json_object_get(search, "results");
-                int i;
-                for (i = 0; i < json_array_size(pkg_array); i++) {
-                    json_t *pkg = json_array_get(pkg_array, i);
-                    printf("%s\n", 
-                        json_string_value(json_object_get(pkg, "Name")));
-                }
+                print_pkg_search(search);
             }
             json_decref(search);
         }
@@ -193,6 +183,7 @@ int main(int argc, char **argv) {
     }
 
     /* Compulsory cleanup */
+    curl_global_cleanup();
     alpm_list_free(targets);
     alpm_release();
 
