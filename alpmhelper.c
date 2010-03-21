@@ -17,6 +17,7 @@
 
 /* Standard */
 #include <stdio.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -37,11 +38,11 @@ void alpm_quick_init() {
     alpm_initialize();
     alpm_option_set_root("/");
     alpm_option_set_dbpath("/var/lib/pacman/");
+    alpm_db_register_sync("testing");
+    alpm_db_register_sync("community-testing");
     alpm_db_register_sync("core");
     alpm_db_register_sync("extra");
-    alpm_db_register_sync("testing");
     alpm_db_register_sync("community");
-    alpm_db_register_sync("community-testing");
     db_local = alpm_db_register_local();
 }
 
@@ -102,22 +103,24 @@ alpm_list_t *alpm_query_search(alpm_list_t *target) {
 }
 
 
-/* Sort of equivalent to pacman -Si. Quits as soon as a pkg is found */
+/* Semi-equivalent to pacman -Si. Quits as soon as a pkg is found */
 pmdb_t *alpm_sync_search(alpm_list_t *target) {
 
-    alpm_list_t *syncs, *i;
+    pmdb_t *db = NULL;
+    alpm_list_t *syncs, *i, *j;
 
     syncs = alpm_option_get_syncdbs();
 
+    /* Iterating over each sync */
     for (i = syncs; i; i = alpm_list_next(i)) {
-        pmdb_t *db = alpm_list_getdata(i);
-        alpm_list_t *ret = alpm_db_search(db, target);
+        db = alpm_list_getdata(i);
 
-        if (! ret) {
-            continue;
-        } else {
-            alpm_list_free(ret);
-            return db; /* Great success! */
+        /* Iterating over each package in sync */
+        for (j = alpm_db_get_pkgcache(db); j; j = alpm_list_next(j)) {
+            pmpkg_t *pkg = alpm_list_getdata(j);
+            if (strcmp(alpm_pkg_get_name(pkg), alpm_list_getdata(target)) == 0) {
+                return db;
+            }
         }
     }
 
