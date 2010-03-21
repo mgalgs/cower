@@ -114,16 +114,6 @@ int main(int argc, char **argv) {
     ret = parseargs(argc, argv);
     curl = curl_easy_init();
 
-    /* DEBUG: Show masks and package args
-    alpm_list_t *i;
-    printf("oper_mask = %d\n", oper_mask);
-    printf("opt_mask = %d\n", opt_mask);
-    for (i = targets; i; i = alpm_list_next(i)) {
-        char *pkg_arg;
-        pkg_arg = alpm_list_getdata(i);
-        printf("package argument: %s\n", pkg_arg);
-    } END DEBUG */
-
     /* Order matters somewhat. Update must come before download
      * to ensure that we catch the possibility of a download flag
      * being passed along with it.
