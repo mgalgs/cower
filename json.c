@@ -25,6 +25,8 @@
 #include "json.h"
 #include "aur.h"
 
+extern CURL *curl;
+
 static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
     struct write_result *result = (struct write_result *)stream;
 
@@ -40,12 +42,10 @@ static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream)
 }
 
 char *curl_get_json(const char *url) {
-    CURL *curl;
     CURLcode status;
     char *data;
     long code;
 
-    curl = curl_easy_init();
     data = malloc(JSON_BUFFER_SIZE);
     if(!curl || !data) return NULL;
 
@@ -63,7 +63,6 @@ char *curl_get_json(const char *url) {
         fprintf(stderr, "curl error: unable to request data from %s\n", url);
         fprintf(stderr, "%s\n", curl_easy_strerror(status));
         free(data);
-        curl_easy_cleanup(curl);
         return NULL;
     }
 
@@ -71,11 +70,8 @@ char *curl_get_json(const char *url) {
     if(code != 200) {
         fprintf(stderr, "curl error: server responded with code %ld\n", code);
         free(data);
-        curl_easy_cleanup(curl);
         return NULL;
     }
-
-    curl_easy_cleanup(curl);
 
     /* zero-terminate the result */
     data[write_result.pos] = '\0';

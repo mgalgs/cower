@@ -29,6 +29,7 @@
 #include "util.h"
 
 static alpm_list_t *targets; /* Package argument list */
+CURL *curl; /* curl agent for interaction with AUR */
 int oper_mask = 0, opt_mask = 0; /* Runtime Config */
 
 static int parseargs(int argc, char **argv) {
@@ -111,6 +112,7 @@ int main(int argc, char **argv) {
 
     int ret;
     ret = parseargs(argc, argv);
+    curl = curl_easy_init();
 
     /* DEBUG: Show masks and package args
     alpm_list_t *i;
@@ -183,6 +185,7 @@ int main(int argc, char **argv) {
     }
 
     /* Compulsory cleanup */
+    curl_easy_cleanup(curl);
     curl_global_cleanup();
     alpm_list_free(targets);
     alpm_release();
