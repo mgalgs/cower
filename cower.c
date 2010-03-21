@@ -140,10 +140,12 @@ int main(int argc, char **argv) {
         alpm_quick_init();
         alpm_list_t *i;
         for (i = targets; i; i = alpm_list_next(i)) {
+           /*
            alpm_list_t *p = NULL;
-           int result;
            p = alpm_list_add(p, alpm_list_getdata(i));
-           result = is_in_pacman(p);
+           */
+           int result;
+           result = is_in_pacman((const char*)alpm_list_getdata(i));
            if (! result) { /* 1 is return on successful find */
                json_t *infojson = aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO,
                    alpm_list_getdata(i));
@@ -157,7 +159,6 @@ int main(int argc, char **argv) {
                        (const char*)alpm_list_getdata(i));
                }
            }
-           alpm_list_free(p);
         }
     } else if (oper_mask & OPER_INFO) { /* 2 */
         alpm_list_t *i;

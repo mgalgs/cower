@@ -113,21 +113,26 @@ pmdb_t *alpm_sync_search(alpm_list_t *target) {
     return NULL; /* Failure */
 }
 
-int is_in_pacman(alpm_list_t *target) {
+int is_in_pacman(const char *target) {
 
     pmdb_t *found_in;
-    found_in = alpm_sync_search(target);
+    alpm_list_t *p = NULL;
+
+    p = alpm_list_add(p, (void*)target);
+    found_in = alpm_sync_search(p);
 
     if (found_in) {
-        opt_mask & OPT_COLOR ? cfprint(1, alpm_list_getdata(target), WHITE) :
-            printf("%s", (const char*)alpm_list_getdata(target));
+        opt_mask & OPT_COLOR ? cfprint(1, target, WHITE) :
+            printf("%s", target);
         printf(" is available in "); 
         opt_mask & OPT_COLOR ? cfprint(1, alpm_db_get_name(found_in), YELLOW) :
             printf("%s", alpm_db_get_name(found_in));
         putchar('\n');
 
+        alpm_list_free(p);
         return 1;
     }
 
+    alpm_list_free(p);
     return 0;
 }
