@@ -131,15 +131,10 @@ int main(int argc, char **argv) {
     if (oper_mask & OPER_UPDATE) { /* 8 */
         alpm_quick_init();
         alpm_list_t *foreign = alpm_query_search(NULL);
-        /* Do something with the list */
-        alpm_list_t *i;
-        for (i = foreign; i; i = alpm_list_next(i)) {
-            pmpkg_t *pmpkg = alpm_list_getdata(i);
-            printf("Foreign pkg: %s\n", alpm_pkg_get_name(pmpkg));
-            /* TODO: Finish me */
+
+        if (foreign) {
+            aur_find_updates(foreign);
         }
-        if (oper_mask & OPER_DOWNLOAD)
-            printf("I'll even download your updates too. I promise!\n");
         alpm_list_free(foreign);
     } else if (oper_mask & OPER_DOWNLOAD) { /* 4 */
         /* Check alpm for the existance of this package. If it's not in the 
@@ -154,6 +149,11 @@ int main(int argc, char **argv) {
             if (infojson) {
                 aur_get_tarball(infojson, NULL);
                 json_decref(infojson);
+            } else {
+                opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
+                    fprintf(stderr, "error:");
+                fprintf(stderr, " no results for \"%s\"\n", 
+                    (const char*)alpm_list_getdata(i));
             }
          }
     } else if (oper_mask & OPER_INFO) { /* 2 */
@@ -164,8 +164,14 @@ int main(int argc, char **argv) {
 
             if (search) {
                 print_pkg_info(search);
-                json_decref(search);
+            } else {
+                opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
+                    fprintf(stderr, "error:");
+                fprintf(stderr, " no results for \"%s\"\n", 
+                    (const char*)alpm_list_getdata(i));
             }
+            json_decref(search);
+
         }
     } else if (oper_mask & OPER_SEARCH) { /* 1 */
         /* TODO: Aggregate all searches, sort, and print at once */
@@ -176,6 +182,11 @@ int main(int argc, char **argv) {
 
             if (search) {
                 print_pkg_search(search);
+            } else {
+                opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
+                    fprintf(stderr, "error:");
+                fprintf(stderr, " no results for \"%s\"\n", 
+                    (const char*)alpm_list_getdata(i));
             }
             json_decref(search);
         }
