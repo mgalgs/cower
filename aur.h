@@ -37,5 +37,4 @@ int aur_get_tarball(json_t*, char*);
 /* RPC Query */
 json_t *aur_rpc_query(int, const char*);
 
-
 #endif /* _AUR_H */

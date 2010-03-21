@@ -15,14 +15,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* Standard */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
+/* Non-standard */
 #include <alpm.h>
 #include <jansson.h>
 
+/* Local */
 #include "aur.h"
 #include "util.h"
 

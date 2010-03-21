@@ -15,7 +15,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 /* Color constants. */
 enum {
     BLACK   = 0,    BOLDBLACK = 9,

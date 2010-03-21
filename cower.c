@@ -15,15 +15,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* Standard */
 #include <alpm.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+/* Non-standard */
 #include <curl/curl.h>
 #include <jansson.h>
 
+/* Local */
 #include "alpmhelper.h"
 #include "aur.h"
 #include "util.h"

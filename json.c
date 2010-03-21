@@ -1,5 +1,5 @@
 /*
- *  curlhelper.c
+ *  json.c
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,16 +15,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+/* Standard */
 #include <curl/curl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
+/* Non-standard */
 #include <alpm.h>
 #include <jansson.h>
 
-#include "json.h"
+/* Local */
 #include "aur.h"
+#include "json.h"
 
 extern CURL *curl;
 
