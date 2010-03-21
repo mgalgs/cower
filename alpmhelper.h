@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-void alpm_quick_init();
+void alpm_quick_init(void);
 int alpm_sync_search(alpm_list_t*);
-alpm_list_t *alpm_query_search(alpm_list_t*);
+alpm_list_t *alpm_query_foreign(void);
 

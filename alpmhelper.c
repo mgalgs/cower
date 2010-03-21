@@ -67,21 +67,12 @@ static int is_foreign(pmpkg_t *pkg) {
 }
 
 /* Equivalent of pacman -Qs or -Qm */
-alpm_list_t *alpm_query_search(alpm_list_t *targets) {
+alpm_list_t *alpm_query_foreign() {
 
     alpm_list_t *i, *searchlist;
-    int freelist;
-
     alpm_list_t *ret = NULL;
 
-    /* if we have a targets list, search for packages matching it */
-    if(targets) {
-        searchlist = alpm_db_search(db_local, targets);
-        freelist = 1;
-    } else { /* Otherwise, we want a list of foreign packages */
-        searchlist = alpm_db_get_pkgcache(db_local);
-        freelist = 0;
-    }
+    searchlist = alpm_db_get_pkgcache(db_local);
 
     if(searchlist == NULL) {
         return NULL;
@@ -93,14 +84,9 @@ alpm_list_t *alpm_query_search(alpm_list_t *targets) {
         /* only weed out foreign pkgs if we called this
          * function with a NULL parameter
          */
-        if (!targets && is_foreign(pkg)) { 
+        if (is_foreign(pkg)) { 
             ret = alpm_list_add(ret, pkg);
         }
-    }
-
-    /* we only want to free if the list was a search list */
-    if(freelist) {
-        alpm_list_free(searchlist);
     }
 
     return ret; /* This needs to be freed in the calling function */
@@ -135,3 +121,4 @@ int alpm_sync_search(alpm_list_t *targets) {
 
     return 1; /* Failure */
 }
+
