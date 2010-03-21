@@ -28,10 +28,14 @@
 #define AUR_RPC_QUERY_TYPE_INFO   1
 #define AUR_RPC_QUERY_TYPE_SEARCH 2
 
-/* RPC Query */
-json_t *aur_rpc_query(int, const char*);
+/* Updates */
+void aur_find_updates(alpm_list_t*);
 
 /* Download */
 int aur_get_tarball(json_t*, char*);
+
+/* RPC Query */
+json_t *aur_rpc_query(int, const char*);
+
 
 #endif /* _AUR_H */

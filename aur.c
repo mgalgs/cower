@@ -33,46 +33,6 @@
 
 extern int opt_mask;
 
-json_t *aur_rpc_query(int type, const char* arg) {
-    char *text;
-    char url[AUR_RPC_URL_SIZE];
-
-    json_t *root;
-    json_error_t error;
-    json_t *return_type;
-
-    /* Format URL to pass to curl */
-    snprintf(url, AUR_RPC_URL_SIZE, AUR_RPC_URL,
-        type == AUR_RPC_QUERY_TYPE_INFO ? "info" : "search",
-        arg);
-
-    text = curl_get_json(url);
-    if(!text)
-        return NULL;
-
-    /* Fetch JSON */
-    root = json_loads(text, &error);
-    free(text);
-
-    /* Check for error */
-    if(!root) {
-        fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
-        return NULL;
-    }
-
-    /* Check return type in JSON */
-    return_type = json_object_get(root, "type");
-    if (! strcmp(json_string_value(return_type), "error")) {
-        opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
-            fprintf(stderr, "error:"),
-        fprintf(stderr, " no results for \"%s\"\n", arg);
-        json_decref(root);
-        return NULL;
-    }
-
-    return root; /* This needs to be freed in the calling function */
-}
-
 int aur_get_tarball(json_t *root, char *target_dir) {
     CURL *curl;
     FILE *fd;
@@ -150,5 +110,45 @@ int aur_get_tarball(json_t *root, char *target_dir) {
     free(dir);
 
     return result;
+}
+
+json_t *aur_rpc_query(int type, const char* arg) {
+    char *text;
+    char url[AUR_RPC_URL_SIZE];
+
+    json_t *root;
+    json_error_t error;
+    json_t *return_type;
+
+    /* Format URL to pass to curl */
+    snprintf(url, AUR_RPC_URL_SIZE, AUR_RPC_URL,
+        type == AUR_RPC_QUERY_TYPE_INFO ? "info" : "search",
+        arg);
+
+    text = curl_get_json(url);
+    if(!text)
+        return NULL;
+
+    /* Fetch JSON */
+    root = json_loads(text, &error);
+    free(text);
+
+    /* Check for error */
+    if(!root) {
+        fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
+        return NULL;
+    }
+
+    /* Check return type in JSON */
+    return_type = json_object_get(root, "type");
+    if (! strcmp(json_string_value(return_type), "error")) {
+        opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
+            fprintf(stderr, "error:"),
+        fprintf(stderr, " no results for \"%s\"\n", arg);
+        json_decref(root);
+        return NULL;
+    }
+
+    return root; /* This needs to be freed in the calling function */
 }
 
