@@ -49,7 +49,6 @@ int cfprint(int fd, const char* input, int color) {
 }
 
 void print_pkg_info(json_t *pkg) {
-    char aurpage[128];
     json_t *pkginfo;
     const char *id, *name, *ver, *url, *cat, *license, *votes, *ood, *desc;
 
@@ -84,7 +83,6 @@ void print_pkg_info(json_t *pkg) {
     opt_mask & OPT_COLOR ?  cfprint(1, url, CYAN) : printf(url);
     putchar('\n');
 
-    snprintf(aurpage, 128, AUR_PKG_URL_FORMAT, id);
     printf("AUR Page        : ");
         if (opt_mask & OPT_COLOR) {
             cfprint(1, AUR_PKG_URL_FORMAT, CYAN);
