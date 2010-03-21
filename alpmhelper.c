@@ -67,12 +67,19 @@ static int is_foreign(pmpkg_t *pkg) {
 }
 
 /* Equivalent of pacman -Qm */
-alpm_list_t *alpm_query_foreign() {
+alpm_list_t *alpm_query_search(alpm_list_t *target) {
 
     alpm_list_t *i, *searchlist;
     alpm_list_t *ret = NULL;
+    int freelist;
 
-    searchlist = alpm_db_get_pkgcache(db_local);
+    if (target) { /* If we have a target, search for it */
+        searchlist = alpm_db_search(db_local, target);
+        freelist = 1;
+    } else { /* Otherwise return a pointer to the local cache */
+        searchlist = alpm_db_get_pkgcache(db_local);
+        freelist = 0;
+    }
 
     if(searchlist == NULL) {
         return NULL;
@@ -82,13 +89,18 @@ alpm_list_t *alpm_query_foreign() {
         pmpkg_t *pkg = alpm_list_getdata(i);
 
         /* TODO: Reuse alpm_sync_search for this */
-        if (is_foreign(pkg)) {
+        if (!target && is_foreign(pkg)) {
             ret = alpm_list_add(ret, pkg);
         }
     }
 
+    if (freelist) {
+        alpm_list_free(searchlist);
+    }
+
     return ret; /* This needs to be freed in the calling function */
 }
+
 
 /* Sort of equivalent to pacman -Si. Quits as soon as a pkg is found */
 pmdb_t *alpm_sync_search(alpm_list_t *target) {

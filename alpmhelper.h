@@ -16,7 +16,7 @@
  */
 
 void alpm_quick_init(void);
-alpm_list_t *alpm_query_foreign(void);
+alpm_list_t *alpm_query_search(alpm_list_t*);
 pmdb_t *alpm_sync_search(alpm_list_t*);
 int is_in_pacman(const char*);
 
