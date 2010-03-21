@@ -29,7 +29,7 @@ static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream)
     struct write_result *result = (struct write_result *)stream;
 
     if(result->pos + size * nmemb >= JSON_BUFFER_SIZE - 1) {
-        fprintf(stderr, "error: too small buffer\n");
+        fprintf(stderr, "curl error: too small buffer\n");
         return 0;
     }
 
@@ -60,14 +60,18 @@ char *curl_get_json(const char *url) {
 
     status = curl_easy_perform(curl);
     if(status != 0) {
-        fprintf(stderr, "error: unable to request data from %s:\n", url);
+        fprintf(stderr, "curl error: unable to request data from %s\n", url);
         fprintf(stderr, "%s\n", curl_easy_strerror(status));
+        curl_easy_cleanup(curl);
+        curl_global_cleanup();
         return NULL;
     }
 
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
     if(code != 200) {
-        fprintf(stderr, "error: server responded with code %ld\n", code);
+        fprintf(stderr, "curl error: server responded with code %ld\n", code);
+        curl_easy_cleanup(curl);
+        curl_global_cleanup();
         return NULL;
     }
 
@@ -80,19 +84,3 @@ char *curl_get_json(const char *url) {
     return data;
 }
 
-/*
-int main(int argc, char *argv[]) {
-    char *result = curl_get_json(atoi(argv[1]), argv[2]);
-    json_t *root;
-    json_error_t error;
-
-    if (! result) printf("result is NULL!\n");
-
-    root = json_loads(result, &error);
-
-    free(result);
-    json_decref(root);
-
-    return 0;
-}
-*/
