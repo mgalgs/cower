@@ -162,10 +162,16 @@ int main(int argc, char **argv) {
         for (i = targets; i; i = alpm_list_next(i)) {
             json_t *search = 
                 aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO, alpm_list_getdata(i));
+
             /* Do something with the json. Probably pass it to another
              * function for processing and/or printing.
              */
+            if (search) {
+                json_t *pkginfo = json_object_get(search, "results");
+                printf("%s\n", json_string_value(json_object_get(pkginfo, "Name")));
+
             json_decref(search);
+            }
         }
     } else if (oper_mask & OPER_SEARCH) { /* 1 */
         alpm_list_t *i;
