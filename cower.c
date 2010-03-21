@@ -113,7 +113,9 @@ int main(int argc, char **argv) {
 
     alpm_list_t *i;
 
+    /* DEBUG: Show masks and package args */
     printf("oper_mask = %d\n", oper_mask);
+    printf("opt_mask = %d\n", opt_mask);
     for (i = targets; i; i = alpm_list_next(i)) {
         char *pkg_arg;
         pkg_arg = alpm_list_getdata(i);
