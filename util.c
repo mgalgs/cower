@@ -50,16 +50,16 @@ void print_pkg_info(json_t *pkg) {
 
     pkginfo = json_object_get(pkg, "results");
 
-    /* Declare pointers to our data to make our life easier */
-    id = json_string_value(json_object_get(pkginfo, "ID"));
-    name = json_string_value(json_object_get(pkginfo, "Name"));
-    ver = json_string_value(json_object_get(pkginfo, "Version"));
-    url = json_string_value(json_object_get(pkginfo, "URL"));
-    cat = json_string_value(json_object_get(pkginfo, "CategoryID"));
+    /* Declare pointers to json data to make my life easier */
+    id      = json_string_value(json_object_get(pkginfo, "ID"));
+    name    = json_string_value(json_object_get(pkginfo, "Name"));
+    ver     = json_string_value(json_object_get(pkginfo, "Version"));
+    url     = json_string_value(json_object_get(pkginfo, "URL"));
+    cat     = json_string_value(json_object_get(pkginfo, "CategoryID"));
     license = json_string_value(json_object_get(pkginfo, "License"));
-    votes = json_string_value(json_object_get(pkginfo, "NumVotes"));
-    ood = json_string_value(json_object_get(pkginfo, "OutOfDate"));
-    desc = json_string_value(json_object_get(pkginfo, "Description"));
+    votes   = json_string_value(json_object_get(pkginfo, "NumVotes"));
+    ood     = json_string_value(json_object_get(pkginfo, "OutOfDate"));
+    desc    = json_string_value(json_object_get(pkginfo, "Description"));
 
     /* Print it all pretty like */
     printf("Repository      : %s\n", opt_mask & OPT_COLOR ?
@@ -70,8 +70,7 @@ void print_pkg_info(json_t *pkg) {
 
     printf("Version         : %s\n", opt_mask & OPT_COLOR ?
         strcmp(ood, "0") ?
-            colorize(ver, RED, buffer) :
-                colorize(ver, GREEN, buffer) :
+            colorize(ver, RED, buffer) : colorize(ver, GREEN, buffer) :
             ver);
 
     printf("URL             : %s\n", opt_mask & OPT_COLOR ?
@@ -82,8 +81,11 @@ void print_pkg_info(json_t *pkg) {
         colorize(aurpage, CYAN, buffer) : aurpage);
 
     printf("Category        : %s\n", pkg_category[atoi(cat)]);
+
     printf("License         : %s\n", license);
+
     printf("Number of Votes : %s\n", votes);
+
     printf("Out Of Date     : %s\n", opt_mask & OPT_COLOR ?
         strcmp(ood, "0") ?
             colorize("Yes", RED, buffer) : colorize("No", GREEN, buffer) :
