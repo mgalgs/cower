@@ -32,6 +32,7 @@
 extern CURL *curl;
 
 static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
+
     struct write_result *result = (struct write_result *)stream;
 
     if(result->pos + size * nmemb >= JSON_BUFFER_SIZE - 1) {
@@ -46,6 +47,7 @@ static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream)
 }
 
 char *curl_get_json(const char *url) {
+
     CURLcode status;
     char *data;
     long code;

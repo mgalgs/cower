@@ -37,9 +37,9 @@ static char *pkg_category[] = { NULL, "None", "daemons", "devel",
                               "multimedia", "network", "office", "science",
                               "system", "x11", "xfce", "kernels" };
 
-
-/* TODO: Figure out va macros */
+/* TODO: Implement va macro */
 int cfprint(int fd, const char* input, int color) {
+
     if (fd == 1 || !fd) {
         return printf("\033[1;3%dm%s\033[1;m", color, input);
     } else if (fd == 2) {
@@ -49,6 +49,7 @@ int cfprint(int fd, const char* input, int color) {
 }
 
 void print_pkg_info(json_t *pkg) {
+
     json_t *pkginfo;
     const char *id, *name, *ver, *url, *cat, *license, *votes, *ood, *desc;
 
@@ -84,13 +85,13 @@ void print_pkg_info(json_t *pkg) {
     putchar('\n');
 
     printf("AUR Page        : ");
-        if (opt_mask & OPT_COLOR) {
-            cfprint(1, AUR_PKG_URL_FORMAT, CYAN);
-            cfprint(1, id, CYAN);
-        } else {
-            printf("%s", AUR_PKG_URL_FORMAT);
-            printf("%s", id);
-        }
+    if (opt_mask & OPT_COLOR) {
+        cfprint(1, AUR_PKG_URL_FORMAT, CYAN);
+        cfprint(1, id, CYAN);
+    } else {
+        printf("%s", AUR_PKG_URL_FORMAT);
+        printf("%s", id);
+    }
     putchar('\n');
 
     printf("Category        : %s\n", pkg_category[atoi(cat)]);
@@ -111,6 +112,7 @@ void print_pkg_info(json_t *pkg) {
 }
 
 void print_pkg_search(json_t *search) {
+
     json_t *pkg_array, *pkg;
     unsigned int i;
     const char *name, *ver, *desc, *ood;
@@ -143,7 +145,9 @@ void print_pkg_search(json_t *search) {
 }
 
 int file_exists(const char* fd) {
+
     struct stat st;
+
     if (! stat(fd, &st)) {
         return 1;
     } else {

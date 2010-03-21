@@ -70,8 +70,7 @@ static int is_foreign(pmpkg_t *pkg) {
 /* Equivalent of pacman -Qs or -Qm */
 alpm_list_t *alpm_query_search(alpm_list_t *target) {
 
-    alpm_list_t *i, *searchlist;
-    alpm_list_t *ret = NULL;
+    alpm_list_t *i, *searchlist, *ret = NULL;
     int freelist;
 
     if (target) { /* If we have a target, search for it */

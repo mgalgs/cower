@@ -36,7 +36,10 @@ extern int opt_mask;
 extern int oper_mask;
 
 void aur_find_updates(alpm_list_t *foreign) {
+
     alpm_list_t *i;
+
+    /* Iterate over foreign packages */
     for (i = foreign; i; i = alpm_list_next(i)) {
         pmpkg_t *pmpkg = alpm_list_getdata(i);
 
@@ -52,8 +55,9 @@ void aur_find_updates(alpm_list_t *foreign) {
             aur_ver = json_string_value(json_object_get(pkg, "Version"));
             local_ver = alpm_pkg_get_version(pmpkg);
 
+            /* Version check */
             if (alpm_pkg_vercmp(aur_ver, local_ver) > 0) {
-                if (oper_mask & OPER_DOWNLOAD) {
+                if (oper_mask & OPER_DOWNLOAD) { /* -d found with -u */
                         aur_get_tarball(infojson, NULL);
                 } else {
                     if (opt_mask & OPT_COLOR) {
@@ -81,10 +85,11 @@ void aur_find_updates(alpm_list_t *foreign) {
 }
 
 int aur_get_tarball(json_t *root, char *target_dir) {
+
     CURL *curl;
     FILE *fd;
-    char *dir, *filename, *fullpath, url[128];
-    const char *pkgname;
+    const char *dir, *filename, *pkgname;
+    char *fullpath, url[128];
     int result = 0;
     json_t *pkginfo;
 
@@ -154,18 +159,17 @@ int aur_get_tarball(json_t *root, char *target_dir) {
     }
 
     free(fullpath);
-    free(dir);
+    free((void*)dir);
 
     return result;
 }
 
 json_t *aur_rpc_query(int type, const char* arg) {
+
     char *text;
     char url[AUR_RPC_URL_SIZE];
-
-    json_t *root;
+    json_t *root, *return_type;
     json_error_t error;
-    json_t *return_type;
 
     /* Format URL to pass to curl */
     snprintf(url, AUR_RPC_URL_SIZE, AUR_RPC_URL,

@@ -31,9 +31,10 @@
 #include "aur.h"
 #include "util.h"
 
-static alpm_list_t *targets; /* Package argument list */
 CURL *curl; /* curl agent for interaction with AUR */
 int oper_mask = 0, opt_mask = 0; /* Runtime Config */
+
+static alpm_list_t *targets; /* Package argument list */
 
 static int parseargs(int argc, char **argv) {
     int opt;
@@ -98,7 +99,8 @@ static int parseargs(int argc, char **argv) {
 }
 
 static void usage() {
-    printf("Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
+printf("cower v0.9.0\n\
+Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
 \n\
  Operations:\n\
   -d, --download          download PACKAGE(s)\n\
@@ -133,7 +135,7 @@ int main(int argc, char **argv) {
         }
         alpm_list_free(foreign);
     } else if (oper_mask & OPER_DOWNLOAD) { /* 4 */
-        /* Check alpm for the existance of this package. If it's not in the 
+        /* Query alpm for the existance of this package. If it's not in the 
          * sync, do an info query on the package in the AUR. Does it exist?
          * If yes, pass it to aur_get_tarball.
          */
@@ -175,7 +177,7 @@ int main(int argc, char **argv) {
 
         }
     } else if (oper_mask & OPER_SEARCH) { /* 1 */
-        /* TODO: Aggregate all searches, sort, and print at once */
+        /* TODO: Combine all searches, sort, remove dupes, and print once */
         curl = curl_easy_init();
         alpm_list_t *i;
         for (i = targets; i; i = alpm_list_next(i)) {
