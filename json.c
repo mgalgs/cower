@@ -22,22 +22,13 @@
 
 #include <jansson.h>
 
-#include "curlhelper.h"
+#include "json.h"
 #include "aur.h"
 
-int newline_offset(const char *text) {
-    const char *newline = strchr(text, '\n');
-    if(!newline) {
-        return strlen(text);
-    } else {
-        return (int)(newline - text);
-    }
-}
-
-size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
+static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
     struct write_result *result = (struct write_result *)stream;
 
-    if(result->pos + size * nmemb >= BUFFER_SIZE - 1) {
+    if(result->pos + size * nmemb >= JSON_BUFFER_SIZE - 1) {
         fprintf(stderr, "error: too small buffer\n");
         return 0;
     }
@@ -48,20 +39,25 @@ size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
     return size * nmemb;
 }
 
-char *request(const char *url) {
+char *curl_get_json(int type, const char *arg) {
     CURL *curl;
     CURLcode status;
     char *data;
+    char url[AUR_RPC_URL_SIZE];
     long code;
 
     curl = curl_easy_init();
-    data = malloc(BUFFER_SIZE);
+    data = malloc(JSON_BUFFER_SIZE);
     if(!curl || !data) return NULL;
 
     struct write_result write_result = {
         .data = data,
         .pos = 0
     };
+
+    snprintf(url, AUR_RPC_URL_SIZE, AUR_RPC_URL,
+        type == AUR_RPC_QUERY_TYPE_INFO ? "info" : "search", 
+        arg);
 
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_response);
@@ -89,3 +85,19 @@ char *request(const char *url) {
     return data;
 }
 
+/*
+int main(int argc, char *argv[]) {
+    char *result = curl_get_json(atoi(argv[1]), argv[2]);
+    json_t *root;
+    json_error_t error;
+
+    if (! result) printf("result is NULL!\n");
+
+    root = json_loads(result, &error);
+
+    free(result);
+    json_decref(root);
+
+    return 0;
+}
+*/
