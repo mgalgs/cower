@@ -101,6 +101,9 @@ void usage() {
   -d, --download          download PACKAGE(s)\n\
   -i, --info              show info for PACKAGE(s)\n\
   -s, --search            search for PACKAGE(s)\n\
+  -u, --update            check for updates against AUR. If the \n\
+                            download flag is passed as well, fetch\n\
+                            each available update.\n\
 \n\
  General options:\n\
   -c, --color             use colored output\n\
