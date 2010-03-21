@@ -137,21 +137,27 @@ int main(int argc, char **argv) {
          * sync, do an info query on the package in the AUR. Does it exist?
          * If yes, pass it to get_taurball.
          */
-         alpm_list_t *i;
-         for (i = targets; i; i = alpm_list_next(i)) {
-            /* TODO: Call to pacman */
-            json_t *infojson = aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO,
-                alpm_list_getdata(i));
-            if (infojson) {
-                aur_get_tarball(infojson, NULL);
-                json_decref(infojson);
-            } else {
-                opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
-                    fprintf(stderr, "error:");
-                fprintf(stderr, " no results for \"%s\"\n", 
-                    (const char*)alpm_list_getdata(i));
-            }
-         }
+        alpm_quick_init();
+        alpm_list_t *i;
+        for (i = targets; i; i = alpm_list_next(i)) {
+           alpm_list_t *zoom = NULL; int result;
+           zoom = alpm_list_add(zoom, alpm_list_getdata(i));
+           result = alpm_sync_search(zoom);
+           if (result) { /* 0 is return on successful find */
+               json_t *infojson = aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO,
+                   alpm_list_getdata(i));
+               if (infojson) {
+                   aur_get_tarball(infojson, NULL);
+                   json_decref(infojson);
+               } else {
+                   opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
+                       fprintf(stderr, "error:");
+                   fprintf(stderr, " no results for \"%s\"\n", 
+                       (const char*)alpm_list_getdata(i));
+               }
+           }
+           alpm_list_free(zoom);
+        }
     } else if (oper_mask & OPER_INFO) { /* 2 */
         alpm_list_t *i;
         for (i = targets; i; i = alpm_list_next(i)) {

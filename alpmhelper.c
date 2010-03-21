@@ -28,6 +28,7 @@
 #include "alpmhelper.h"
 #include "util.h"
 
+extern int opt_mask;
 static pmdb_t *db_local;
 
 void alpm_quick_init() {
@@ -105,7 +106,7 @@ alpm_list_t *alpm_query_search(alpm_list_t *targets) {
     return ret; /* This needs to be freed in the calling function */
 }
 
-int sync_search(alpm_list_t *targets) {
+int alpm_sync_search(alpm_list_t *targets) {
 
     alpm_list_t *syncs, *i;
 
@@ -119,6 +120,15 @@ int sync_search(alpm_list_t *targets) {
             continue;
         } else {
             alpm_list_free(ret);
+            /* Printing in here gives the benefit of easily knowing the repo
+             * that the package is in
+             */
+            opt_mask & OPT_COLOR ? cfprint(1, alpm_list_getdata(targets), WHITE) :
+                printf("%s", alpm_list_getdata(targets));
+            printf(" is available in "); 
+            opt_mask & OPT_COLOR ? cfprint(1, alpm_db_get_name(db), YELLOW) :
+                printf("%s", alpm_db_get_name(db));
+            putchar('\n');
             return 0; /* Great success! */
         }
     }
