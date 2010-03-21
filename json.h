@@ -23,7 +23,6 @@ struct write_result {
     int pos;
 };
 
-//static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream);
 char *curl_get_json(int, const char*);
 
 #endif /* _CURLHELPER_H */
