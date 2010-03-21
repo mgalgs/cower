@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <curl/curl.h>
 
+#include <alpm.h>
 #include <jansson.h>
 
 #include "json.h"
