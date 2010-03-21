@@ -172,9 +172,19 @@ int main(int argc, char **argv) {
         for (i = targets; i; i = alpm_list_next(i)) {
             json_t *search = 
                 aur_rpc_query(AUR_RPC_QUERY_TYPE_SEARCH, alpm_list_getdata(i));
-            /* Do something with the json. Probably pass it to another
-             * function for processing and/or printing.
+            /* Do something with the json. Ideally, we'll aggregate all searches
+             * together and then print all at once.
              */
+            /* "Do something" for now = Print it */
+            if (search) {
+                json_t *pkg_array = json_object_get(search, "results");
+                int i;
+                for (i = 0; i < json_array_size(pkg_array); i++) {
+                    json_t *pkg = json_array_get(pkg_array, i);
+                    printf("%s\n", 
+                        json_string_value(json_object_get(pkg, "Name")));
+                }
+            }
             json_decref(search);
         }
     } else {
