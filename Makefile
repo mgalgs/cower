@@ -21,10 +21,6 @@ aur.o: aur.c aur.h
 alpmhelper.o: alpmhelper.c alpmhelper.h
 	$(CC) $(CFLAGS) $< -c $(DEBUG)
 
-#package.o: package.c package.h
-#	$(CC) $(CFLAGS) $< -c $(DEBUG)
-#
-
 clean:
 	@rm *.o
 

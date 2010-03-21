@@ -25,7 +25,6 @@
 
 #include "alpmhelper.h"
 #include "aur.h"
-#include "package.h"
 #include "util.h"
 
 static alpm_list_t *targets; /* Package argument list */
