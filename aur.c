@@ -58,14 +58,20 @@ void aur_find_updates(alpm_list_t *foreign) {
                 } else {
                     if (opt_mask & OPT_COLOR) {
                         cfprint(1, alpm_pkg_get_name(pmpkg), WHITE);
-                        putchar(' ');
-                        cfprint(1, local_ver, GREEN);
-                        printf(" -> ");
-                        cfprint(1, aur_ver, GREEN);
+                        if (! (opt_mask & OPT_QUIET)) {
+                            putchar(' ');
+                            cfprint(1, local_ver, GREEN);
+                            printf(" -> ");
+                            cfprint(1, aur_ver, GREEN);
+                        }
                         putchar('\n');
                     } else {
-                        printf("%s %s -> %s\n", alpm_pkg_get_name(pmpkg),
-                            local_ver, aur_ver);
+                        if (! (opt_mask & OPT_QUIET)) {
+                            printf("%s %s -> %s\n", alpm_pkg_get_name(pmpkg),
+                                local_ver, aur_ver);
+                        } else {
+                            printf("%s\n", alpm_pkg_get_name(pmpkg));
+                        }
                     }
                 }
             }
