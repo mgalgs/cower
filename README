@@ -1,26 +1,25 @@
-Ideally, this will act a lot like Slurpy.
+Ideally, this will act a lot like Slurpy, but powered by the awesomeness of C.
 
 Dependencies:
 	> jansson
 	> curl
 	> bsdtar
+	> alpm (pacman)
 
 What works:
 	> Search package(s)
 	> Info for package(s)
 	> Download and extract package(s)
+	> Check for updates (with download)
 
 TODO pile:
 	> Specify alternate download directory
 	> Check for existance of package in repos
 	> Download dependencies
-	> Update function (with download)
-	> Colorize error messages
 	> verbosity levels
 	> sort search results
-	> Find leaks
 
 Maybe pile:
-	> Static link jansson
+	> Static link jansson (probably not)
 	> upload taurballs
 
