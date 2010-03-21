@@ -23,6 +23,7 @@
 #include <unistd.h>
 
 /* Non-standard */
+#include <alpm.h>
 #include <curl/curl.h>
 #include <jansson.h>
 
@@ -32,6 +33,46 @@
 #include "util.h"
 
 extern int opt_mask;
+extern int oper_mask;
+
+void aur_find_updates(alpm_list_t *foreign) {
+    alpm_list_t *i;
+    for (i = foreign; i; i = alpm_list_next(i)) {
+        pmpkg_t *pmpkg = alpm_list_getdata(i);
+
+        /* Do I exist in the AUR? */
+        json_t *infojson = aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO,
+            alpm_pkg_get_name(pmpkg));
+
+        if (infojson != NULL) { /* Yes, I do exist! */
+            json_t *pkg;
+            const char *aur_ver, *local_ver;
+
+            pkg = json_object_get(infojson, "results");
+            aur_ver = json_string_value(json_object_get(pkg, "Version"));
+            local_ver = alpm_pkg_get_version(pmpkg);
+
+            if (alpm_pkg_vercmp(aur_ver, local_ver) > 0) {
+                if (oper_mask & OPER_DOWNLOAD) {
+                        aur_get_tarball(infojson, NULL);
+                } else {
+                    if (opt_mask & OPT_COLOR) {
+                        cfprint(1, alpm_pkg_get_name(pmpkg), WHITE);
+                        putchar(' ');
+                        cfprint(1, local_ver, GREEN);
+                        printf(" -> ");
+                        cfprint(1, aur_ver, GREEN);
+                        putchar('\n');
+                    } else {
+                        printf("%s %s -> %s\n", alpm_pkg_get_name(pmpkg),
+                            local_ver, aur_ver);
+                    }
+                }
+            }
+            json_decref(infojson);
+        }
+    }
+}
 
 int aur_get_tarball(json_t *root, char *target_dir) {
     CURL *curl;
@@ -61,7 +102,7 @@ int aur_get_tarball(json_t *root, char *target_dir) {
     filename = strrchr(url, '/');
 
     /* ...and the full path to the taurball! */
-    fullpath = calloc(strlen(dir) + strlen(filename), sizeof(char));
+    fullpath = calloc(strlen(dir) + strlen(filename), sizeof(char) + 1);
     fullpath = strncat(fullpath, dir, strlen(dir));
     fullpath = strncat(fullpath, filename, strlen(filename));
 
@@ -142,9 +183,11 @@ json_t *aur_rpc_query(int type, const char* arg) {
     /* Check return type in JSON */
     return_type = json_object_get(root, "type");
     if (! strcmp(json_string_value(return_type), "error")) {
+        /*
         opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
             fprintf(stderr, "error:"),
         fprintf(stderr, " no results for \"%s\"\n", arg);
+        */
         json_decref(root);
         return NULL;
     }
