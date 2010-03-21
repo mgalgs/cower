@@ -29,24 +29,26 @@
 /* Local */
 #include "util.h"
 #include "aur.h"
-#include "curlhelper.h"
+#include "json.h"
 #include "package.h"
 
 extern int opt_mask;
 
-struct json_t *aur_pkg_search(char* req) {
+json_t *aur_rpc_query(int type, char* arg) {
     char *text;
-    char url[URL_SIZE];
+    char url[AUR_RPC_URL_SIZE];
     char buffer[32];
 
     json_t *root;
     json_error_t error;
-    json_t *search_res;
+    json_t *result, *return_type;
 
     /* Format URL to pass to curl */
-    snprintf(url, URL_SIZE, URL_FORMAT, "search", req);
+    snprintf(url, AUR_RPC_URL_SIZE, AUR_RPC_URL,
+        type == AUR_RPC_QUERY_TYPE_INFO ? "info" : "search",
+        arg);
 
-    text = request(url);
+    text = curl_get_json(url);
     if(!text)
         return NULL;
 
@@ -60,90 +62,20 @@ struct json_t *aur_pkg_search(char* req) {
         return NULL;
     }
 
-    /* Grab results object in JSON */
-    search_res = json_object_get(root, "results");
-
-    /* Valid results? */
-    if(!json_is_array(search_res)) {
+    /* Check return type in JSON */
+    return_type = json_object_get(root, "type");
+    if (! strcmp(json_string_value(return_type), "error")) {
         fprintf(stderr, "%s no results for \"%s\"\n", 
             opt_mask & OPT_COLOR ? colorize("error:", RED, buffer) : "error:",
-            req);
+            arg);
+        json_decref(root);
         return NULL;
     }
 
-    print_search_results(search_res);
-    json_decref(root);
-
-    return NULL;
+    return root; /* This needs to be freed in the calling function */
 }
 
-void print_search_results(json_t* search_res) {
-    unsigned int i;
-
-    json_t *pkg;
-    const char *name, *version, *desc;
-    int ood;
-    char buffer[256];
-
-    for(i = 0; i < json_array_size(search_res); i++) {
-        pkg = json_array_get(search_res, i);
-
-        name = json_string_value(json_object_get(pkg, "Name"));
-        version = json_string_value(json_object_get(pkg, "Version"));
-        desc = json_string_value(json_object_get(pkg, "Description"));
-        ood = atoi(json_string_value(json_object_get(pkg, "OutOfDate")));
-
-        printf("%s", opt_mask & OPT_COLOR ? colorize("aur/", MAGENTA, buffer) : "aur/");
-        printf("%s ", opt_mask & OPT_COLOR ? colorize(name, WHITE, buffer) : name);
-        printf("%s\n", opt_mask & OPT_COLOR ?
-            (ood ? colorize(version, RED, buffer) : colorize(version, GREEN, buffer)) :
-            version);
-        if(! (opt_mask & OPT_QUIET)) printf("    %s\n", desc);
-    }
-}
-
-struct aurpkg *aur_pkg_info(char* req) {
-    char *text;
-    char url[URL_SIZE];
-
-    json_t *root;
-    json_error_t error;
-    json_t *package;
-    char buffer[32];
-
-    snprintf(url, URL_SIZE, URL_FORMAT, "info", req);
-
-    text = request(url);
-    if(!text)
-        return NULL;
-
-    root = json_loads(text, &error);
-    free(text);
-
-    if(!root) {
-        fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
-        return NULL;
-    }
-
-    package = json_object_get(root, "results");
-
-    /* No result found */
-    if(!json_is_object(package)) {
-        fprintf(stderr, "%s package \"%s\" not found\n", 
-            opt_mask & OPT_COLOR ? colorize("error:", RED, buffer) : "error:",
-            req);
-        return NULL;
-    }
-
-    struct aurpkg *pkg = malloc(sizeof(struct aurpkg));
-    get_pkg_details(package, &pkg);
-
-    json_decref(root);
-
-    return pkg;
-}
-
-int get_taurball(const char *url, char *target_dir) {
+int aur_get_tarball(const char *url, char *target_dir) {
     CURL *curl;
     FILE *fd;
     char *dir, *filename, *fullpath, buffer[256];
@@ -182,7 +114,7 @@ int get_taurball(const char *url, char *target_dir) {
             curl_global_cleanup();
 
             filename[strlen(filename) - 7] = '\0'; /* hackity hack basename */
-            printf("%.*s", filename, opt_mask & OPT_COLOR ? colorize(filename, WHITE, buffer) : filename);
+            printf("%s", opt_mask & OPT_COLOR ? colorize(filename, WHITE, buffer) : filename);
             printf(" downloaded to ");
             printf("%s\n",
                 opt_mask & OPT_COLOR ? colorize(dir, GREEN, buffer) : dir);

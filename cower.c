@@ -133,7 +133,16 @@ int main(int argc, char **argv) {
     } else if (oper_mask & OPER_INFO) { /* 4 */
         printf("IOU one info function.\n");
     } else if (oper_mask & OPER_SEARCH) { /* 1 */
-        printf("IOU one search function.\n");
+        /* printf("IOU one search function.\n"); */
+        alpm_list_t *i;
+        for (i = targets; i; i = alpm_list_next(i)) {
+            json_t *search = 
+                aur_rpc_query(AUR_RPC_QUERY_TYPE_SEARCH, alpm_list_getdata(i));
+            /* Do something with the json. Probably pass it to another
+             * function for processing and/or printing.
+             */
+            json_decref(search);
+        }
     } else {
         usage();
         ret = 1;

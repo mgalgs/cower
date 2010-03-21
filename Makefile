@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-O2 -pipe -Wall -pedantic
 DEBUG=-g
-OBJ=util.o json.o
+OBJ=util.o json.o aur.o
 LINKOPT=-ljansson -lcurl -lalpm
 
 all: cower
@@ -15,9 +15,9 @@ util.o: util.c util.h
 json.o: json.c json.h
 	$(CC) $(CFLAGS) $< -c $(DEBUG)
 
-#aur.o: aur.c aur.h
-#	$(CC) $(CFLAGS) $< -c $(DEBUG)
-#
+aur.o: aur.c aur.h
+	$(CC) $(CFLAGS) $< -c $(DEBUG)
+
 #package.o: package.c package.h
 #	$(CC) $(CFLAGS) $< -c $(DEBUG)
 #

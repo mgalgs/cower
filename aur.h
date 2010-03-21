@@ -25,14 +25,10 @@
 #define AUR_RPC_QUERY_TYPE_INFO   1
 #define AUR_RPC_QUERY_TYPE_SEARCH 2
 
-/* Info */
-struct aurpkg *aur_pkg_info(char*);
-
-/* Search */
-void print_search_results(json_t*);
-struct json_t *aur_pkg_search(char*);
+/* RPC Query */
+json_t *aur_rpc_query(int, char*);
 
 /* Download */
-int get_taurball(const char*, char*);
+int aur_get_taurball(const char*, char*);
 
 #endif /* _AUR_H */
