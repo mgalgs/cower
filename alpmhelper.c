@@ -33,7 +33,7 @@ static pmdb_t *db_local;
 
 void alpm_quick_init() {
 
-    /* Should be parsing config here. For now, static declares */
+    /* TODO: Parse pacman config */
     alpm_initialize();
     alpm_option_set_root("/");
     alpm_option_set_dbpath("/var/lib/pacman/");
@@ -66,7 +66,7 @@ static int is_foreign(pmpkg_t *pkg) {
     return 0;
 }
 
-/* Equivalent of pacman -Qm */
+/* Equivalent of pacman -Qs or -Qm */
 alpm_list_t *alpm_query_search(alpm_list_t *target) {
 
     alpm_list_t *i, *searchlist;
@@ -121,7 +121,7 @@ pmdb_t *alpm_sync_search(alpm_list_t *target) {
         }
     }
 
-    return NULL; /* Failure */
+    return NULL; /* Not found */
 }
 
 int is_in_pacman(const char *target) {
