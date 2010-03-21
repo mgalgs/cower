@@ -9,18 +9,14 @@ Dependencies:
 What works:
 	> Search package(s)
 	> Info for package(s)
-	> Download and extract package(s)
+	> Download and extraction of package(s)
 	> Check for updates (with download)
 
 TODO pile:
 	> Integrate ABS
 	> Specify alternate download directory
-	> Check for existance of package in repos
 	> Download dependencies
 	> verbosity levels
 	> sort search results
-
-Maybe pile:
-	> Static link jansson (probably not)
 	> upload taurballs
 
