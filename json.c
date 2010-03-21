@@ -39,11 +39,10 @@ static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream)
     return size * nmemb;
 }
 
-char *curl_get_json(int type, const char *arg) {
+char *curl_get_json(const char *url) {
     CURL *curl;
     CURLcode status;
     char *data;
-    char url[AUR_RPC_URL_SIZE];
     long code;
 
     curl = curl_easy_init();
@@ -54,10 +53,6 @@ char *curl_get_json(int type, const char *arg) {
         .data = data,
         .pos = 0
     };
-
-    snprintf(url, AUR_RPC_URL_SIZE, AUR_RPC_URL,
-        type == AUR_RPC_QUERY_TYPE_INFO ? "info" : "search", 
-        arg);
 
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_response);
