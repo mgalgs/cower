@@ -149,12 +149,10 @@ int main(int argc, char **argv) {
          */
          alpm_list_t *i;
          for (i = targets; i; i = alpm_list_next(i)) {
+            /* TODO: Call to pacman */
             json_t *infojson = aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO,
                 alpm_list_getdata(i));
-            if (! infojson) {
-                fprintf(stderr, "nope, can't find %s\n", 
-                    (const char*)alpm_list_getdata(i));
-            } else {
+            if (infojson) {
                 aur_get_tarball(infojson, NULL);
                 json_decref(infojson);
             }
