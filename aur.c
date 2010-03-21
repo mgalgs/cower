@@ -41,7 +41,7 @@ json_t *aur_rpc_query(int type, char* arg) {
 
     json_t *root;
     json_error_t error;
-    json_t *result, *return_type;
+    json_t *return_type;
 
     /* Format URL to pass to curl */
     snprintf(url, AUR_RPC_URL_SIZE, AUR_RPC_URL,
