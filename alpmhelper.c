@@ -31,6 +31,7 @@
 static pmdb_t *db_local;
 
 void alpm_quick_init() {
+
     /* Should be parsing config here. For now, static declares */
     alpm_initialize();
     alpm_option_set_root("/");
@@ -44,6 +45,7 @@ void alpm_quick_init() {
 }
 
 static int is_foreign(pmpkg_t *pkg) {
+
     const char *pkgname = alpm_pkg_get_name(pkg);
     alpm_list_t *j;
     alpm_list_t *sync_dbs = alpm_option_get_syncdbs();
@@ -65,6 +67,7 @@ static int is_foreign(pmpkg_t *pkg) {
 
 /* Equivalent of pacman -Qs or -Qm */
 alpm_list_t *alpm_query_search(alpm_list_t *targets) {
+
     alpm_list_t *i, *searchlist;
     int freelist;
 
@@ -102,3 +105,23 @@ alpm_list_t *alpm_query_search(alpm_list_t *targets) {
     return ret; /* This needs to be freed in the calling function */
 }
 
+int sync_search(alpm_list_t *targets) {
+
+    alpm_list_t *syncs, *i;
+
+    syncs = alpm_option_get_syncdbs();
+
+    for (i = syncs; i; i = alpm_list_next(i)) {
+        pmdb_t *db = alpm_list_getdata(i);
+        alpm_list_t *ret = alpm_db_search(db, targets);
+
+        if (! ret) {
+            continue;
+        } else {
+            alpm_list_free(ret);
+            return 0; /* Great success! */
+        }
+    }
+
+    return 1; /* Failure */
+}
