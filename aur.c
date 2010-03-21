@@ -36,7 +36,6 @@ extern int opt_mask;
 json_t *aur_rpc_query(int type, const char* arg) {
     char *text;
     char url[AUR_RPC_URL_SIZE];
-    char buffer[32];
 
     json_t *root;
     json_error_t error;
@@ -64,9 +63,8 @@ json_t *aur_rpc_query(int type, const char* arg) {
     /* Check return type in JSON */
     return_type = json_object_get(root, "type");
     if (! strcmp(json_string_value(return_type), "error")) {
-        fprintf(stderr, "%s no results for \"%s\"\n", 
-            opt_mask & OPT_COLOR ? colorize("error:", RED, buffer) : "error:",
-            arg);
+        opt_mask & OPT_COLOR ? cprint("error:", RED) : printf("error:"),
+        printf(" no results for \"%s\"\n", arg);
         json_decref(root);
         return NULL;
     }
@@ -77,7 +75,7 @@ json_t *aur_rpc_query(int type, const char* arg) {
 int aur_get_tarball(json_t *root, char *target_dir) {
     CURL *curl;
     FILE *fd;
-    char *dir, *filename, *fullpath, url[128], buffer[256];
+    char *dir, *filename, *fullpath, url[128];
     const char *pkgname;
     int result = 0;
     json_t *pkginfo;
@@ -109,8 +107,8 @@ int aur_get_tarball(json_t *root, char *target_dir) {
     filename++; /* Get rid of the leading slash */
 
     if (file_exists(fullpath) && ! (opt_mask & OPT_FORCE)) {
-        fprintf(stderr, "%s %s already exists.\nUse -f to force this operation.\n", 
-            opt_mask & OPT_COLOR ? colorize("error:", RED, buffer) : "error:",
+        opt_mask & OPT_COLOR ? cprint("error:", RED) : printf("error:");
+        printf(" %s already exists.\nUse -f to force this operation.\n", 
             fullpath);
         result = 1;
     } else {
@@ -124,10 +122,10 @@ int aur_get_tarball(json_t *root, char *target_dir) {
             curl_easy_cleanup(curl);
             curl_global_cleanup();
 
-            printf("%s", opt_mask & OPT_COLOR ? colorize(pkgname, WHITE, buffer) : pkgname);
+            opt_mask & OPT_COLOR ? cprint(pkgname, WHITE) : printf(pkgname);
             printf(" downloaded to ");
-            printf("%s\n",
-                opt_mask & OPT_COLOR ? colorize(dir, GREEN, buffer) : dir);
+            opt_mask & OPT_COLOR ? cprint(dir, GREEN) : printf(dir);
+            putchar('\n');
 
             fclose(fd);
 

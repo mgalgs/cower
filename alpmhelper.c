@@ -4,6 +4,8 @@
 
 #include <alpm.h>
 
+#include <jansson.h>
+
 #include "util.h"
 #include "alpmhelper.h"
 

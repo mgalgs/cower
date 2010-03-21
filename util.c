@@ -34,17 +34,13 @@ static char *pkg_category[] = { NULL, "None", "daemons", "devel",
                               "system", "x11", "xfce", "kernels" };
 
 
-char *colorize(const char* input, int color, char* buffer) {
-    /* A buffer has to be passed to this function to avoid
-     * memory loss. Regardless, it needs to return the buffer
-     * so that it can be used in-place.
-     */
-    sprintf(buffer, "\033[1;3%dm%s\033[1;m", color, input);
-    return buffer;
+/* TODO: Figure out va macros and allow access to stderr */
+int cprint(const char* input, int color) {
+    return printf("\033[1;3%dm%s\033[1;m", color, input);
 }
 
 void print_pkg_info(json_t *pkg) {
-    char buffer[128], aurpage[128];
+    char aurpage[128];
     json_t *pkginfo;
     const char *id, *name, *ver, *url, *cat, *license, *votes, *ood, *desc;
 
@@ -62,23 +58,33 @@ void print_pkg_info(json_t *pkg) {
     desc    = json_string_value(json_object_get(pkginfo, "Description"));
 
     /* Print it all pretty like */
-    printf("Repository      : %s\n", opt_mask & OPT_COLOR ?
-        colorize("aur", MAGENTA, buffer) : "aur");
+    printf("Repository      : ");
+    opt_mask & OPT_COLOR ? cprint("aur", MAGENTA) : printf("aur");
+    putchar('\n');
 
-    printf("Name:           : %s\n", opt_mask & OPT_COLOR ?
-        colorize(name, WHITE, buffer) : name);
+    printf("Name:           : ");
+    opt_mask & OPT_COLOR ? cprint(name, WHITE) : printf(name);
+    putchar('\n');
 
-    printf("Version         : %s\n", opt_mask & OPT_COLOR ?
-        strcmp(ood, "0") ?
-            colorize(ver, RED, buffer) : colorize(ver, GREEN, buffer) :
-            ver);
+    printf("Version         : ");
+    opt_mask & OPT_COLOR ?
+        strcmp(ood, "0") ? cprint(ver, RED) : cprint(ver, GREEN) : printf(ver);
+    putchar('\n');
 
-    printf("URL             : %s\n", opt_mask & OPT_COLOR ?
-        colorize(url, CYAN, buffer) : url);
+    printf("URL             : ");
+    opt_mask & OPT_COLOR ?  cprint(url, CYAN) : printf(url);
+    putchar('\n');
 
     snprintf(aurpage, 128, AUR_PKG_URL_FORMAT, id);
-    printf("AUR Page        : %s\n", opt_mask & OPT_COLOR ?
-        colorize(aurpage, CYAN, buffer) : aurpage);
+    printf("AUR Page        : ");
+        if (opt_mask & OPT_COLOR) {
+            cprint(AUR_PKG_URL_FORMAT, CYAN);
+            cprint(id, CYAN);
+        } else {
+            printf("%s", AUR_PKG_URL_FORMAT);
+            printf("%s", id);
+        }
+    putchar('\n');
 
     printf("Category        : %s\n", pkg_category[atoi(cat)]);
 
@@ -86,10 +92,12 @@ void print_pkg_info(json_t *pkg) {
 
     printf("Number of Votes : %s\n", votes);
 
-    printf("Out Of Date     : %s\n", opt_mask & OPT_COLOR ?
+    printf("Out Of Date     : ");
+    opt_mask & OPT_COLOR ?
         strcmp(ood, "0") ?
-            colorize("Yes", RED, buffer) : colorize("No", GREEN, buffer) :
-            strcmp(ood, "0") ? "Yes" : "No");
+            cprint("Yes", RED) : cprint("No", GREEN) :
+            printf("%s", strcmp(ood, "0") ?  "Yes" : "No");
+    putchar('\n');
 
     printf("Description     : %s\n\n", desc);
 
