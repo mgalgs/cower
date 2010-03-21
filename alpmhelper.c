@@ -124,7 +124,7 @@ int alpm_sync_search(alpm_list_t *targets) {
              * that the package is in
              */
             opt_mask & OPT_COLOR ? cfprint(1, alpm_list_getdata(targets), WHITE) :
-                printf("%s", alpm_list_getdata(targets));
+                printf("%s", (const char*)alpm_list_getdata(targets));
             printf(" is available in "); 
             opt_mask & OPT_COLOR ? cfprint(1, alpm_db_get_name(db), YELLOW) :
                 printf("%s", alpm_db_get_name(db));
