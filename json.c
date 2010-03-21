@@ -64,7 +64,6 @@ char *curl_get_json(const char *url) {
         fprintf(stderr, "%s\n", curl_easy_strerror(status));
         free(data);
         curl_easy_cleanup(curl);
-        curl_global_cleanup();
         return NULL;
     }
 
@@ -73,12 +72,10 @@ char *curl_get_json(const char *url) {
         fprintf(stderr, "curl error: server responded with code %ld\n", code);
         free(data);
         curl_easy_cleanup(curl);
-        curl_global_cleanup();
         return NULL;
     }
 
     curl_easy_cleanup(curl);
-    curl_global_cleanup();
 
     /* zero-terminate the result */
     data[write_result.pos] = '\0';
