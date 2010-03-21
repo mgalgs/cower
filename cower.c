@@ -143,7 +143,22 @@ int main(int argc, char **argv) {
             printf("I'll even download your updates too. I promise!\n");
         alpm_list_free(foreign);
     } else if (oper_mask & OPER_DOWNLOAD) { /* 4 */
-        printf("IOU one download function.\n");
+        /* Check alpm for the existance of this package. If it's not in the 
+         * sync, do an info query on the package in the AUR. Does it exist?
+         * If yes, pass it to get_taurball.
+         */
+         alpm_list_t *i;
+         for (i = targets; i; i = alpm_list_next(i)) {
+            json_t *infojson = aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO,
+                alpm_list_getdata(i));
+            if (! infojson) {
+                fprintf(stderr, "nope, can't find %s\n", 
+                    (const char*)alpm_list_getdata(i));
+            } else {
+                aur_get_tarball(infojson, NULL);
+                json_decref(infojson);
+            }
+         }
     } else if (oper_mask & OPER_INFO) { /* 4 */
         alpm_list_t *i;
         for (i = targets; i; i = alpm_list_next(i)) {

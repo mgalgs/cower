@@ -28,9 +28,9 @@
 #define AUR_RPC_QUERY_TYPE_SEARCH 2
 
 /* RPC Query */
-json_t *aur_rpc_query(int, char*);
+json_t *aur_rpc_query(int, const char*);
 
 /* Download */
-int aur_get_taurball(json_t*, char*);
+int aur_get_tarball(json_t*, char*);
 
 #endif /* _AUR_H */

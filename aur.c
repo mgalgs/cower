@@ -33,7 +33,7 @@
 
 extern int opt_mask;
 
-json_t *aur_rpc_query(int type, char* arg) {
+json_t *aur_rpc_query(int type, const char* arg) {
     char *text;
     char url[AUR_RPC_URL_SIZE];
     char buffer[32];
@@ -74,11 +74,13 @@ json_t *aur_rpc_query(int type, char* arg) {
     return root; /* This needs to be freed in the calling function */
 }
 
-int aur_get_tarball(json_t *pkginfo, char *target_dir) {
+int aur_get_tarball(json_t *root, char *target_dir) {
     CURL *curl;
     FILE *fd;
     char *dir, *filename, *fullpath, url[128], buffer[256];
+    const char *pkgname;
     int result = 0;
+    json_t *pkginfo;
 
     if (target_dir == NULL) { /* Use pwd */
         dir = getcwd(NULL, 0);
@@ -86,9 +88,15 @@ int aur_get_tarball(json_t *pkginfo, char *target_dir) {
         dir = target_dir;
     }
 
+    /* Point to the juicy bits of the JSON */
+    pkginfo = json_object_get(root, "results");
+
     /* Build URL. Need this to get the taurball, durp */
     snprintf(url, 128, AUR_PKG_URL,
         json_string_value(json_object_get(pkginfo, "URLPath")));
+
+    /* Point to the package name */
+    pkgname = json_string_value(json_object_get(pkginfo, "Name"));
 
     /* Pointer to the 'basename' of the URL Path */
     filename = strrchr(url, '/');
@@ -98,13 +106,14 @@ int aur_get_tarball(json_t *pkginfo, char *target_dir) {
     fullpath = strncat(fullpath, dir, strlen(dir));
     fullpath = strncat(fullpath, filename, strlen(filename));
 
+    filename++; /* Get rid of the leading slash */
+
     if (file_exists(fullpath) && ! (opt_mask & OPT_FORCE)) {
         fprintf(stderr, "%s %s already exists.\nUse -f to force this operation.\n", 
             opt_mask & OPT_COLOR ? colorize("error:", RED, buffer) : "error:",
             fullpath);
         result = 1;
     } else {
-        fullpath[strlen(fullpath)] = '.'; /* Unmask file extension */
         fd = fopen(filename, "w");
         if (fd != NULL) {
             curl = curl_easy_init();
@@ -115,8 +124,7 @@ int aur_get_tarball(json_t *pkginfo, char *target_dir) {
             curl_easy_cleanup(curl);
             curl_global_cleanup();
 
-            filename[strlen(filename) - 7] = '\0'; /* hackity hack basename */
-            printf("%s", opt_mask & OPT_COLOR ? colorize(filename, WHITE, buffer) : filename);
+            printf("%s", opt_mask & OPT_COLOR ? colorize(pkgname, WHITE, buffer) : pkgname);
             printf(" downloaded to ");
             printf("%s\n",
                 opt_mask & OPT_COLOR ? colorize(dir, GREEN, buffer) : dir);
