@@ -92,7 +92,7 @@ alpm_list_t *alpm_query_foreign() {
     return ret; /* This needs to be freed in the calling function */
 }
 
-int alpm_sync_search(alpm_list_t *targets) {
+pmdb_t *alpm_sync_search(alpm_list_t *target) {
 
     alpm_list_t *syncs, *i;
 
@@ -100,25 +100,34 @@ int alpm_sync_search(alpm_list_t *targets) {
 
     for (i = syncs; i; i = alpm_list_next(i)) {
         pmdb_t *db = alpm_list_getdata(i);
-        alpm_list_t *ret = alpm_db_search(db, targets);
+        alpm_list_t *ret = alpm_db_search(db, target);
 
         if (! ret) {
             continue;
         } else {
             alpm_list_free(ret);
-            /* Printing in here gives the benefit of easily knowing the repo
-             * that the package is in
-             */
-            opt_mask & OPT_COLOR ? cfprint(1, alpm_list_getdata(targets), WHITE) :
-                printf("%s", (const char*)alpm_list_getdata(targets));
-            printf(" is available in "); 
-            opt_mask & OPT_COLOR ? cfprint(1, alpm_db_get_name(db), YELLOW) :
-                printf("%s", alpm_db_get_name(db));
-            putchar('\n');
-            return 0; /* Great success! */
+            return db; /* Great success! */
         }
     }
 
-    return 1; /* Failure */
+    return NULL; /* Failure */
 }
 
+int is_in_pacman(alpm_list_t *target) {
+
+    pmdb_t *found_in;
+    found_in = alpm_sync_search(target);
+
+    if (found_in) {
+        opt_mask & OPT_COLOR ? cfprint(1, alpm_list_getdata(target), WHITE) :
+            printf("%s", (const char*)alpm_list_getdata(target));
+        printf(" is available in "); 
+        opt_mask & OPT_COLOR ? cfprint(1, alpm_db_get_name(found_in), YELLOW) :
+            printf("%s", alpm_db_get_name(found_in));
+        putchar('\n');
+
+        return 1;
+    }
+
+    return 0;
+}

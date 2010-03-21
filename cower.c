@@ -143,8 +143,8 @@ int main(int argc, char **argv) {
            alpm_list_t *p = NULL;
            int result;
            p = alpm_list_add(p, alpm_list_getdata(i));
-           result = alpm_sync_search(p);
-           if (result) { /* 0 is return on successful find */
+           result = is_in_pacman(p);
+           if (! result) { /* 1 is return on successful find */
                json_t *infojson = aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO,
                    alpm_list_getdata(i));
                if (infojson) {
