@@ -97,7 +97,7 @@ static int parseargs(int argc, char **argv) {
     return 0;
 }
 
-void usage() {
+static void usage() {
     printf("Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
 \n\
  Operations:\n\
@@ -105,26 +105,26 @@ void usage() {
   -i, --info              show info for PACKAGE(s)\n\
   -s, --search            search for PACKAGE(s)\n\
   -u, --update            check for updates against AUR. If the \n\
-                            download flag is passed as well, fetch\n\
-                            each available update.\n\
+                            --download flag is passed as well,\n\
+                            fetch each available update.\n\
 \n\
  General options:\n\
   -c, --color             use colored output\n\
   -f, --force             overwrite existing files when dowloading\n\
-  -q, --quiet             show only package names in search results\n\n");
+  -q, --quiet             output less to stdout\n\n");
 }
 
 int main(int argc, char **argv) {
 
     int ret;
     ret = parseargs(argc, argv);
-    curl = curl_easy_init();
 
     /* Order matters somewhat. Update must come before download
      * to ensure that we catch the possibility of a download flag
      * being passed along with it.
      */
     if (oper_mask & OPER_UPDATE) { /* 8 */
+        curl = curl_easy_init();
         alpm_quick_init();
         alpm_list_t *foreign = alpm_query_search(NULL);
 
@@ -135,32 +135,33 @@ int main(int argc, char **argv) {
     } else if (oper_mask & OPER_DOWNLOAD) { /* 4 */
         /* Check alpm for the existance of this package. If it's not in the 
          * sync, do an info query on the package in the AUR. Does it exist?
-         * If yes, pass it to get_taurball.
+         * If yes, pass it to aur_get_tarball.
          */
+        curl = curl_easy_init();
         alpm_quick_init();
         alpm_list_t *i;
         for (i = targets; i; i = alpm_list_next(i)) {
-           int result;
-           result = is_in_pacman((const char*)alpm_list_getdata(i));
-           if (! result) { /* 1 is return on successful find */
-               json_t *infojson = aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO,
-                   alpm_list_getdata(i));
-               if (infojson) {
-                   aur_get_tarball(infojson, NULL);
-                   json_decref(infojson);
-               } else {
-                   opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
-                       fprintf(stderr, "error:");
-                   fprintf(stderr, " no results for \"%s\"\n", 
-                       (const char*)alpm_list_getdata(i));
-               }
-           }
+            int result;
+            result = is_in_pacman((const char*)i->data);
+            if (! result) { /* Not found in pacman */
+                json_t *infojson = 
+                    aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO, i->data);
+                if (infojson) { /* Found it in the AUR */
+                    aur_get_tarball(infojson, NULL);
+                    json_decref(infojson);
+                } else { /* Not found anywhere */
+                    opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
+                        fprintf(stderr, "error:");
+                    fprintf(stderr, " no results for \"%s\"\n", 
+                        (const char*)i->data);
+                }
+            }
         }
     } else if (oper_mask & OPER_INFO) { /* 2 */
+        curl = curl_easy_init();
         alpm_list_t *i;
         for (i = targets; i; i = alpm_list_next(i)) {
-            json_t *search = 
-                aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO, alpm_list_getdata(i));
+            json_t *search = aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO, i->data);
 
             if (search) {
                 print_pkg_info(search);
@@ -168,17 +169,17 @@ int main(int argc, char **argv) {
                 opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
                     fprintf(stderr, "error:");
                 fprintf(stderr, " no results for \"%s\"\n", 
-                    (const char*)alpm_list_getdata(i));
+                    (const char*)i->data);
             }
             json_decref(search);
 
         }
     } else if (oper_mask & OPER_SEARCH) { /* 1 */
         /* TODO: Aggregate all searches, sort, and print at once */
+        curl = curl_easy_init();
         alpm_list_t *i;
         for (i = targets; i; i = alpm_list_next(i)) {
-            json_t *search = 
-                aur_rpc_query(AUR_RPC_QUERY_TYPE_SEARCH, alpm_list_getdata(i));
+            json_t *search = aur_rpc_query(AUR_RPC_QUERY_TYPE_SEARCH, i->data);
 
             if (search) {
                 print_pkg_search(search);
@@ -186,7 +187,7 @@ int main(int argc, char **argv) {
                 opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
                     fprintf(stderr, "error:");
                 fprintf(stderr, " no results for \"%s\"\n", 
-                    (const char*)alpm_list_getdata(i));
+                    (const char*)i->data);
             }
             json_decref(search);
         }
