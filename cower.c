@@ -131,6 +131,14 @@ int main(int argc, char **argv) {
         alpm_quick_init();
         alpm_list_t *foreign = alpm_query_search(NULL);
         /* Do something with the list */
+        alpm_list_t *i;
+        for (i = foreign; i; i = alpm_list_next(i)) {
+            pmpkg_t *pmpkg = alpm_list_getdata(i);
+            printf("Foreign pkg: %s\n", alpm_pkg_get_name(pmpkg));
+            /* Do a query against the AUR for each of these 
+             * and pull down a json_t. Compare the versions.
+             */
+        }
         if (oper_mask & OPER_DOWNLOAD)
             printf("I'll even download your updates too. I promise!\n");
         alpm_list_free(foreign);
