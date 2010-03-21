@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-O2 -pipe -Wall -pedantic
+CFLAGS=-O2 -pipe -Wall -pedantic -std=c99
 DEBUG=-g
 OBJ=util.o json.o aur.o
 LINKOPT=-ljansson -lcurl -lalpm
