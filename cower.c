@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
         char *pkg_arg;
         pkg_arg = alpm_list_getdata(i);
         printf("package argument: %s\n", pkg_arg);
-    }
+    } /* END DEBUG */
 
     /* Order matters somewhat. Update must come before download
      * to ensure that we catch the possibility of a download flag
@@ -157,20 +157,15 @@ int main(int argc, char **argv) {
                 json_decref(infojson);
             }
          }
-    } else if (oper_mask & OPER_INFO) { /* 4 */
+    } else if (oper_mask & OPER_INFO) { /* 2 */
         alpm_list_t *i;
         for (i = targets; i; i = alpm_list_next(i)) {
             json_t *search = 
                 aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO, alpm_list_getdata(i));
 
-            /* Do something with the json. Probably pass it to another
-             * function for processing and/or printing.
-             */
             if (search) {
-                json_t *pkginfo = json_object_get(search, "results");
-                printf("%s\n", json_string_value(json_object_get(pkginfo, "Name")));
-
-            json_decref(search);
+                print_pkg_info(search);
+                json_decref(search);
             }
         }
     } else if (oper_mask & OPER_SEARCH) { /* 1 */
