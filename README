@@ -13,6 +13,7 @@ What works:
 	> Check for updates (with download)
 
 TODO pile:
+	> Integrate ABS
 	> Specify alternate download directory
 	> Check for existance of package in repos
 	> Download dependencies
