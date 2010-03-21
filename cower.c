@@ -15,17 +15,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <alpm.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <getopt.h>
-#include <alpm.h>
 
 #include <jansson.h>
 
-#include "util.h"
+#include "alpmhelper.h"
 #include "aur.h"
 #include "package.h"
+#include "util.h"
 
 static alpm_list_t *targets; /* Package argument list */
 int oper_mask = 0, opt_mask = 0; /* Runtime Config */
@@ -127,7 +128,9 @@ int main(int argc, char **argv) {
      * being passed along with it.
      */
     if (oper_mask & OPER_UPDATE) { /* 8 */
-        printf("IOU one update function.\n");
+        /* printf("IOU one update function.\n"); */
+        alpm_quick_init();
+
         if (oper_mask & OPER_DOWNLOAD)
             printf("I'll even download your updates too. I promise!\n");
     } else if (oper_mask & OPER_DOWNLOAD) { /* 4 */
@@ -158,6 +161,8 @@ int main(int argc, char **argv) {
     }
 
     alpm_list_free(targets);
+
+    alpm_release();
 
     return ret;
 }
