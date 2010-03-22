@@ -97,12 +97,12 @@ int cfprintf(FILE *fd, const char* fmt, ...) {
             }
             count += fputs(itoa(i, 10), fd);
             break;
-        case '!': /* color on */
+        case '<': /* color on */
             count += fputs(C_ON, fd);
             count += fputs(itoa(va_arg(ap, int), 10), fd);
             fputc('m', fd); count++;
             break;
-        case '@': /* color off */
+        case '>': /* color off */
             count += fputs(C_OFF, fd);
             break;
         case '%':
@@ -136,24 +136,24 @@ void print_pkg_info(json_t *pkg) {
     /* Print it all pretty like */
     printf("Repository      : ");
     opt_mask & OPT_COLOR ?
-        cfprintf(stdout, "%!aur%@\n", MAGENTA) : printf("aur\n");
+        cfprintf(stdout, "%<aur%>\n", MAGENTA) : printf("aur\n");
 
     printf("Name:           : ");
     opt_mask & OPT_COLOR ?
-        cfprintf(stdout, "%!%s%@\n", WHITE, name) : printf("%s\n", name);
+        cfprintf(stdout, "%<%s%>\n", WHITE, name) : printf("%s\n", name);
 
     printf("Version         : ");
     opt_mask & OPT_COLOR ?
-        cfprintf(stdout, "%!%s%@\n", strcmp(ood, "0") ? RED : GREEN, ver) :
+        cfprintf(stdout, "%<%s%>\n", strcmp(ood, "0") ? RED : GREEN, ver) :
         printf("%s\n", ver);
 
     printf("URL             : ");
     opt_mask & OPT_COLOR ?
-        cfprintf(stdout, "%!%s%@\n", CYAN, url, NULL) : printf("%s\n", url);
+        cfprintf(stdout, "%<%s%>\n", CYAN, url, NULL) : printf("%s\n", url);
 
     printf("AUR Page        : ");
     opt_mask & OPT_COLOR ?
-        cfprintf(stdout, "%!%s%s%@\n", CYAN, AUR_PKG_URL_FORMAT, id) :
+        cfprintf(stdout, "%<%s%s%>\n", CYAN, AUR_PKG_URL_FORMAT, id) :
         printf("%s%s\n", AUR_PKG_URL_FORMAT, id);
 
     printf("Category        : %s\n", pkg_category[atoi(cat)]);
@@ -165,8 +165,8 @@ void print_pkg_info(json_t *pkg) {
     printf("Out Of Date     : ");
     opt_mask & OPT_COLOR ?
         strcmp(ood, "0") ?
-            cfprintf(stdout, "%!Yes%@\n", RED) : 
-                cfprintf(stdout, "%!No%@\n", GREEN) :
+            cfprintf(stdout, "%<Yes%>\n", RED) : 
+                cfprintf(stdout, "%<No%>\n", GREEN) :
             printf("%s\n", strcmp(ood, "0") ?  "Yes" : "No");
 
     printf("Description     : %s\n\n", desc);
@@ -192,12 +192,12 @@ void print_pkg_search(json_t *search) {
         /* Line 1 */
         if (! (opt_mask & OPT_QUIET))
             opt_mask & OPT_COLOR ? 
-                cfprintf(stdout, "%!aur/%@", MAGENTA) : printf("aur/");
+                cfprintf(stdout, "%<aur/%>", MAGENTA) : printf("aur/");
         opt_mask & OPT_COLOR ? 
-            cfprintf(stdout, "%!%s%@", WHITE, name) : printf(name);
+            cfprintf(stdout, "%<%s%>", WHITE, name) : printf(name);
         putchar(' ');
         opt_mask & OPT_COLOR ?
-            cfprintf(stdout, "%!%s%@", strcmp(ood, "0") ? RED : GREEN, ver) :
+            cfprintf(stdout, "%<%s%>", strcmp(ood, "0") ? RED : GREEN, ver) :
             printf("%s", ver);
         putchar('\n');
 

@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
                     json_decref(infojson);
                 } else { /* Not found anywhere */
                     opt_mask & OPT_COLOR ?
-                        cfprintf(stderr, "%!%s%@", RED, "error:") :
+                        cfprintf(stderr, "%<%s%>", RED, "error:") :
                         fprintf(stderr, "error:");
                     fprintf(stderr, " no results for \"%s\"\n",
                         (const char*)i->data);
@@ -168,7 +168,7 @@ int main(int argc, char **argv) {
             if (search) {
                 print_pkg_info(search);
             } else {
-                opt_mask & OPT_COLOR ? cfprintf(stderr, "%!%s%@", RED, "error:") :
+                opt_mask & OPT_COLOR ? cfprintf(stderr, "%<%s%>", RED, "error:") :
                     fprintf(stderr, "error:");
                 fprintf(stderr, " no results for \"%s\"\n",
                     (const char*)i->data);
@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
             if (search) {
                 print_pkg_search(search);
             } else {
-                opt_mask & OPT_COLOR ? cfprintf(stderr, "%!%s%@", RED, "error:") :
+                opt_mask & OPT_COLOR ? cfprintf(stderr, "%<%s%>", RED, "error:") :
                     fprintf(stderr, "error:");
                 fprintf(stderr, " no results for \"%s\"\n", 
                     (const char*)i->data);
