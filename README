@@ -3,8 +3,8 @@ Ideally, this will act a lot like Slurpy, but powered by the awesomeness of C.
 Dependencies:
 	> jansson
 	> curl
-	> bsdtar
-	> alpm (pacman)
+	> libarchive (for bsdtar)
+	> pacman (for libalpm)
 
 Features:
 	> Search package(s)
