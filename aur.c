@@ -61,12 +61,12 @@ void aur_find_updates(alpm_list_t *foreign) {
                         aur_get_tarball(infojson, NULL);
                 } else {
                     if (opt_mask & OPT_COLOR) {
-                        cfprintf(1, WHITE, alpm_pkg_get_name(pmpkg), NULL);
+                        cfprintf(stdout, WHITE, alpm_pkg_get_name(pmpkg), NULL);
                         if (! (opt_mask & OPT_QUIET)) {
                             putchar(' ');
-                            cfprintf(1, GREEN, local_ver, NULL);
+                            cfprintf(stdout, GREEN, local_ver, NULL);
                             printf(" -> ");
-                            cfprintf(1, GREEN, aur_ver, NULL);
+                            cfprintf(stdout, GREEN, aur_ver, NULL);
                         }
                         putchar('\n');
                     } else {
@@ -120,7 +120,7 @@ int aur_get_tarball(json_t *root, char *target_dir) {
     filename++; /* Get rid of the leading slash */
 
     if (file_exists(fullpath) && ! (opt_mask & OPT_FORCE)) {
-        opt_mask & OPT_COLOR ? cfprintf(2, RED, "error:", NULL) :
+        opt_mask & OPT_COLOR ? cfprintf(stderr, RED, "error:", NULL) :
             fprintf(stderr, "error:");
         fprintf(stderr, " %s already exists.\nUse -f to force this operation.\n", 
             fullpath);
@@ -137,10 +137,10 @@ int aur_get_tarball(json_t *root, char *target_dir) {
             curl_global_cleanup();
 
             opt_mask & OPT_COLOR ? 
-                cfprintf(1, WHITE, pkgname, NULL) : printf(pkgname);
+                cfprintf(stdout, WHITE, pkgname, NULL) : printf(pkgname);
             printf(" downloaded to ");
             opt_mask & OPT_COLOR ? 
-                cfprintf(1, GREEN, dir, NULL) : printf(dir);
+                cfprintf(stdout, GREEN, dir, NULL) : printf(dir);
             putchar('\n');
 
             fclose(fd);
@@ -173,6 +173,14 @@ json_t *aur_rpc_query(int type, const char* arg) {
     json_t *root, *return_type;
     json_error_t error;
 
+    /*
+    if (type == AUR_RPC_QUERY_TYPE_SEARCH && strlen(arg) < 3) {
+        opt_mask & OPT_COLOR ? cfprintf(stderr, RED, "error:", NULL) : printf("error:");
+        printf(" search string too small.\n");
+        return NULL;
+    }
+    */
+
     /* Format URL to pass to curl */
     snprintf(url, AUR_RPC_URL_SIZE, AUR_RPC_URL,
         type == AUR_RPC_QUERY_TYPE_INFO ? "info" : "search",
@@ -195,11 +203,6 @@ json_t *aur_rpc_query(int type, const char* arg) {
     /* Check return type in JSON */
     return_type = json_object_get(root, "type");
     if (! strcmp(json_string_value(return_type), "error")) {
-        /*
-        opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
-            fprintf(stderr, "error:"),
-        fprintf(stderr, " no results for \"%s\"\n", arg);
-        */
         json_decref(root);
         return NULL;
     }

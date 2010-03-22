@@ -38,29 +38,21 @@ static char *pkg_category[] = { NULL, "None", "daemons", "devel",
                               "multimedia", "network", "office", "science",
                               "system", "x11", "xfce", "kernels" };
 
-int cfprintf(int fd, int color, const char* arg1, ...) {
+int cfprintf(FILE *fd, int color, const char* arg1, ...) {
 
     va_list ap;
     const char *s;
     int chars_written = 0;
 
-    va_start(ap, arg1);
+    va_start(ap, arg1); /* start va */
 
-    if (fd == 1 || !fd) {
-        chars_written += printf("\033[1;3%dm", color);
-        for (s = arg1; s; s = va_arg(ap, const char*)) {
-            chars_written += printf("%s", s);
-        }
-        chars_written += printf("\033[1;m");
-    } else if (fd == 2) {
-        chars_written += fprintf(stderr, "\033[1;3%dm", color);
-        for (s = arg1; s; s = va_arg(ap, const char*)) {
-            chars_written += fprintf(stderr, "%s", s);
-        }
-        chars_written += fprintf(stderr, "\033[1;m");
+    chars_written += fprintf(fd, "\033[1;3%dm", color);
+    for (s = arg1; s; s = va_arg(ap, const char*)) {
+        chars_written += fprintf(fd, "%s", s);
     }
+    chars_written += fprintf(fd, "\033[1;m");
 
-    va_end(ap);
+    va_end(ap); /* end va */
 
     return chars_written;
 }
@@ -85,25 +77,25 @@ void print_pkg_info(json_t *pkg) {
 
     /* Print it all pretty like */
     printf("Repository      : ");
-    opt_mask & OPT_COLOR ? cfprintf(1, MAGENTA, "aur", NULL) : printf("aur");
+    opt_mask & OPT_COLOR ? cfprintf(stdout, MAGENTA, "aur", NULL) : printf("aur");
     putchar('\n');
 
     printf("Name:           : ");
-    opt_mask & OPT_COLOR ? cfprintf(1, WHITE, name, NULL) : printf(name);
+    opt_mask & OPT_COLOR ? cfprintf(stdout, WHITE, name, NULL) : printf(name);
     putchar('\n');
 
     printf("Version         : ");
     opt_mask & OPT_COLOR ?
-        cfprintf(1, strcmp(ood, "0") ? RED : GREEN, ver, NULL) : printf(ver);
+        cfprintf(stdout, strcmp(ood, "0") ? RED : GREEN, ver, NULL) : printf(ver);
     putchar('\n');
 
     printf("URL             : ");
-    opt_mask & OPT_COLOR ?  cfprintf(1, CYAN, url, NULL) : printf(url);
+    opt_mask & OPT_COLOR ?  cfprintf(stdout, CYAN, url, NULL) : printf(url);
     putchar('\n');
 
     printf("AUR Page        : ");
     opt_mask & OPT_COLOR ?
-        cfprintf(1, CYAN, AUR_PKG_URL_FORMAT, id, NULL) :
+        cfprintf(stdout, CYAN, AUR_PKG_URL_FORMAT, id, NULL) :
         printf("%s%s", AUR_PKG_URL_FORMAT, id);
 
     putchar('\n');
@@ -117,7 +109,7 @@ void print_pkg_info(json_t *pkg) {
     printf("Out Of Date     : ");
     opt_mask & OPT_COLOR ?
         strcmp(ood, "0") ?
-            cfprintf(1, RED, "Yes", NULL) : cfprintf(1, GREEN, "No", NULL) :
+            cfprintf(stdout, RED, "Yes", NULL) : cfprintf(stdout, GREEN, "No", NULL) :
             printf("%s", strcmp(ood, "0") ?  "Yes" : "No");
     putchar('\n');
 
@@ -144,11 +136,11 @@ void print_pkg_search(json_t *search) {
         /* Line 1 */
         if (! (opt_mask & OPT_QUIET))
             opt_mask & OPT_COLOR ? 
-                cfprintf(1, MAGENTA, "aur/", NULL) : printf("aur/");
-        opt_mask & OPT_COLOR ? cfprintf(1, WHITE, name, NULL) : printf(name);
+                cfprintf(stdout, MAGENTA, "aur/", NULL) : printf("aur/");
+        opt_mask & OPT_COLOR ? cfprintf(stdout, WHITE, name, NULL) : printf(name);
         putchar(' ');
         opt_mask & OPT_COLOR ?
-            cfprintf(1, strcmp(ood, "0") ? RED : GREEN, ver, NULL) :
+            cfprintf(stdout, strcmp(ood, "0") ? RED : GREEN, ver, NULL) :
             printf("%s", ver);
         putchar('\n');
 
