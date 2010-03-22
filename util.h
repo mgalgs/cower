@@ -15,7 +15,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Color constants. */
+/* constants for cfprintf */
+#define C_ON        "\033[1;3"
+#define C_OFF       "\033[1;m"
+
+/* colors */
 enum {
     BLACK   = 0,    BOLDBLACK = 9,
     RED     = 1,    BOLDRED = 10,
@@ -28,7 +32,7 @@ enum {
     FG      = 8,    BOLDFG = 17
 };
 
-/* Operations */
+/* operations */
 enum {
     OPER_SEARCH = 1,
     OPER_INFO = 2,
@@ -36,7 +40,7 @@ enum {
     OPER_UPDATE = 8
 };
 
-/* Options */
+/* options */
 enum {
     OPT_COLOR = 1,
     OPT_VERBOSE = 2,
@@ -44,8 +48,9 @@ enum {
     OPT_QUIET = 8
 };
 
-int cfprintf(FILE*, int, const char*, ...);
+int cfprintf(FILE*, const char*, ...);
 int file_exists(const char*);
+char *itoa(unsigned int, int);
 void print_pkg_info(json_t*);
 void print_pkg_search(json_t*);
 
