@@ -165,10 +165,9 @@ void print_pkg_info(json_t *pkg) {
     printf("Out Of Date     : ");
     opt_mask & OPT_COLOR ?
         strcmp(ood, "0") ?
-            cfprintf(stdout, "%!Yes%@", RED) : 
-                cfprintf(stdout, "%!No%@", GREEN) :
-            printf("%s", strcmp(ood, "0") ?  "Yes" : "No");
-    putchar('\n');
+            cfprintf(stdout, "%!Yes%@\n", RED) : 
+                cfprintf(stdout, "%!No%@\n", GREEN) :
+            printf("%s\n", strcmp(ood, "0") ?  "Yes" : "No");
 
     printf("Description     : %s\n\n", desc);
 
