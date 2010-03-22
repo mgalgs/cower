@@ -61,12 +61,12 @@ void aur_find_updates(alpm_list_t *foreign) {
                         aur_get_tarball(infojson, NULL);
                 } else {
                     if (opt_mask & OPT_COLOR) {
-                        cfprint(1, alpm_pkg_get_name(pmpkg), WHITE);
+                        cfprintf(1, WHITE, alpm_pkg_get_name(pmpkg), NULL);
                         if (! (opt_mask & OPT_QUIET)) {
                             putchar(' ');
-                            cfprint(1, local_ver, GREEN);
+                            cfprintf(1, GREEN, local_ver, NULL);
                             printf(" -> ");
-                            cfprint(1, aur_ver, GREEN);
+                            cfprintf(1, GREEN, aur_ver, NULL);
                         }
                         putchar('\n');
                     } else {
@@ -120,7 +120,7 @@ int aur_get_tarball(json_t *root, char *target_dir) {
     filename++; /* Get rid of the leading slash */
 
     if (file_exists(fullpath) && ! (opt_mask & OPT_FORCE)) {
-        opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
+        opt_mask & OPT_COLOR ? cfprintf(2, RED, "error:", NULL) :
             fprintf(stderr, "error:");
         fprintf(stderr, " %s already exists.\nUse -f to force this operation.\n", 
             fullpath);
@@ -136,9 +136,11 @@ int aur_get_tarball(json_t *root, char *target_dir) {
             curl_easy_cleanup(curl);
             curl_global_cleanup();
 
-            opt_mask & OPT_COLOR ? cfprint(1, pkgname, WHITE) : printf(pkgname);
+            opt_mask & OPT_COLOR ? 
+                cfprintf(1, WHITE, pkgname, NULL) : printf(pkgname);
             printf(" downloaded to ");
-            opt_mask & OPT_COLOR ? cfprint(1, dir, GREEN) : printf(dir);
+            opt_mask & OPT_COLOR ? 
+                cfprintf(1, GREEN, dir, NULL) : printf(dir);
             putchar('\n');
 
             fclose(fd);

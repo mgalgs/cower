@@ -135,10 +135,12 @@ int is_in_pacman(const char *target) {
     found_in = alpm_sync_search(p);
 
     if (found_in) {
-        opt_mask & OPT_COLOR ? cfprint(1, target, WHITE) :
+        opt_mask & OPT_COLOR ? 
+            cfprintf(1, WHITE, target, NULL) :
             printf("%s", target);
         printf(" is available in "); 
-        opt_mask & OPT_COLOR ? cfprint(1, alpm_db_get_name(found_in), YELLOW) :
+        opt_mask & OPT_COLOR ? 
+            cfprintf(1, YELLOW, alpm_db_get_name(found_in), NULL) :
             printf("%s", alpm_db_get_name(found_in));
         putchar('\n');
 

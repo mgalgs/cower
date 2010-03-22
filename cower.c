@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
                     aur_get_tarball(infojson, NULL);
                     json_decref(infojson);
                 } else { /* Not found anywhere */
-                    opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
+                    opt_mask & OPT_COLOR ? cfprintf(2, RED, "error:", NULL) :
                         fprintf(stderr, "error:");
                     fprintf(stderr, " no results for \"%s\"\n", 
                         (const char*)i->data);
@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
             if (search) {
                 print_pkg_info(search);
             } else {
-                opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
+                opt_mask & OPT_COLOR ? cfprintf(2, RED, "error:", NULL) :
                     fprintf(stderr, "error:");
                 fprintf(stderr, " no results for \"%s\"\n", 
                     (const char*)i->data);
@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
             if (search) {
                 print_pkg_search(search);
             } else {
-                opt_mask & OPT_COLOR ? cfprint(2, "error:", RED) :
+                opt_mask & OPT_COLOR ? cfprintf(2, RED, "error:", NULL) :
                     fprintf(stderr, "error:");
                 fprintf(stderr, " no results for \"%s\"\n", 
                     (const char*)i->data);
