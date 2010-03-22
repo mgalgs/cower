@@ -23,7 +23,7 @@
 #define AUR_PKG_URL_FORMAT  "http://aur.archlinux.org/packages.php?ID="
 
 #define AUR_RPC_URL_SIZE    256
-#define JSON_BUFFER_SIZE    (256 * 1024) /* 256kB */
+#define JSON_BUFFER_SIZE    (1024 * 1024) /* 1MiB */
 
 #define AUR_RPC_QUERY_TYPE_INFO   1
 #define AUR_RPC_QUERY_TYPE_SEARCH 2
