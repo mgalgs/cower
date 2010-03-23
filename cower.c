@@ -18,6 +18,7 @@
 /* Standard */
 #include <alpm.h>
 #include <getopt.h>
+#include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,38 +53,47 @@ static int parseargs(int argc, char **argv) {
         {"verbose",     no_argument,        0, 'v'},
         {"force",       no_argument,        0, 'f'},
         {"quiet",       no_argument,        0, 'q'},
+        {"target",      required_argument,  0, 't'},
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv, "suidcvfq", opts, &option_index))) {
+    while ((opt = getopt_long(argc, argv, "disucfqt:v", opts, &option_index))) {
         if (opt < 0) {
             break;
         }
 
         switch (opt) {
+            /* Operations */
+            case 'd':
+                config->op |= OP_DL;
+                break;
+            case 'i':
+                config->op |= OP_INFO;
+                break;
             case 's':
                 config->op |= OP_SEARCH;
                 break;
             case 'u':
                 config->op |= OP_UPDATE;
                 break;
-            case 'i':
-                config->op |= OP_INFO;
-                break;
-            case 'd':
-                config->op |= OP_DL;
-                break;
+
+            /* Options */
             case 'c':
                 config->color = 1;
-                break;
-            case 'v':
-                config->verbose++;
                 break;
             case 'f':
                 config->force = 1;
                 break;
             case 'q':
                 config->quiet = 1;
+                break;
+            case 't':
+                if (config->download_dir) {
+                    free(config->download_dir);
+                }
+                config->download_dir = strndup(optarg, PATH_MAX);
+            case 'v':
+                config->verbose++;
                 break;
             case '?': 
                 return 1;
