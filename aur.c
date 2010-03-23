@@ -29,7 +29,7 @@
 
 /* Local */
 #include "aur.h"
-#include "json.h"
+#include "fetch.h"
 #include "util.h"
 
 extern int opt_mask;

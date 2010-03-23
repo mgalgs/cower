@@ -1,5 +1,5 @@
 /*
- *  json.h
+ *  fetch.h
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _JSON_H
-#define _JSON_H
+#ifndef _FETCH_H
+#define _FETCH_H
 
 struct write_result {
     char *data;
@@ -25,4 +25,4 @@ struct write_result {
 
 char *curl_get_json(const char*);
 
-#endif /* _JSON_H */
+#endif /* _FETCh_H */

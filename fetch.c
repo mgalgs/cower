@@ -1,5 +1,5 @@
 /*
- *  json.c
+ *  fetch.c
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 
 /* Local */
 #include "aur.h"
-#include "json.h"
+#include "fetch.h"
 
 extern CURL *curl;
 

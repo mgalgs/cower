@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-O2 -pipe -Wall -pedantic -std=c99
-DEBUG=
-OBJ=util.o json.o aur.o alpmhelper.o
+DEBUG=-g
+OBJ=alpmhelper.o aur.o fetch.o util.o
 LINKOPT=-ljansson -lcurl -lalpm
 
 all: cower
@@ -9,16 +9,16 @@ all: cower
 cower: cower.c $(OBJ)
 	$(CC) $(CFLAGS) $< $(OBJ) -o $@ $(LINKOPT) $(DEBUG)
 
-util.o: util.c util.h
-	$(CC) $(CFLAGS) $< -c $(DEBUG)
-
-json.o: json.c json.h
+alpmhelper.o: alpmhelper.c alpmhelper.h
 	$(CC) $(CFLAGS) $< -c $(DEBUG)
 
 aur.o: aur.c aur.h
 	$(CC) $(CFLAGS) $< -c $(DEBUG)
 
-alpmhelper.o: alpmhelper.c alpmhelper.h
+fetch.o: fetch.c fetch.h
+	$(CC) $(CFLAGS) $< -c $(DEBUG)
+
+util.o: util.c util.h
 	$(CC) $(CFLAGS) $< -c $(DEBUG)
 
 clean:
