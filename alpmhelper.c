@@ -30,7 +30,6 @@
 #include "conf.h"
 #include "util.h"
 
-extern int opt_mask;
 static pmdb_t *db_local;
 
 void alpm_quick_init() {

@@ -33,13 +33,17 @@
 #include "fetch.h"
 #include "util.h"
 
-extern int opt_mask;
-extern int oper_mask;
-
+/** 
+* @brief search for updates to foreign packages
+* 
+* @param foreign    an alpm_list_t of foreign pacman packages
+* 
+* @return number of updates available
+*/
 int aur_find_updates(alpm_list_t *foreign) {
 
     alpm_list_t *i;
-    int ret = 1;
+    int ret = 0;
 
     /* Iterate over foreign packages */
     for (i = foreign; i; i = alpm_list_next(i)) {
@@ -49,7 +53,7 @@ int aur_find_updates(alpm_list_t *foreign) {
         json_t *infojson = aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO,
             alpm_pkg_get_name(pmpkg));
 
-        if (infojson == NULL) {
+        if (infojson == NULL) { /* Not found, next candidate */
             json_decref(infojson);
             continue;
         }
@@ -67,7 +71,7 @@ int aur_find_updates(alpm_list_t *foreign) {
             continue;
         }
 
-        ret = 0;
+        ret++; /* Found an update, increment */
         if (config->op & OP_DL) { /* -d found with -u */
             aur_get_tarball(infojson);
         } else {
@@ -100,11 +104,10 @@ int aur_get_tarball(json_t *root) {
     int result = 0;
     json_t *pkginfo;
 
-    if (config->download_dir == NULL) { /* Use pwd */
+    if (config->download_dir == NULL) /* Use pwd */
         dir = getcwd(NULL, 0);
-    } else { /* TODO: Implement */
+    else /* TODO: Implement */
         dir = config->download_dir;
-    }
 
     /* Point to the juicy bits of the JSON */
     pkginfo = json_object_get(root, "results");
@@ -127,11 +130,10 @@ int aur_get_tarball(json_t *root) {
     filename++; /* Get rid of the leading slash */
 
     if (file_exists(fullpath) && ! config->force) {
-        if (config->color) {
+        if (config->color)
             cfprintf(stderr, "%<%s%>", RED, "error:");
-        } else {
+        else
             fprintf(stderr, "error:");
-        }
 
         fprintf(stderr, " %s already exists.\nUse -f to force this operation.\n",
             fullpath);
@@ -148,25 +150,22 @@ int aur_get_tarball(json_t *root) {
             curl_easy_cleanup(curl);
             curl_global_cleanup();
 
-            if (config->color) {
+            if (config->color)
                 cprintf("%<%s%> downloaded to %<%s%>\n",
                     WHITE, pkgname, GREEN, dir);
-            } else {
+            else
                 printf("%s downloaded to %s\n", pkgname, dir);
-            }
 
             fclose(fd);
 
             /* Fork off bsdtar to extract the taurball */
             pid_t pid; pid = fork();
-            if (pid == 0) { /* Child process */
+            if (pid == 0) /* Child process */
                 result = execlp("bsdtar", "bsdtar", "-xf", fullpath, NULL);
-            } else { /* Back in the parent, waiting for child to finish */
+            else /* Back in the parent, waiting for child to finish */
                 while (! waitpid(pid, NULL, WNOHANG));
-                if (! result) { /* If we get here, bsdtar finished successfully */
+                if (! result) /* If we get here, bsdtar finished successfully */
                     unlink(fullpath);
-                }
-            }
         } else {
             fprintf(stderr, "Error writing to path: %s\n", dir);
             result = 1;
