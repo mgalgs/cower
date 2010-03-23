@@ -106,12 +106,7 @@ int aur_get_tarball(json_t *root) {
     if (config->download_dir == NULL) /* Use pwd */
         dir = getcwd(NULL, 0);
     else {
-        if (*(config->download_dir) == '/') { /* Absolute path passed */
-            dir = config->download_dir;
-        } else {
-            /* Resolve relative path to full */
-            dir = realpath(config->download_dir, NULL);
-        }
+        dir = realpath(config->download_dir, NULL);
     }
 
     if (! file_exists(dir)) {
