@@ -214,7 +214,7 @@ int file_exists(const char* filename) {
 
     struct stat st;
 
-    return stat(filename, &st);
+    return ! stat(filename, &st);
 }
 
 /*
