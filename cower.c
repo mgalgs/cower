@@ -89,7 +89,7 @@ static int parseargs(int argc, char **argv) {
                 break;
             case 't':
                 if (config->download_dir) {
-                    free(config->download_dir);
+                    free((void*)config->download_dir);
                 }
                 config->download_dir = strndup(optarg, PATH_MAX);
             case 'v':
