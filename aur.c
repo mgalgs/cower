@@ -62,7 +62,7 @@ int aur_find_updates(alpm_list_t *foreign) {
         local_ver = alpm_pkg_get_version(pmpkg);
 
         /* Version check */
-        if (alpm_pkg_vercmp(remote_ver, local_ver) < 0) {
+        if (alpm_pkg_vercmp(remote_ver, local_ver) <= 0) {
             json_decref(infojson);
             continue;
         }
