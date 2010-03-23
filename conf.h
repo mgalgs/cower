@@ -31,7 +31,7 @@ typedef struct __config_t {
     unsigned short force;
     unsigned short verbose;
     unsigned short quiet;
-    char *download_dir;
+    const char *download_dir;
 } config_t;
 
 enum {
