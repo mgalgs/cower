@@ -27,6 +27,7 @@
 
 /* Local */
 #include "alpmhelper.h"
+#include "conf.h"
 #include "util.h"
 
 extern int opt_mask;
@@ -135,14 +136,13 @@ int is_in_pacman(const char *target) {
     found_in = alpm_sync_search(p);
 
     if (found_in) {
-        opt_mask & OPT_COLOR ?
-            cfprintf(stdout, "%<%s%>", WHITE, target) :
-            printf("%s", target);
-        printf(" is available in "); 
-        opt_mask & OPT_COLOR ? 
-            cfprintf(stdout, "%<%s%>", YELLOW, alpm_db_get_name(found_in)) :
-            printf("%s", alpm_db_get_name(found_in));
-        putchar('\n');
+        if (config->color) {
+            cprintf("%<%s%> is available in %<%s%>\n",
+                WHITE, target, YELLOW, alpm_db_get_name(found_in));
+        } else {
+            printf("%s is available in %s\n",
+                target, alpm_db_get_name(found_in));
+        }
 
         alpm_list_free(p);
         return 1;

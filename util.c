@@ -165,7 +165,7 @@ void print_pkg_info(json_t *pkg) {
     printf("Number of Votes : %s\n", votes);
 
     if (config->color) {
-        cprintf("Out of Date     : %s\n", ood ? RED : GREEN, ood ? "Yes" : "No");
+        cprintf("Out of Date     : %<%s%>\n", ood ? RED : GREEN, ood ? "Yes" : "No");
     } else {
         printf("Out of Date     : %s\n", ood ? "Yes" : "No");
     }
@@ -178,7 +178,8 @@ void print_pkg_search(json_t *search) {
 
     json_t *pkg_array, *pkg;
     unsigned int i;
-    const char *name, *ver, *desc, *ood;
+    const char *name, *ver, *desc;
+    int ood;
 
     pkg_array = json_object_get(search, "results");
 
@@ -188,7 +189,7 @@ void print_pkg_search(json_t *search) {
         name = json_string_value(json_object_get(pkg, "Name"));
         ver = json_string_value(json_object_get(pkg, "Version"));
         desc = json_string_value(json_object_get(pkg, "Description"));
-        ood = json_string_value(json_object_get(pkg, "OutOfDate"));
+        ood = atoi(json_string_value(json_object_get(pkg, "OutOfDate")));
 
         if (config->quiet) {
             if (config->color) {
@@ -198,13 +199,10 @@ void print_pkg_search(json_t *search) {
             }
         } else {
             if (config->color) {
-                cprintf("%<aur/%>", MAGENTA);
-                cprintf("%<%s%>", WHITE, name);
-                cprintf("%<%s%>", ood ? RED : GREEN, ver);
+                cprintf("%<aur/%>%<%s%> %<%s%>\n",
+                    MAGENTA, WHITE, name, ood ? RED : GREEN, ver);
             } else {
-                printf("aur/%s %s", name, ver);
-
-                printf("%s", ver);
+                printf("aur/%s %s\n", name, ver);
             }
             printf("    %s\n", desc);
         }

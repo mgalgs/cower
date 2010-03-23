@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-O2 -pipe -Wall -pedantic -std=c99
 DEBUG=-g
-OBJ=alpmhelper.o aur.o fetch.o util.o
+OBJ=alpmhelper.o aur.o conf.o fetch.o util.o
 LINKOPT=-ljansson -lcurl -lalpm
 
 all: cower
@@ -13,6 +13,9 @@ alpmhelper.o: alpmhelper.c alpmhelper.h
 	$(CC) $(CFLAGS) $< -c $(DEBUG)
 
 aur.o: aur.c aur.h
+	$(CC) $(CFLAGS) $< -c $(DEBUG)
+
+conf.o: conf.c conf.h
 	$(CC) $(CFLAGS) $< -c $(DEBUG)
 
 fetch.o: fetch.c fetch.h

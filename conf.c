@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <jansson.h>
+
 #include "conf.h"
 #include "util.h"
 
@@ -35,7 +37,13 @@ config_t *config_new(void) {
             return(NULL);
     }
 
-    /* Define default options here */
+    /* default options */
+    newconfig->op = 0;
+    newconfig->download_dir = NULL;
+    newconfig->color = 0;
+    newconfig->force = 0;
+    newconfig->quiet = 0;
+    newconfig->verbose = 0;
 
     return newconfig;
 }
@@ -48,6 +56,7 @@ int config_free(config_t *oldconfig) {
 
     /* free malloc'd strings within config */
 
+    free(oldconfig);
     oldconfig = NULL;
 
     return 0;

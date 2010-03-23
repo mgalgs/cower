@@ -29,15 +29,17 @@
 
 /* Local */
 #include "aur.h"
+#include "conf.h"
 #include "fetch.h"
 #include "util.h"
 
 extern int opt_mask;
 extern int oper_mask;
 
-void aur_find_updates(alpm_list_t *foreign) {
+int aur_find_updates(alpm_list_t *foreign) {
 
     alpm_list_t *i;
+    int ret = 0;
 
     /* Iterate over foreign packages */
     for (i = foreign; i; i = alpm_list_next(i)) {
@@ -49,40 +51,43 @@ void aur_find_updates(alpm_list_t *foreign) {
 
         if (infojson != NULL) { /* Yes, I do exist! */
             json_t *pkg;
-            const char *aur_ver, *local_ver;
+            const char *remote_ver, *local_ver;
 
             pkg = json_object_get(infojson, "results");
-            aur_ver = json_string_value(json_object_get(pkg, "Version"));
+            remote_ver = json_string_value(json_object_get(pkg, "Version"));
             local_ver = alpm_pkg_get_version(pmpkg);
 
             /* Version check */
-            if (alpm_pkg_vercmp(aur_ver, local_ver) > 0) {
-                if (oper_mask & OPER_DOWNLOAD) { /* -d found with -u */
-                        aur_get_tarball(infojson, NULL);
+            if (alpm_pkg_vercmp(remote_ver, local_ver) > 0) {
+                ret = 1;
+                if (config->op & OP_DL) { /* -d found with -u */
+                    aur_get_tarball(infojson);
                 } else {
-                    if (opt_mask & OPT_COLOR) {
-                        cfprintf(stdout, "%<%s%>\n", WHITE, alpm_pkg_get_name(pmpkg));
-                        if (! (opt_mask & OPT_QUIET)) {
-                            putchar(' ');
-                            cfprintf(stdout, "%<%s%> -> %<%s%>\n",
-                                GREEN, local_ver, GREEN, aur_ver);
+                    if (config->color) {
+                        cprintf("%<%s%>\n", WHITE, alpm_pkg_get_name(pmpkg));
+                        if (! config->quiet) {
+                            cprintf(" %<%s%> -> %<%s%>\n",
+                                GREEN, local_ver, GREEN, remote_ver);
                         }
                     } else {
-                        if (! (opt_mask & OPT_QUIET)) {
-                            printf("%s %s -> %s\n", alpm_pkg_get_name(pmpkg),
-                                local_ver, aur_ver);
+                        if (! config->quiet) {
+                            printf("%s %s -> %s\n",
+                                alpm_pkg_get_name(pmpkg), local_ver, remote_ver);
                         } else {
                             printf("%s\n", alpm_pkg_get_name(pmpkg));
                         }
                     }
                 }
             }
+
             json_decref(infojson);
         }
     }
+
+    return ret;
 }
 
-int aur_get_tarball(json_t *root, char *target_dir) {
+int aur_get_tarball(json_t *root) {
 
     CURL *curl;
     FILE *fd;
@@ -91,10 +96,10 @@ int aur_get_tarball(json_t *root, char *target_dir) {
     int result = 0;
     json_t *pkginfo;
 
-    if (target_dir == NULL) { /* Use pwd */
+    if (config->download_dir == NULL) { /* Use pwd */
         dir = getcwd(NULL, 0);
     } else { /* TODO: Implement the option for this */
-        dir = target_dir;
+        dir = config->download_dir;
     }
 
     /* Point to the juicy bits of the JSON */
@@ -117,11 +122,16 @@ int aur_get_tarball(json_t *root, char *target_dir) {
 
     filename++; /* Get rid of the leading slash */
 
-    if (file_exists(fullpath) && ! (opt_mask & OPT_FORCE)) {
-        opt_mask & OPT_COLOR ? cfprintf(stderr, "%<%s%>", RED, "error:") :
+    if (file_exists(fullpath) && ! (config->force)) {
+        if (config->color) {
+            cfprintf(stderr, "%<%s%>", RED, "error:");
+        } else {
             fprintf(stderr, "error:");
-        fprintf(stderr, " %s already exists.\nUse -f to force this operation.\n", 
+        }
+
+        fprintf(stderr, " %s already exists.\nUse -f to force this operation.\n",
             fullpath);
+
         result = 1;
     } else {
         fd = fopen(filename, "w");
@@ -134,14 +144,16 @@ int aur_get_tarball(json_t *root, char *target_dir) {
             curl_easy_cleanup(curl);
             curl_global_cleanup();
 
-            opt_mask & OPT_COLOR ? 
-                cfprintf(stdout, "%<%s%>\n", WHITE, pkgname) : printf(pkgname);
-            printf(" downloaded to ");
-            opt_mask & OPT_COLOR ? 
-                cfprintf(stdout, "%<%s%>\n", GREEN, dir) : printf(dir);
+            if (config->color) {
+                cprintf("%<%s%> downloaded to %<%s%>\n",
+                    WHITE, pkgname, GREEN, dir);
+            } else {
+                printf("%s downloaded to %s\n", pkgname, dir);
+            }
 
             fclose(fd);
 
+            /* Fork off bsdtar to extract the taurball */
             pid_t pid; pid = fork();
             if (pid == 0) { /* Child process */
                 result = execlp("bsdtar", "bsdtar", "-xf", fullpath, NULL);

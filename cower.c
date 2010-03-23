@@ -29,6 +29,7 @@
 /* Local */
 #include "alpmhelper.h"
 #include "aur.h"
+#include "conf.h"
 #include "util.h"
 
 CURL *curl; /* curl agent for interaction with AUR */
@@ -61,28 +62,28 @@ static int parseargs(int argc, char **argv) {
 
         switch (opt) {
             case 's':
-                oper_mask |= OPER_SEARCH;
+                config->op |= OP_SEARCH;
                 break;
             case 'u':
-                oper_mask |= OPER_UPDATE;
+                config->op |= OP_UPDATE;
                 break;
             case 'i':
-                oper_mask |= OPER_INFO;
+                config->op |= OP_INFO;
                 break;
             case 'd':
-                oper_mask |= OPER_DOWNLOAD;
+                config->op |= OP_DL;
                 break;
             case 'c':
-                opt_mask |= OPT_COLOR;
+                config->color = 1;
                 break;
             case 'v':
-                opt_mask |= OPT_VERBOSE;
+                config->verbose++;
                 break;
             case 'f':
-                opt_mask |= OPT_FORCE;
+                config->force = 1;
                 break;
             case 'q':
-                opt_mask |= OPT_QUIET;
+                config->quiet = 1;
                 break;
             case '?': 
                 return 1;
@@ -117,6 +118,8 @@ printf(" General options:\n\
 
 int main(int argc, char **argv) {
 
+    config = config_new();
+
     int ret;
     ret = parseargs(argc, argv);
 
@@ -124,7 +127,7 @@ int main(int argc, char **argv) {
      * to ensure that we catch the possibility of a download flag
      * being passed along with it.
      */
-    if (oper_mask & OPER_UPDATE) { /* 8 */
+    if (config->op & OP_UPDATE) { /* 8 */
         curl = curl_easy_init();
         alpm_quick_init();
         alpm_list_t *foreign = alpm_query_search(NULL);
@@ -133,7 +136,7 @@ int main(int argc, char **argv) {
             aur_find_updates(foreign);
         }
         alpm_list_free(foreign);
-    } else if (oper_mask & OPER_DOWNLOAD) { /* 4 */
+    } else if (config->op & OP_DL) { /* 4 */
         /* Query alpm for the existance of this package. If it's not in the 
          * sync, do an info query on the package in the AUR. Does it exist?
          * If yes, pass it to aur_get_tarball.
@@ -148,10 +151,10 @@ int main(int argc, char **argv) {
                 json_t *infojson = 
                     aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO, i->data);
                 if (infojson) { /* Found it in the AUR */
-                    aur_get_tarball(infojson, NULL);
+                    aur_get_tarball(infojson);
                     json_decref(infojson);
                 } else { /* Not found anywhere */
-                    opt_mask & OPT_COLOR ?
+                    config->color ?
                         cfprintf(stderr, "%<%s%>", RED, "error:") :
                         fprintf(stderr, "error:");
                     fprintf(stderr, " no results for \"%s\"\n",
@@ -159,7 +162,7 @@ int main(int argc, char **argv) {
                 }
             }
         }
-    } else if (oper_mask & OPER_INFO) { /* 2 */
+    } else if (config->op & OP_INFO) { /* 2 */
         curl = curl_easy_init();
         alpm_list_t *i;
         for (i = targets; i; i = alpm_list_next(i)) {
@@ -168,7 +171,7 @@ int main(int argc, char **argv) {
             if (search) {
                 print_pkg_info(search);
             } else {
-                opt_mask & OPT_COLOR ? cfprintf(stderr, "%<%s%>", RED, "error:") :
+                config->color ? cfprintf(stderr, "%<%s%>", RED, "error:") :
                     fprintf(stderr, "error:");
                 fprintf(stderr, " no results for \"%s\"\n",
                     (const char*)i->data);
@@ -176,7 +179,7 @@ int main(int argc, char **argv) {
             json_decref(search);
 
         }
-    } else if (oper_mask & OPER_SEARCH) { /* 1 */
+    } else if (config->op & OP_SEARCH) { /* 1 */
         /* TODO: Combine all searches, sort, remove dupes, and print once */
         curl = curl_easy_init();
         alpm_list_t *i;
@@ -186,7 +189,7 @@ int main(int argc, char **argv) {
             if (search) {
                 print_pkg_search(search);
             } else {
-                opt_mask & OPT_COLOR ? cfprintf(stderr, "%<%s%>", RED, "error:") :
+                config->color ? cfprintf(stderr, "%<%s%>", RED, "error:") :
                     fprintf(stderr, "error:");
                 fprintf(stderr, " no results for \"%s\"\n", 
                     (const char*)i->data);
@@ -203,6 +206,7 @@ int main(int argc, char **argv) {
     curl_global_cleanup();
     alpm_list_free(targets);
     alpm_release();
+    config_free(config);
 
     return ret;
 }
