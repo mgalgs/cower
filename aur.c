@@ -39,7 +39,7 @@ extern int oper_mask;
 int aur_find_updates(alpm_list_t *foreign) {
 
     alpm_list_t *i;
-    int ret = 0;
+    int ret = 1;
 
     /* Iterate over foreign packages */
     for (i = foreign; i; i = alpm_list_next(i)) {
@@ -49,38 +49,42 @@ int aur_find_updates(alpm_list_t *foreign) {
         json_t *infojson = aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO,
             alpm_pkg_get_name(pmpkg));
 
-        if (infojson != NULL) { /* Yes, I do exist! */
-            json_t *pkg;
-            const char *remote_ver, *local_ver;
+        if (infojson == NULL) {
+            json_decref(infojson);
+            continue;
+        }
 
-            pkg = json_object_get(infojson, "results");
-            remote_ver = json_string_value(json_object_get(pkg, "Version"));
-            local_ver = alpm_pkg_get_version(pmpkg);
+        json_t *pkg;
+        const char *remote_ver, *local_ver;
 
-            /* Version check */
-            if (alpm_pkg_vercmp(remote_ver, local_ver) > 0) {
-                ret = 1;
-                if (config->op & OP_DL) { /* -d found with -u */
-                    aur_get_tarball(infojson);
+        pkg = json_object_get(infojson, "results");
+        remote_ver = json_string_value(json_object_get(pkg, "Version"));
+        local_ver = alpm_pkg_get_version(pmpkg);
+
+        /* Version check */
+        if (alpm_pkg_vercmp(remote_ver, local_ver) < 0) {
+            json_decref(infojson);
+            continue;
+        }
+
+        ret = 0;
+        if (config->op & OP_DL) { /* -d found with -u */
+            aur_get_tarball(infojson);
+        } else {
+            if (config->color) {
+                cprintf("%<%s%>\n", WHITE, alpm_pkg_get_name(pmpkg));
+                if (! config->quiet) {
+                    cprintf(" %<%s%> -> %<%s%>\n",
+                        GREEN, local_ver, GREEN, remote_ver);
+                }
+            } else {
+                if (! config->quiet) {
+                    printf("%s %s -> %s\n",
+                        alpm_pkg_get_name(pmpkg), local_ver, remote_ver);
                 } else {
-                    if (config->color) {
-                        cprintf("%<%s%>\n", WHITE, alpm_pkg_get_name(pmpkg));
-                        if (! config->quiet) {
-                            cprintf(" %<%s%> -> %<%s%>\n",
-                                GREEN, local_ver, GREEN, remote_ver);
-                        }
-                    } else {
-                        if (! config->quiet) {
-                            printf("%s %s -> %s\n",
-                                alpm_pkg_get_name(pmpkg), local_ver, remote_ver);
-                        } else {
-                            printf("%s\n", alpm_pkg_get_name(pmpkg));
-                        }
-                    }
+                    printf("%s\n", alpm_pkg_get_name(pmpkg));
                 }
             }
-
-            json_decref(infojson);
         }
     }
 
@@ -98,7 +102,7 @@ int aur_get_tarball(json_t *root) {
 
     if (config->download_dir == NULL) { /* Use pwd */
         dir = getcwd(NULL, 0);
-    } else { /* TODO: Implement the option for this */
+    } else { /* TODO: Implement */
         dir = config->download_dir;
     }
 
@@ -122,7 +126,7 @@ int aur_get_tarball(json_t *root) {
 
     filename++; /* Get rid of the leading slash */
 
-    if (file_exists(fullpath) && ! (config->force)) {
+    if (file_exists(fullpath) && ! config->force) {
         if (config->color) {
             cfprintf(stderr, "%<%s%>", RED, "error:");
         } else {
