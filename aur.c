@@ -105,7 +105,7 @@ int aur_get_tarball(json_t *root) {
 
     if (config->download_dir == NULL) /* Use pwd */
         dir = getcwd(NULL, 0);
-    else { /* TODO: Implement */
+    else {
         if (*(config->download_dir) == '/') { /* Absolute path passed */
             dir = config->download_dir;
         } else {
@@ -119,8 +119,6 @@ int aur_get_tarball(json_t *root) {
         free((void*)dir);
         return 1;
     }
-
-    //printf("dir = %s\n", dir);
 
     /* Point to the juicy bits of the JSON */
     pkginfo = json_object_get(root, "results");
@@ -137,11 +135,8 @@ int aur_get_tarball(json_t *root) {
 
     sprintf(fullpath, "%s/%s", dir, filename);
 
-    /* DEBUG */
-    printf("fullpath = %s\n", fullpath);
-    //printf("filename = %s\n", filename);
-    //return 0;
-    /* DEBUG */
+    /* Mask .tar.gz extension to check for the exploded dir existing */
+    fullpath[strlen(fullpath) - 7] = '\0';
 
     if (file_exists(fullpath) && ! config->force) {
         if (config->color)
@@ -154,6 +149,7 @@ int aur_get_tarball(json_t *root) {
 
         result = 1;
     } else {
+        fullpath[strlen(fullpath)] = '.'; /* Unmask extension */
         fd = fopen(fullpath, "w");
         if (fd != NULL) {
             curl = curl_easy_init();
@@ -175,7 +171,6 @@ int aur_get_tarball(json_t *root) {
             /* Fork off bsdtar to extract the taurball */
             pid_t pid; pid = fork();
             if (pid == 0) { /* Child process */
-                //printf("bsdtar -C %s -xf %s\n", dir, fullpath);
                 result = execlp("bsdtar", "bsdtar", "-C", dir, "-xf", fullpath, NULL);
             } else /* Back in the parent, waiting for child to finish */
                 while (! waitpid(pid, NULL, WNOHANG));
@@ -204,8 +199,7 @@ json_t *aur_rpc_query(int type, const char* arg) {
         opt_mask & OPT_COLOR ? cfprintf(stderr, RED, "error:", NULL) : printf("error:");
         printf(" search string too small.\n");
         return NULL;
-    }
-    */
+    } */
 
     /* Format URL to pass to curl */
     snprintf(url, AUR_RPC_URL_SIZE, AUR_RPC_URL,
