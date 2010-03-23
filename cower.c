@@ -123,7 +123,8 @@ Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
 printf(" General options:\n\
   -c, --color             use colored output\n\
   -f, --force             overwrite existing files when dowloading\n\
-  -q, --quiet             output less to stdout\n\n");
+  -q, --quiet             output less to stdout\n\
+  -t DIR, --target=DIR    specify an alternate download directory\n\n");
 }
 
 int main(int argc, char **argv) {
