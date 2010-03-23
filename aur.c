@@ -16,6 +16,7 @@
  */
 
 /* Standard */
+#include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,22 +73,20 @@ int aur_find_updates(alpm_list_t *foreign) {
         }
 
         ret++; /* Found an update, increment */
-        if (config->op & OP_DL) { /* -d found with -u */
+        if (config->op & OP_DL) /* -d found with -u */
             aur_get_tarball(infojson);
-        } else {
+        else {
             if (config->color) {
                 cprintf("%<%s%>\n", WHITE, alpm_pkg_get_name(pmpkg));
-                if (! config->quiet) {
+                if (! config->quiet)
                     cprintf(" %<%s%> -> %<%s%>\n",
                         GREEN, local_ver, GREEN, remote_ver);
-                }
             } else {
-                if (! config->quiet) {
+                if (! config->quiet)
                     printf("%s %s -> %s\n",
                         alpm_pkg_get_name(pmpkg), local_ver, remote_ver);
-                } else {
+                else
                     printf("%s\n", alpm_pkg_get_name(pmpkg));
-                }
             }
         }
     }
@@ -100,14 +99,28 @@ int aur_get_tarball(json_t *root) {
     CURL *curl;
     FILE *fd;
     const char *dir, *filename, *pkgname;
-    char *fullpath, url[128];
+    char fullpath[PATH_MAX], url[128];
     int result = 0;
     json_t *pkginfo;
 
     if (config->download_dir == NULL) /* Use pwd */
         dir = getcwd(NULL, 0);
-    else /* TODO: Implement */
-        dir = config->download_dir;
+    else { /* TODO: Implement */
+        if (*(config->download_dir) == '/') { /* Absolute path passed */
+            dir = config->download_dir;
+        } else {
+            /* Resolve relative path to full */
+            dir = realpath(config->download_dir, NULL);
+        }
+    }
+
+    if (! file_exists(dir)) {
+        fprintf(stderr, "error: specified path does not exist\n");
+        free((void*)dir);
+        return 1;
+    }
+
+    //printf("dir = %s\n", dir);
 
     /* Point to the juicy bits of the JSON */
     pkginfo = json_object_get(root, "results");
@@ -120,14 +133,15 @@ int aur_get_tarball(json_t *root) {
     pkgname = json_string_value(json_object_get(pkginfo, "Name"));
 
     /* Pointer to the 'basename' of the URL Path */
-    filename = strrchr(url, '/');
+    filename = strrchr(url, '/') + 1;
 
-    /* ...and the full path to the taurball! */
-    fullpath = calloc(strlen(dir) + strlen(filename), sizeof(char) + 1);
-    fullpath = strncat(fullpath, dir, strlen(dir));
-    fullpath = strncat(fullpath, filename, strlen(filename));
+    sprintf(fullpath, "%s/%s", dir, filename);
 
-    filename++; /* Get rid of the leading slash */
+    /* DEBUG */
+    printf("fullpath = %s\n", fullpath);
+    //printf("filename = %s\n", filename);
+    //return 0;
+    /* DEBUG */
 
     if (file_exists(fullpath) && ! config->force) {
         if (config->color)
@@ -140,7 +154,7 @@ int aur_get_tarball(json_t *root) {
 
         result = 1;
     } else {
-        fd = fopen(filename, "w");
+        fd = fopen(fullpath, "w");
         if (fd != NULL) {
             curl = curl_easy_init();
             curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -160,9 +174,10 @@ int aur_get_tarball(json_t *root) {
 
             /* Fork off bsdtar to extract the taurball */
             pid_t pid; pid = fork();
-            if (pid == 0) /* Child process */
-                result = execlp("bsdtar", "bsdtar", "-xf", fullpath, NULL);
-            else /* Back in the parent, waiting for child to finish */
+            if (pid == 0) { /* Child process */
+                //printf("bsdtar -C %s -xf %s\n", dir, fullpath);
+                result = execlp("bsdtar", "bsdtar", "-C", dir, "-xf", fullpath, NULL);
+            } else /* Back in the parent, waiting for child to finish */
                 while (! waitpid(pid, NULL, WNOHANG));
                 if (! result) /* If we get here, bsdtar finished successfully */
                     unlink(fullpath);
@@ -172,7 +187,6 @@ int aur_get_tarball(json_t *root) {
         }
     }
 
-    free(fullpath);
     free((void*)dir);
 
     return result;
