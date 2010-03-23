@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-O2 -pipe -Wall -pedantic -std=c99
-DEBUG=-g
+DEBUG=
 OBJ=alpmhelper.o aur.o conf.o fetch.o util.o
 LINKOPT=-ljansson -lcurl -lalpm
 
