@@ -14,6 +14,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef _COWER_UTIL_H
+#define _COWER_UTIL_H
 
 /* constants for cfprintf */
 #define C_ON        "\033[1;3"
@@ -21,36 +23,26 @@
 
 /* colors */
 enum {
-    BLACK   = 0,    BOLDBLACK = 9,
-    RED     = 1,    BOLDRED = 10,
-    GREEN   = 2,    BOLDGREEN = 11,
-    YELLOW  = 3,    BOLDYELLOW =  12,
-    BLUE    = 4,    BOLDBLUE = 13,
+    BLACK   = 0,    BOLDBLACK   = 9,
+    RED     = 1,    BOLDRED     = 10,
+    GREEN   = 2,    BOLDGREEN   = 11,
+    YELLOW  = 3,    BOLDYELLOW  = 12,
+    BLUE    = 4,    BOLDBLUE    = 13,
     MAGENTA = 5,    BOLDMAGENTA = 14,
-    CYAN    = 6,    BOLDCYAN = 15,
-    WHITE   = 7,    BOLDWHITE = 16,
-    FG      = 8,    BOLDFG = 17
+    CYAN    = 6,    BOLDCYAN    = 15,
+    WHITE   = 7,    BOLDWHITE   = 16,
+    FG      = 8,    BOLDFG      = 17
 };
 
-/* operations */
-enum {
-    OPER_SEARCH = 1,
-    OPER_INFO = 2,
-    OPER_DOWNLOAD = 4,
-    OPER_UPDATE = 8
-};
-
-/* options */
-enum {
-    OPT_COLOR = 1,
-    OPT_VERBOSE = 2,
-    OPT_FORCE = 4,
-    OPT_QUIET = 8
-};
-
-int cfprintf(FILE*, const char*, ...);
-int file_exists(const char*);
 char *itoa(unsigned int, int);
+int cfprintf(FILE*, const char*, ...);
+int cprintf(const char*, ...);
+int file_exists(const char*);
 void print_pkg_info(json_t*);
 void print_pkg_search(json_t*);
 
+#ifndef HAVE_STRNDUP
+char *strndup(const char *s, size_t n);
+#endif
+
+#endif /* _COWER_UTIL_H */

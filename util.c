@@ -28,21 +28,20 @@
 
 /* Local */
 #include "aur.h"
+#include "conf.h"
 #include "util.h"
 
-extern int opt_mask;
-
-static char *pkg_category[] = { NULL, "None", "daemons", "devel",
-                              "editors", "emulators", "games", "gnome",
-                              "i18n", "kde", "lib", "modules",
-                              "multimedia", "network", "office", "science",
-                              "system", "x11", "xfce", "kernels" };
+static char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
+                         "emulators", "games", "gnome", "i18n", "kde", "lib",
+                         "modules", "multimedia", "network", "office",
+                         "science", "system", "x11", "xfce", "kernels" };
 
 char *itoa(unsigned int num, int base){
+
      static char retbuf[33];
      char *p;
 
-     if(base < 2 || base > 16)
+     if (base < 2 || base > 16)
          return NULL;
 
      p = &retbuf[sizeof(retbuf)-1];
@@ -51,7 +50,7 @@ char *itoa(unsigned int num, int base){
      do {
          *--p = "0123456789abcdef"[num % base];
          num /= base;
-     } while(num != 0);
+     } while (num != 0);
 
      return p;
 }
@@ -65,14 +64,12 @@ char *itoa(unsigned int num, int base){
  *
  * Returns: numbers of chars written (including term escape sequences)
  */
-int cfprintf(FILE *fd, const char* fmt, ...) {
-    va_list ap;
+static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
+
     const char *p;
     int count = 0;
 
-    int i; char *s; /* va_arg containers */
-
-    va_start(ap, fmt);
+    int i; char *s;
 
     for (p = fmt; *p != '\0'; p++) {
         if (*p != '%') {
@@ -82,15 +79,15 @@ int cfprintf(FILE *fd, const char* fmt, ...) {
 
         switch (*++p) {
         case 'c':
-            i = va_arg(ap, int);
+            i = va_arg(args, int);
             fputc(i, fd); count++;
             break;
         case 's':
-            s = va_arg(ap, char*);
+            s = va_arg(args, char*);
             count += fputs(s, fd);
             break;
         case 'd':
-            i = va_arg(ap, int);
+            i = va_arg(args, int);
             if (i < 0) {
                 i = -i;
                 fputc('-', fd);
@@ -99,7 +96,7 @@ int cfprintf(FILE *fd, const char* fmt, ...) {
             break;
         case '<': /* color on */
             count += fputs(C_ON, fd);
-            count += fputs(itoa(va_arg(ap, int), 10), fd);
+            count += fputs(itoa(va_arg(args, int), 10), fd);
             fputc('m', fd); count++;
             break;
         case '>': /* color off */
@@ -110,19 +107,35 @@ int cfprintf(FILE *fd, const char* fmt, ...) {
             break;
         }
     }
-    va_end(ap);
 
     return count;
- }
+}
+
+int cfprintf(FILE *fd, const char* fmt, ...) {
+    va_list args;
+
+    va_start(args, fmt);
+    return c_vfprintf(fd, fmt, args);
+    va_end(args);
+}
+
+int cprintf(const char* fmt, ...) {
+    va_list args;
+
+    va_start(args, fmt);
+    return c_vfprintf(stdout, fmt, args);
+    va_end(args);
+}
 
 void print_pkg_info(json_t *pkg) {
 
     json_t *pkginfo;
-    const char *id, *name, *ver, *url, *cat, *license, *votes, *ood, *desc;
+    const char *id, *name, *ver, *url, *cat, *license, *votes, *desc;
+    int ood;
 
     pkginfo = json_object_get(pkg, "results");
 
-    /* Declare pointers to json data to make my life easier */
+    /* Declare  to json data to make my life easier */
     id      = json_string_value(json_object_get(pkginfo, "ID"));
     name    = json_string_value(json_object_get(pkginfo, "Name"));
     ver     = json_string_value(json_object_get(pkginfo, "Version"));
@@ -130,44 +143,32 @@ void print_pkg_info(json_t *pkg) {
     cat     = json_string_value(json_object_get(pkginfo, "CategoryID"));
     license = json_string_value(json_object_get(pkginfo, "License"));
     votes   = json_string_value(json_object_get(pkginfo, "NumVotes"));
-    ood     = json_string_value(json_object_get(pkginfo, "OutOfDate"));
     desc    = json_string_value(json_object_get(pkginfo, "Description"));
+    ood     = atoi(json_string_value(json_object_get(pkginfo, "OutOfDate")));
 
-    /* Print it all pretty like */
-    printf("Repository      : ");
-    opt_mask & OPT_COLOR ?
-        cfprintf(stdout, "%<aur%>\n", MAGENTA) : printf("aur\n");
+    if (config->color) {
+        cprintf("Repository      : %<aur%>\n", MAGENTA);
+        cprintf("Name            : %<%s%>\n", WHITE, name);
+        cprintf("Version         : %<%s%>\n", ood ? RED : GREEN, ver);
+        cprintf("URL             : %<%s%>\n", CYAN, url);
+        cprintf("AUR Page        : %<%s%>\n", CYAN, AUR_PKG_URL_FORMAT, id);
+    } else {
+        printf("Repository      : aur\n");
+        printf("Name:           : %s\n", name);
+        printf("Version         : %s\n", ver);
+        printf("URL             : %s\n", url);
+        printf("AUR Page        : %s%s\n", AUR_PKG_URL_FORMAT, id);
+    }
 
-    printf("Name:           : ");
-    opt_mask & OPT_COLOR ?
-        cfprintf(stdout, "%<%s%>\n", WHITE, name) : printf("%s\n", name);
-
-    printf("Version         : ");
-    opt_mask & OPT_COLOR ?
-        cfprintf(stdout, "%<%s%>\n", strcmp(ood, "0") ? RED : GREEN, ver) :
-        printf("%s\n", ver);
-
-    printf("URL             : ");
-    opt_mask & OPT_COLOR ?
-        cfprintf(stdout, "%<%s%>\n", CYAN, url, NULL) : printf("%s\n", url);
-
-    printf("AUR Page        : ");
-    opt_mask & OPT_COLOR ?
-        cfprintf(stdout, "%<%s%s%>\n", CYAN, AUR_PKG_URL_FORMAT, id) :
-        printf("%s%s\n", AUR_PKG_URL_FORMAT, id);
-
-    printf("Category        : %s\n", pkg_category[atoi(cat)]);
-
+    printf("Category        : %s\n", aur_cat[atoi(cat)]);
     printf("License         : %s\n", license);
-
     printf("Number of Votes : %s\n", votes);
 
-    printf("Out Of Date     : ");
-    opt_mask & OPT_COLOR ?
-        strcmp(ood, "0") ?
-            cfprintf(stdout, "%<Yes%>\n", RED) : 
-                cfprintf(stdout, "%<No%>\n", GREEN) :
-            printf("%s\n", strcmp(ood, "0") ?  "Yes" : "No");
+    if (config->color) {
+        cprintf("Out of Date     : %s\n", ood ? RED : GREEN, ood ? "Yes" : "No");
+    } else {
+        printf("Out of Date     : %s\n", ood ? "Yes" : "No");
+    }
 
     printf("Description     : %s\n\n", desc);
 
@@ -189,33 +190,54 @@ void print_pkg_search(json_t *search) {
         desc = json_string_value(json_object_get(pkg, "Description"));
         ood = json_string_value(json_object_get(pkg, "OutOfDate"));
 
-        /* Line 1 */
-        if (! (opt_mask & OPT_QUIET))
-            opt_mask & OPT_COLOR ? 
-                cfprintf(stdout, "%<aur/%>", MAGENTA) : printf("aur/");
-        opt_mask & OPT_COLOR ? 
-            cfprintf(stdout, "%<%s%>", WHITE, name) : printf(name);
-        putchar(' ');
-        opt_mask & OPT_COLOR ?
-            cfprintf(stdout, "%<%s%>", strcmp(ood, "0") ? RED : GREEN, ver) :
-            printf("%s", ver);
-        putchar('\n');
+        if (config->quiet) {
+            if (config->color) {
+                cprintf("%<%s%>\n", WHITE, name);
+            } else {
+                printf("%s\n", name);
+            }
+        } else {
+            if (config->color) {
+                cprintf("%<aur/%>", MAGENTA);
+                cprintf("%<%s%>", WHITE, name);
+                cprintf("%<%s%>", ood ? RED : GREEN, ver);
+            } else {
+                printf("aur/%s %s", name, ver);
 
-        /* Line 2 */
-        if (! (opt_mask & OPT_QUIET))
+                printf("%s", ver);
+            }
             printf("    %s\n", desc);
+        }
 
     }
 }
 
-int file_exists(const char* fd) {
+int file_exists(const char* filename) {
 
     struct stat st;
 
-    if (! stat(fd, &st)) {
-        return 1;
-    } else {
-        return 0;
-    }
+    return stat(filename, &st);
 }
 
+/*
+#ifndef HAVE_STRNDUP
+static size_t strnlen(const char *s, size_t max) {
+
+    register const char *p;
+    for(p = s; *p && max--; ++p);
+    return(p - s);
+}
+
+char *strndup(const char *s, size_t n) {
+
+    size_t len = strnlen(s, n);
+    char *new = (char *) malloc(len + 1);
+
+    if (new == NULL)
+        return NULL;
+
+    new[len] = '\0';
+    return (char *) memcpy(new, s, len);
+}
+#endif
+*/
