@@ -58,7 +58,7 @@ char *itoa(unsigned int num, int base){
 /* Colorized printing with flexible output
  *
  * Limitation: only fixed width fields
- * Supports %d, %c, %s
+ * Supports %d, %c, %s, %l
  * Pass a number to %! in fmt to turn on color
  * Use %@ to turn off color
  *
@@ -69,7 +69,7 @@ static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
     const char *p;
     int count = 0;
 
-    int i; char *s;
+    int i; long l; char *s;
 
     for (p = fmt; *p != '\0'; p++) {
         if (*p != '%') {
@@ -93,6 +93,14 @@ static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
                 fputc('-', fd);
             }
             count += fputs(itoa(i, 10), fd);
+            break;
+        case 'l':
+            l = va_arg(args, long);
+            if (l < 0) {
+                l = -l;
+                fputc('-', fd);
+            }
+            count += fputs(itoa(l, 10), fd);
             break;
         case '<': /* color on */
             count += fputs(C_ON, fd);
