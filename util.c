@@ -159,7 +159,7 @@ void print_pkg_info(json_t *pkg) {
         cprintf("Name            : %<%s%>\n", WHITE, name);
         cprintf("Version         : %<%s%>\n", ood ? RED : GREEN, ver);
         cprintf("URL             : %<%s%>\n", CYAN, url);
-        cprintf("AUR Page        : %<%s%>\n", CYAN, AUR_PKG_URL_FORMAT, id);
+        cprintf("AUR Page        : %<%s%s%>\n", CYAN, AUR_PKG_URL_FORMAT, id);
     } else {
         printf("Repository      : aur\n");
         printf("Name:           : %s\n", name);
