@@ -151,7 +151,6 @@ int aur_get_tarball(json_t *root) {
       result = curl_easy_perform(curl);
 
       curl_easy_cleanup(curl);
-      curl_global_cleanup();
 
       if (config->color)
         cprintf("%<%s%> downloaded to %<%s%>\n", WHITE, pkgname, GREEN, dir);
