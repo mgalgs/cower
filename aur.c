@@ -109,7 +109,11 @@ int aur_get_tarball(json_t *root) {
         dir = realpath(config->download_dir, NULL);
 
     if (! dir || ! file_exists(dir)) {
-        fprintf(stderr, "error: specified path does not exist\n");
+        if (config->color) {
+            cfprintf(stderr, "%<error:%> specified path does not exist.\n", RED);
+        } else {
+            fprintf(stderr, "error: specified path does not exist.\n");
+        }
         return 1;
     }
 
@@ -204,7 +208,12 @@ json_t *aur_rpc_query(int type, const char* arg) {
 
     /* Check for error */
     if(!root) {
-        fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
+        if (config->color) {
+            cfprintf(stderr, "%<error:%> could not create JSON. Please report this error.\n",
+                RED);
+        } else {
+            fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
+        }
         return NULL;
     }
 
