@@ -110,24 +110,21 @@ int aur_get_tarball(json_t *root) {
 
     if (! dir || ! file_exists(dir)) {
         fprintf(stderr, "error: specified path does not exist\n");
-        free((void*)dir);
         return 1;
     }
 
     /* Point to the juicy bits of the JSON */
     pkginfo = json_object_get(root, "results");
+    pkgname = json_string_value(json_object_get(pkginfo, "Name"));
 
     /* Build URL. Need this to get the taurball, durp */
     snprintf(url, 128, AUR_PKG_URL,
         json_string_value(json_object_get(pkginfo, "URLPath")));
 
-    /* Point to the package name */
-    pkgname = json_string_value(json_object_get(pkginfo, "Name"));
-
     /* Pointer to the 'basename' of the URL Path */
     filename = strrchr(url, '/') + 1;
 
-    sprintf(fullpath, "%s/%s", dir, filename);
+    snprintf(fullpath, PATH_MAX, "%s/%s", dir, filename);
 
     /* Mask .tar.gz extension to check for the exploded dir existing */
     fullpath[strlen(fullpath) - 7] = '\0';
