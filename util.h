@@ -41,8 +41,4 @@ int file_exists(const char*);
 void print_pkg_info(json_t*);
 void print_pkg_search(json_t*);
 
-#ifndef HAVE_STRNDUP
-char *strndup(const char *s, size_t n);
-#endif
-
 #endif /* _COWER_UTIL_H */
