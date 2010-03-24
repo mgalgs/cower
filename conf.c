@@ -31,34 +31,34 @@
 config_t *config = NULL;
 
 config_t *config_new(void) {
-    config_t *newconfig = calloc(1, sizeof(config_t));
-    if(!newconfig) {
-        fprintf(stderr, "error allocating %zd bytes\n", sizeof(config_t));
-            return(NULL);
-    }
+  config_t *newconfig = calloc(1, sizeof(config_t));
+  if(!newconfig) {
+    fprintf(stderr, "error allocating %zd bytes\n", sizeof(config_t));
+      return(NULL);
+  }
 
-    /* default options */
-    newconfig->op = 0;
-    newconfig->download_dir = NULL;
-    newconfig->color = 0;
-    newconfig->force = 0;
-    newconfig->quiet = 0;
-    newconfig->verbose = 0;
+  /* default options */
+  newconfig->op = 0;
+  newconfig->download_dir = NULL;
+  newconfig->color = 0;
+  newconfig->force = 0;
+  newconfig->quiet = 0;
+  newconfig->verbose = 0;
 
-    return newconfig;
+  return newconfig;
 }
 
 int config_free(config_t *oldconfig) {
 
-    if (oldconfig == NULL) {
-        return -1;
-    }
+  if (oldconfig == NULL) {
+    return -1;
+  }
 
-    /* free malloc'd strings within config */
-    free((void*)oldconfig->download_dir);
-    free(oldconfig);
-    oldconfig = NULL;
+  /* free malloc'd strings within config */
+  free((void*)oldconfig->download_dir);
+  free(oldconfig);
+  oldconfig = NULL;
 
-    return 0;
+  return 0;
 }
 

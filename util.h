@@ -18,20 +18,20 @@
 #define _COWER_UTIL_H
 
 /* constants for cfprintf */
-#define C_ON        "\033[1;3"
-#define C_OFF       "\033[1;m"
+#define C_ON    "\033[1;3"
+#define C_OFF     "\033[1;m"
 
 /* colors */
 enum {
-    BLACK   = 0,    BOLDBLACK   = 9,
-    RED     = 1,    BOLDRED     = 10,
-    GREEN   = 2,    BOLDGREEN   = 11,
-    YELLOW  = 3,    BOLDYELLOW  = 12,
-    BLUE    = 4,    BOLDBLUE    = 13,
-    MAGENTA = 5,    BOLDMAGENTA = 14,
-    CYAN    = 6,    BOLDCYAN    = 15,
-    WHITE   = 7,    BOLDWHITE   = 16,
-    FG      = 8,    BOLDFG      = 17
+  BLACK   = 0,  BOLDBLACK   = 9,
+  RED     = 1,  BOLDRED     = 10,
+  GREEN   = 2,  BOLDGREEN   = 11,
+  YELLOW  = 3,  BOLDYELLOW  = 12,
+  BLUE    = 4,  BOLDBLUE    = 13,
+  MAGENTA = 5,  BOLDMAGENTA = 14,
+  CYAN    = 6,  BOLDCYAN    = 15,
+  WHITE   = 7,  BOLDWHITE   = 16,
+  FG      = 8,  BOLDFG      = 17
 };
 
 char *itoa(unsigned int, int);

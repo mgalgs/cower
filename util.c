@@ -32,27 +32,27 @@
 #include "util.h"
 
 static char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
-                         "emulators", "games", "gnome", "i18n", "kde", "lib",
-                         "modules", "multimedia", "network", "office",
-                         "science", "system", "x11", "xfce", "kernels" };
+                           "emulators", "games", "gnome", "i18n", "kde", "lib",
+                           "modules", "multimedia", "network", "office",
+                           "science", "system", "x11", "xfce", "kernels" };
 
 char *itoa(unsigned int num, int base){
 
-     static char retbuf[33];
-     char *p;
+   static char retbuf[33];
+   char *p;
 
-     if (base < 2 || base > 16)
-         return NULL;
+   if (base < 2 || base > 16)
+     return NULL;
 
-     p = &retbuf[sizeof(retbuf)-1];
-     *p = '\0';
+   p = &retbuf[sizeof(retbuf)-1];
+   *p = '\0';
 
-     do {
-         *--p = "0123456789abcdef"[num % base];
-         num /= base;
-     } while (num != 0);
+   do {
+     *--p = "0123456789abcdef"[num % base];
+     num /= base;
+   } while (num != 0);
 
-     return p;
+   return p;
 }
 
 /* Colorized printing with flexible output
@@ -66,162 +66,162 @@ char *itoa(unsigned int num, int base){
  */
 static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
 
-    const char *p;
-    int count = 0;
+  const char *p;
+  int count = 0;
 
-    int i; long l; char *s;
+  int i; long l; char *s;
 
-    for (p = fmt; *p != '\0'; p++) {
-        if (*p != '%') {
-            fputc(*p, fd); count++;
-            continue;
-        }
-
-        switch (*++p) {
-        case 'c':
-            i = va_arg(args, int);
-            fputc(i, fd); count++;
-            break;
-        case 's':
-            s = va_arg(args, char*);
-            count += fputs(s, fd);
-            break;
-        case 'd':
-            i = va_arg(args, int);
-            if (i < 0) {
-                i = -i;
-                fputc('-', fd);
-            }
-            count += fputs(itoa(i, 10), fd);
-            break;
-        case 'l':
-            l = va_arg(args, long);
-            if (l < 0) {
-                l = -l;
-                fputc('-', fd);
-            }
-            count += fputs(itoa(l, 10), fd);
-            break;
-        case '<': /* color on */
-            count += fputs(C_ON, fd);
-            count += fputs(itoa(va_arg(args, int), 10), fd);
-            fputc('m', fd); count++;
-            break;
-        case '>': /* color off */
-            count += fputs(C_OFF, fd);
-            break;
-        case '%':
-            fputc('%', fd); count++;
-            break;
-        }
+  for (p = fmt; *p != '\0'; p++) {
+    if (*p != '%') {
+      fputc(*p, fd); count++;
+      continue;
     }
 
-    return count;
+    switch (*++p) {
+    case 'c':
+      i = va_arg(args, int);
+      fputc(i, fd); count++;
+      break;
+    case 's':
+      s = va_arg(args, char*);
+      count += fputs(s, fd);
+      break;
+    case 'd':
+      i = va_arg(args, int);
+      if (i < 0) {
+        i = -i;
+        fputc('-', fd);
+      }
+      count += fputs(itoa(i, 10), fd);
+      break;
+    case 'l':
+      l = va_arg(args, long);
+      if (l < 0) {
+        l = -l;
+        fputc('-', fd);
+      }
+      count += fputs(itoa(l, 10), fd);
+      break;
+    case '<': /* color on */
+      count += fputs(C_ON, fd);
+      count += fputs(itoa(va_arg(args, int), 10), fd);
+      fputc('m', fd); count++;
+      break;
+    case '>': /* color off */
+      count += fputs(C_OFF, fd);
+      break;
+    case '%':
+      fputc('%', fd); count++;
+      break;
+    }
+  }
+
+  return count;
 }
 
 int cfprintf(FILE *fd, const char* fmt, ...) {
-    va_list args;
+  va_list args;
 
-    va_start(args, fmt);
-    return c_vfprintf(fd, fmt, args);
-    va_end(args);
+  va_start(args, fmt);
+  return c_vfprintf(fd, fmt, args);
+  va_end(args);
 }
 
 int cprintf(const char* fmt, ...) {
-    va_list args;
+  va_list args;
 
-    va_start(args, fmt);
-    return c_vfprintf(stdout, fmt, args);
-    va_end(args);
+  va_start(args, fmt);
+  return c_vfprintf(stdout, fmt, args);
+  va_end(args);
 }
 
 void print_pkg_info(json_t *pkg) {
 
-    json_t *pkginfo;
-    const char *id, *name, *ver, *url, *cat, *license, *votes, *desc;
-    int ood;
+  json_t *pkginfo;
+  const char *id, *name, *ver, *url, *cat, *license, *votes, *desc;
+  int ood;
 
-    pkginfo = json_object_get(pkg, "results");
+  pkginfo = json_object_get(pkg, "results");
 
-    /* Declare  to json data to make my life easier */
-    id      = json_string_value(json_object_get(pkginfo, "ID"));
-    name    = json_string_value(json_object_get(pkginfo, "Name"));
-    ver     = json_string_value(json_object_get(pkginfo, "Version"));
-    url     = json_string_value(json_object_get(pkginfo, "URL"));
-    cat     = json_string_value(json_object_get(pkginfo, "CategoryID"));
-    license = json_string_value(json_object_get(pkginfo, "License"));
-    votes   = json_string_value(json_object_get(pkginfo, "NumVotes"));
-    desc    = json_string_value(json_object_get(pkginfo, "Description"));
-    ood     = atoi(json_string_value(json_object_get(pkginfo, "OutOfDate")));
+  /* Declare  to json data to make my life easier */
+  id      = json_string_value(json_object_get(pkginfo, "ID"));
+  name    = json_string_value(json_object_get(pkginfo, "Name"));
+  ver     = json_string_value(json_object_get(pkginfo, "Version"));
+  url     = json_string_value(json_object_get(pkginfo, "URL"));
+  cat     = json_string_value(json_object_get(pkginfo, "CategoryID"));
+  license = json_string_value(json_object_get(pkginfo, "License"));
+  votes   = json_string_value(json_object_get(pkginfo, "NumVotes"));
+  desc    = json_string_value(json_object_get(pkginfo, "Description"));
+  ood     = atoi(json_string_value(json_object_get(pkginfo, "OutOfDate")));
 
-    if (config->color) {
-        cprintf("Repository      : %<aur%>\n", MAGENTA);
-        cprintf("Name            : %<%s%>\n", WHITE, name);
-        cprintf("Version         : %<%s%>\n", ood ? RED : GREEN, ver);
-        cprintf("URL             : %<%s%>\n", CYAN, url);
-        cprintf("AUR Page        : %<%s%s%>\n", CYAN, AUR_PKG_URL_FORMAT, id);
-    } else {
-        printf("Repository      : aur\n");
-        printf("Name:           : %s\n", name);
-        printf("Version         : %s\n", ver);
-        printf("URL             : %s\n", url);
-        printf("AUR Page        : %s%s\n", AUR_PKG_URL_FORMAT, id);
-    }
+  if (config->color) {
+    cprintf("Repository      : %<aur%>\n", MAGENTA);
+    cprintf("Name            : %<%s%>\n", WHITE, name);
+    cprintf("Version         : %<%s%>\n", ood ? RED : GREEN, ver);
+    cprintf("URL             : %<%s%>\n", CYAN, url);
+    cprintf("AUR Page        : %<%s%s%>\n", CYAN, AUR_PKG_URL_FORMAT, id);
+  } else {
+    printf("Repository      : aur\n");
+    printf("Name:           : %s\n", name);
+    printf("Version         : %s\n", ver);
+    printf("URL             : %s\n", url);
+    printf("AUR Page        : %s%s\n", AUR_PKG_URL_FORMAT, id);
+  }
 
-    printf("Category        : %s\n", aur_cat[atoi(cat)]);
-    printf("License         : %s\n", license);
-    printf("Number of Votes : %s\n", votes);
+  printf("Category        : %s\n", aur_cat[atoi(cat)]);
+  printf("License         : %s\n", license);
+  printf("Number of Votes : %s\n", votes);
 
-    if (config->color) {
-        cprintf("Out of Date     : %<%s%>\n", ood ? RED : GREEN, ood ? "Yes" : "No");
-    } else {
-        printf("Out of Date     : %s\n", ood ? "Yes" : "No");
-    }
+  if (config->color) {
+    cprintf("Out of Date     : %<%s%>\n", ood ? RED : GREEN, ood ? "Yes" : "No");
+  } else {
+    printf("Out of Date     : %s\n", ood ? "Yes" : "No");
+  }
 
-    printf("Description     : %s\n\n", desc);
+  printf("Description     : %s\n\n", desc);
 
 }
 
 void print_pkg_search(json_t *search) {
 
-    json_t *pkg_array, *pkg;
-    unsigned int i;
-    const char *name, *ver, *desc;
-    int ood;
+  json_t *pkg_array, *pkg;
+  unsigned int i;
+  const char *name, *ver, *desc;
+  int ood;
 
-    pkg_array = json_object_get(search, "results");
+  pkg_array = json_object_get(search, "results");
 
-    for (i = 0; i < json_array_size(pkg_array); i++) {
-        pkg = json_array_get(pkg_array, i);
+  for (i = 0; i < json_array_size(pkg_array); i++) {
+    pkg = json_array_get(pkg_array, i);
 
-        name = json_string_value(json_object_get(pkg, "Name"));
-        ver = json_string_value(json_object_get(pkg, "Version"));
-        desc = json_string_value(json_object_get(pkg, "Description"));
-        ood = atoi(json_string_value(json_object_get(pkg, "OutOfDate")));
+    name = json_string_value(json_object_get(pkg, "Name"));
+    ver  = json_string_value(json_object_get(pkg, "Version"));
+    desc = json_string_value(json_object_get(pkg, "Description"));
+    ood  = atoi(json_string_value(json_object_get(pkg, "OutOfDate")));
 
-        if (config->quiet) {
-            if (config->color) {
-                cprintf("%<%s%>\n", WHITE, name);
-            } else {
-                printf("%s\n", name);
-            }
-        } else {
-            if (config->color) {
-                cprintf("%<aur/%>%<%s%> %<%s%>\n",
-                    MAGENTA, WHITE, name, ood ? RED : GREEN, ver);
-            } else {
-                printf("aur/%s %s\n", name, ver);
-            }
-            printf("    %s\n", desc);
-        }
-
+    if (config->quiet) {
+      if (config->color) {
+        cprintf("%<%s%>\n", WHITE, name);
+      } else {
+        printf("%s\n", name);
+      }
+    } else {
+      if (config->color) {
+        cprintf("%<aur/%>%<%s%> %<%s%>\n",
+          MAGENTA, WHITE, name, ood ? RED : GREEN, ver);
+      } else {
+        printf("aur/%s %s\n", name, ver);
+      }
+      printf("    %s\n", desc);
     }
+
+  }
 }
 
 int file_exists(const char* filename) {
 
-    struct stat st;
+  struct stat st;
 
-    return ! stat(filename, &st);
+  return ! stat(filename, &st);
 }
 

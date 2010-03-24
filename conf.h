@@ -23,22 +23,22 @@
 
 typedef struct __config_t {
 
-    /* operations */
-    int op;
+  /* operations */
+  int op;
 
-    /* options */
-    unsigned short color;
-    unsigned short force;
-    unsigned short verbose;
-    unsigned short quiet;
-    const char *download_dir;
+  /* options */
+  unsigned short color;
+  unsigned short force;
+  unsigned short verbose;
+  unsigned short quiet;
+  const char *download_dir;
 } config_t;
 
 enum {
-    OP_SEARCH = 1,
-    OP_INFO = 2,
-    OP_DL = 4,
-    OP_UPDATE = 8
+  OP_SEARCH = 1,
+  OP_INFO = 2,
+  OP_DL = 4,
+  OP_UPDATE = 8
 };
 
 /* global config variable */

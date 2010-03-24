@@ -19,8 +19,8 @@
 #define _FETCH_H
 
 struct write_result {
-    char *data;
-    int pos;
+  char *data;
+  int pos;
 };
 
 char *curl_get_json(const char*);
