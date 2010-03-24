@@ -105,11 +105,10 @@ int aur_get_tarball(json_t *root) {
 
     if (config->download_dir == NULL) /* Use pwd */
         dir = getcwd(NULL, 0);
-    else {
+    else
         dir = realpath(config->download_dir, NULL);
-    }
 
-    if (! file_exists(dir)) {
+    if (! dir || ! file_exists(dir)) {
         fprintf(stderr, "error: specified path does not exist\n");
         free((void*)dir);
         return 1;
