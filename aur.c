@@ -168,7 +168,11 @@ int aur_get_tarball(json_t *root) {
                 if (! result) /* If we get here, bsdtar finished successfully */
                     unlink(fullpath);
         } else {
-            fprintf(stderr, "Error writing to path: %s\n", dir);
+            if (config->color) {
+                cfprintf(stderr, "%<error:%> could not write to path %s\n", RED, dir);
+            } else {
+                fprintf(stderr, "error: could not write to path: %s\n", dir);
+            }
             result = 1;
         }
     }
@@ -184,13 +188,6 @@ json_t *aur_rpc_query(int type, const char* arg) {
     char url[AUR_RPC_URL_SIZE];
     json_t *root, *return_type;
     json_error_t error;
-
-    /* Limit size of query
-    if (type == AUR_RPC_QUERY_TYPE_SEARCH && strlen(arg) < 3) {
-        opt_mask & OPT_COLOR ? cfprintf(stderr, RED, "error:", NULL) : printf("error:");
-        printf(" search string too small.\n");
-        return NULL;
-    } */
 
     /* Format URL to pass to curl */
     snprintf(url, AUR_RPC_URL_SIZE, AUR_RPC_URL,

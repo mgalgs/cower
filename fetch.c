@@ -27,7 +27,9 @@
 
 /* Local */
 #include "aur.h"
+#include "conf.h"
 #include "fetch.h"
+#include "util.h"
 
 extern CURL *curl;
 
@@ -36,7 +38,11 @@ static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream)
     struct write_result *result = (struct write_result *)stream;
 
     if(result->pos + size * nmemb >= JSON_BUFFER_SIZE - 1) {
-        fprintf(stderr, "curl error: too small buffer\n");
+        if (config->color) {
+            cfprintf(stderr, "%<curl error:%> buffer too small.\n", RED);
+        } else {
+            fprintf(stderr, "curl error: buffer too small.\n");
+        }
         return 0;
     }
 
@@ -53,7 +59,16 @@ char *curl_get_json(const char *url) {
     long code;
 
     data = malloc(JSON_BUFFER_SIZE);
-    if(!curl || !data) return NULL;
+    if(!curl || !data) {
+        if (config->color) {
+            cfprintf(stderr, "%<error:%> could not allocate %d bytes.\n",
+                RED, JSON_BUFFER_SIZE);
+        } else {
+            fprintf(stderr, "error: could not allocate %d bytes.\n",
+                JSON_BUFFER_SIZE);
+        }
+        return NULL;
+    }
 
     struct write_result write_result = {
         .data = data,
@@ -66,7 +81,12 @@ char *curl_get_json(const char *url) {
 
     status = curl_easy_perform(curl);
     if(status != 0) {
-        fprintf(stderr, "curl error: unable to request data from %s\n", url);
+        if (config->color) {
+            cfprintf(stderr, "%<curl error:%> unable to request data from %s\n",
+                RED, url);
+        } else {
+            fprintf(stderr, "curl error: unable to request data from %s\n", url);
+        }
         fprintf(stderr, "%s\n", curl_easy_strerror(status));
         free(data);
         return NULL;
@@ -74,7 +94,12 @@ char *curl_get_json(const char *url) {
 
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
     if(code != 200) {
-        fprintf(stderr, "curl error: server responded with code %ld\n", code);
+        if (config->color) {
+            cfprintf(stderr, "%<curl error:%> server responded with code %l",
+                RED, code);
+        } else {
+            fprintf(stderr, "curl error: server responded with code %ld\n", code);
+        }
         free(data);
         return NULL;
     }
