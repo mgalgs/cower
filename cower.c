@@ -195,6 +195,16 @@ int main(int argc, char **argv) {
         curl = curl_easy_init();
         alpm_list_t *i;
         for (i = targets; i; i = alpm_list_next(i)) {
+            if (strlen(i->data) < 3) {
+                if (config->color) {
+                    cfprintf(stderr, "%<error:%> search string '%s' too short.\n",
+                        RED, (const char*)i->data);
+                } else {
+                    fprintf(stderr, "error: search string '%s' too short.\n",
+                        (const char*)i->data);
+                }
+                continue;
+            }
             json_t *search = aur_rpc_query(AUR_RPC_QUERY_TYPE_SEARCH, i->data);
 
             if (search) {
