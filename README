@@ -1,10 +1,10 @@
-Ideally, this will act a lot like Slurpy, but powered by the awesomeness of C.
+Make your packages cower in fear.
 
 Dependencies:
-	> jansson
-	> curl
-	> libarchive (for bsdtar)
-	> pacman (for libalpm)
+	> jansson (JSON handling)
+	> curl (fetching)
+	> libarchive (taurball extraction)
+	> pacman (pacman functions and data structures)
 
 Features:
 	> Search package(s)
