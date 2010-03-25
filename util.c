@@ -90,7 +90,7 @@ static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
       i = va_arg(args, int);
       if (i < 0) {
         i = -i;
-        fputc('-', fd);
+        fputc('-', fd); count++;
       }
       count += fputs(itoa(i, 10), fd);
       break;
@@ -98,7 +98,7 @@ static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
       l = va_arg(args, long);
       if (l < 0) {
         l = -l;
-        fputc('-', fd);
+        fputc('-', fd); count++;
       }
       count += fputs(itoa(l, 10), fd);
       break;
