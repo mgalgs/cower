@@ -121,18 +121,24 @@ static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
 
 int cfprintf(FILE *fd, const char* fmt, ...) {
   va_list args;
+  int result;
 
   va_start(args, fmt);
-  return c_vfprintf(fd, fmt, args);
+  result = c_vfprintf(fd, fmt, args);
   va_end(args);
+
+  return result;
 }
 
 int cprintf(const char* fmt, ...) {
   va_list args;
+  int result;
 
   va_start(args, fmt);
-  return c_vfprintf(stdout, fmt, args);
+  result = c_vfprintf(stdout, fmt, args);
   va_end(args);
+
+  return result;
 }
 
 void print_pkg_info(json_t *pkg) {
