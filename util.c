@@ -39,6 +39,70 @@ static char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
 
 
 /** 
+* @brief slimmed down printf with added patterns for color
+* 
+* @param fd       file descriptor to write to
+* @param fmt      string describing output
+* @param args     data to replace patterns in fmt
+* 
+* @return number of characters printed
+*/
+static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
+
+  const char *p;
+  int count = 0;
+
+  int i; long l; char *s;
+
+  for (p = fmt; *p != '\0'; p++) {
+    if (*p != '%') {
+      fputc(*p, fd); count++;
+      continue;
+    }
+
+    switch (*++p) {
+    case 'c':
+      i = va_arg(args, int);
+      fputc(i, fd); count++;
+      break;
+    case 's':
+      s = va_arg(args, char*);
+      count += fputs(s, fd);
+      break;
+    case 'd':
+      i = va_arg(args, int);
+      if (i < 0) {
+        i = -i;
+        fputc('-', fd); count++;
+      }
+      count += fputs(itoa(i, 10), fd);
+      break;
+    case 'l':
+      l = va_arg(args, long);
+      if (l < 0) {
+        l = -l;
+        fputc('-', fd); count++;
+      }
+      count += fputs(itoa(l, 10), fd);
+      break;
+    case '<': /* color on */
+      count += fputs(C_ON, fd);
+      count += fputs(itoa(va_arg(args, int), 10), fd);
+      fputc('m', fd); count++;
+      break;
+    case '>': /* color off */
+      count += fputs(C_OFF, fd);
+      break;
+    case '%':
+      fputc('%', fd); count++;
+      break;
+    }
+  }
+
+  return count;
+}
+
+/** 
 * @brief aggregate a search JSON array into an alpm_list_t
 * 
 * @param agg      alpm_list_t to aggregate into
@@ -104,70 +168,6 @@ int cprintf(const char* fmt, ...) {
   va_end(args);
 
   return result;
-}
-
-/** 
-* @brief slimmed down printf with added patterns for color
-* 
-* @param fd       file descriptor to write to
-* @param fmt      string describing output
-* @param args     data to replace patterns in fmt
-* 
-* @return number of characters printed
-*/
-static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
-
-  const char *p;
-  int count = 0;
-
-  int i; long l; char *s;
-
-  for (p = fmt; *p != '\0'; p++) {
-    if (*p != '%') {
-      fputc(*p, fd); count++;
-      continue;
-    }
-
-    switch (*++p) {
-    case 'c':
-      i = va_arg(args, int);
-      fputc(i, fd); count++;
-      break;
-    case 's':
-      s = va_arg(args, char*);
-      count += fputs(s, fd);
-      break;
-    case 'd':
-      i = va_arg(args, int);
-      if (i < 0) {
-        i = -i;
-        fputc('-', fd); count++;
-      }
-      count += fputs(itoa(i, 10), fd);
-      break;
-    case 'l':
-      l = va_arg(args, long);
-      if (l < 0) {
-        l = -l;
-        fputc('-', fd); count++;
-      }
-      count += fputs(itoa(l, 10), fd);
-      break;
-    case '<': /* color on */
-      count += fputs(C_ON, fd);
-      count += fputs(itoa(va_arg(args, int), 10), fd);
-      fputc('m', fd); count++;
-      break;
-    case '>': /* color off */
-      count += fputs(C_OFF, fd);
-      break;
-    case '%':
-      fputc('%', fd); count++;
-      break;
-    }
-  }
-
-  return count;
 }
 
 /** 
