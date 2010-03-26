@@ -210,10 +210,8 @@ int main(int argc, char **argv) {
         }
         continue;
       }
-      json_t *search = aur_rpc_query(AUR_RPC_QUERY_TYPE_SEARCH, i->data);
 
-      /* Aggregate searches into a single list */
-      agg = agg_search_results(agg, json_object_get(search, "results"));
+      json_t *search = aur_rpc_query(AUR_RPC_QUERY_TYPE_SEARCH, i->data);
 
       if (! search) {
         if (config->color) {
@@ -223,10 +221,16 @@ int main(int argc, char **argv) {
         }
         fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
       }
+
+      /* Aggregate searches into a single list */
+      agg = agg_search_results(agg, json_object_get(search, "results"));
+
       json_decref(search);
     }
 
+    /* Finally, print the aggregated search results */
     print_pkg_search(agg);
+
     alpm_list_free_inner(agg, _aur_pkg_free);
     alpm_list_free(agg);
   } else {
