@@ -31,6 +31,7 @@
 #include "alpmhelper.h"
 #include "aur.h"
 #include "conf.h"
+#include "package.h"
 #include "util.h"
 
 CURL *curl; /* curl agent for interaction with AUR */
@@ -197,6 +198,7 @@ int main(int argc, char **argv) {
     /* TODO: Combine all searches, sort, remove dupes, and print once */
     curl = curl_easy_init();
     alpm_list_t *i;
+    alpm_list_t *agg = NULL;
     for (i = targets; i; i = alpm_list_next(i)) {
       if (strlen(i->data) < 3) { /* Enforce minimum search length */
         if (config->color) {
@@ -210,9 +212,10 @@ int main(int argc, char **argv) {
       }
       json_t *search = aur_rpc_query(AUR_RPC_QUERY_TYPE_SEARCH, i->data);
 
-      if (search) {
-        print_pkg_search(search);
-      } else {
+      /* Aggregate searches */
+      agg = agg_search_results(agg, json_object_get(search, "results"));
+
+      if (! search) {
         if (config->color) {
           cfprintf(stderr, "%<%s%>", RED, "error:");
         } else {
@@ -222,6 +225,14 @@ int main(int argc, char **argv) {
       }
       json_decref(search);
     }
+    /* Print aggregated search result here */
+    alpm_list_t *k;
+    for (k = agg; k; k = alpm_list_next(k)) {
+      aur_pkg_t *aurpkg = alpm_list_getdata(k);
+      printf("%s\n", aurpkg->name);
+    }
+    alpm_list_free_inner(agg, _aur_pkg_free);
+    alpm_list_free(agg);
   } else {
     usage();
     ret = 1;
