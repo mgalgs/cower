@@ -1,4 +1,4 @@
-Make your packages cower in fear.
+Make your taurballs cower in fear.
 
 Dependencies:
 	> jansson (JSON handling)
@@ -16,6 +16,5 @@ Features:
 TODO pile:
 	> Download dependencies
 	> verbosity levels
-	> sort search results
 	> upload taurballs
 
