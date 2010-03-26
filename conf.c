@@ -18,19 +18,47 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* standard */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
+/* non-standard */
 #include <alpm.h>
 #include <jansson.h>
 
+/* local */
 #include "conf.h"
 #include "util.h"
 
-/* global config variable */
-config_t *config = NULL;
+config_t *config = NULL; /* global config variable */
 
+/** 
+* @brief free a config struct
+* 
+* @param oldconfig  config to be freed
+* 
+* @return 0 on success, non-zero on failure
+*/
+int config_free(config_t *oldconfig) {
+
+  if (oldconfig == NULL) {
+    return -1;
+  }
+
+  /* free malloc'd strings within config */
+  free((void*)oldconfig->download_dir);
+  free(oldconfig);
+  oldconfig = NULL;
+
+  return 0;
+}
+
+/** 
+* @brief allocate a new config struct
+* 
+* @return the new config, or NULL on failure
+*/
 config_t *config_new(void) {
   config_t *newconfig = calloc(1, sizeof(config_t));
   if(!newconfig) {
@@ -47,19 +75,5 @@ config_t *config_new(void) {
   newconfig->verbose = 0;
 
   return newconfig;
-}
-
-int config_free(config_t *oldconfig) {
-
-  if (oldconfig == NULL) {
-    return -1;
-  }
-
-  /* free malloc'd strings within config */
-  free((void*)oldconfig->download_dir);
-  free(oldconfig);
-  oldconfig = NULL;
-
-  return 0;
 }
 

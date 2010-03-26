@@ -44,8 +44,8 @@ enum {
 /* global config variable */
 extern config_t *config;
 
-config_t *config_new(void);
 int config_free(config_t *oldconfig);
+config_t *config_new(void);
 
 #endif /* _COWER_CONF_H */
 
