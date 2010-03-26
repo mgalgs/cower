@@ -77,7 +77,7 @@ int aur_find_updates(alpm_list_t *foreign) {
       aur_get_tarball(infojson);
     else {
       if (config->color) {
-        cprintf("%<%s%>\n", WHITE, alpm_pkg_get_name(pmpkg));
+        cprintf("%<%s%>", WHITE, alpm_pkg_get_name(pmpkg));
         if (! config->quiet)
           cprintf(" %<%s%> -> %<%s%>\n", GREEN, local_ver, GREEN, remote_ver);
       } else {
