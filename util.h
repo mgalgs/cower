@@ -21,6 +21,8 @@
 #define C_ON    "\033[1;3"
 #define C_OFF     "\033[1;m"
 
+#define FREE(p) do { free((void*)p); p = NULL; } while (0)
+
 /* colors */
 enum {
   BLACK   = 0,  BOLDBLACK   = 9,
