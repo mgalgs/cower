@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <alpm.h>
 #include <jansson.h>
 
 #include "conf.h"
