@@ -15,6 +15,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _PACKAGE_H
+#define _PACKAGE_H
+
 typedef struct __aur_pkg_t {
   const char* id;
   const char* name;
@@ -31,3 +34,5 @@ typedef struct __aur_pkg_t {
 int _aur_pkg_cmp(void*, void*);
 void _aur_pkg_free(void*);
 aur_pkg_t *json_to_aur_pkg(json_t*);
+
+#endif /* _PACKAGE_H */
