@@ -41,6 +41,6 @@ int cfprintf(FILE*, const char*, ...);
 int cprintf(const char*, ...);
 int file_exists(const char*);
 void print_pkg_info(json_t*);
-void print_pkg_search(json_t*);
+void print_pkg_search(alpm_list_t*);
 
 #endif /* _COWER_UTIL_H */
