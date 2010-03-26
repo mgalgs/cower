@@ -15,20 +15,36 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* standard */
 #include <stdlib.h>
 #include <string.h>
 
+/* non-standard */
 #include <alpm.h>
 #include <jansson.h>
 
+/* local */
 #include "package.h"
 #include "util.h"
 
+/** 
+* @brief callback for comparing aur_pkg_t structs inside an alpm_list_t
+* 
+* @param p1   left side of the comparison
+* @param p2   right side of the comparison
+* 
+* @return     results of strcmp on names of each aur_pkg_t
+*/
 int _aur_pkg_cmp(void *p1, void *p2) {
   return strcmp((const char*)((aur_pkg_t*)p1)->name,
                 (const char*)((aur_pkg_t*)p2)->name);
 }
 
+/** 
+* @brief callback for freeing an aur_pkg_t inside an alpm_list_t
+* 
+* @param pkg  aur_pkg_t struct inside linked list
+*/
 void _aur_pkg_free(void *pkg) {
 
   FREE(((aur_pkg_t*)pkg)->id);
@@ -44,6 +60,13 @@ void _aur_pkg_free(void *pkg) {
   FREE(pkg);
 }
 
+/** 
+* @brief convert a JSON to an aur_pkg_t
+* 
+* @param j    JSON to convert
+* 
+* @return     aur_pkg_t representation of JSON
+*/
 aur_pkg_t *json_to_aur_pkg(json_t* j) {
 
   aur_pkg_t *newpkg;
