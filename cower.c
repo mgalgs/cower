@@ -212,7 +212,7 @@ int main(int argc, char **argv) {
       }
       json_t *search = aur_rpc_query(AUR_RPC_QUERY_TYPE_SEARCH, i->data);
 
-      /* Aggregate searches */
+      /* Aggregate searches into a single list */
       agg = agg_search_results(agg, json_object_get(search, "results"));
 
       if (! search) {
@@ -225,12 +225,8 @@ int main(int argc, char **argv) {
       }
       json_decref(search);
     }
-    /* Print aggregated search result here */
-    alpm_list_t *k;
-    for (k = agg; k; k = alpm_list_next(k)) {
-      aur_pkg_t *aurpkg = alpm_list_getdata(k);
-      printf("%s\n", aurpkg->name);
-    }
+
+    print_pkg_search(agg);
     alpm_list_free_inner(agg, _aur_pkg_free);
     alpm_list_free(agg);
   } else {
