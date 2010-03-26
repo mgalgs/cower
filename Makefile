@@ -17,16 +17,16 @@ aur.o: aur.c aur.h
 	$(CC) $(CFLAGS) $< -c $(MACROS) $(DEBUG)
 
 conf.o: conf.c conf.h
-	$(CC) $(CFLAGS) $< -c $(MACROS)$(DEBUG)
+	$(CC) $(CFLAGS) $< -c $(MACROS) $(DEBUG)
 
 fetch.o: fetch.c fetch.h
-	$(CC) $(CFLAGS) $< -c $(MACROS)$(DEBUG)
+	$(CC) $(CFLAGS) $< -c $(MACROS) $(DEBUG)
 
 package.o: package.c package.h
-	$(CC) $(CFLAGS) $< -c $(MACROS)$(DEBUG)
+	$(CC) $(CFLAGS) $< -c $(MACROS) $(DEBUG)
 
 util.o: util.c util.h
-	$(CC) $(CFLAGS) $< -c $(MACROS)$(DEBUG)
+	$(CC) $(CFLAGS) $< -c $(MACROS) $(DEBUG)
 
 clean:
 	@rm *.o
