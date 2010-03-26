@@ -40,16 +40,20 @@ static char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
 
 alpm_list_t *agg_search_results(alpm_list_t *agg, json_t *search) {
 
+  alpm_list_t *new_search;
   aur_pkg_t *aur_pkg;
   int n;
   json_t *j_pkg;
 
+  new_search = NULL;
+
   for (n = 0; n < json_array_size(search); n++) {
     j_pkg = json_array_get(search, n);
     aur_pkg = json_to_aur_pkg(j_pkg);
-
-    agg = alpm_list_add_sorted(agg, aur_pkg, (alpm_list_fn_cmp)_aur_pkg_cmp);
+    new_search = alpm_list_add_sorted(new_search, aur_pkg, (alpm_list_fn_cmp)_aur_pkg_cmp);
   }
+
+  agg = alpm_list_mmerge(agg, new_search, (alpm_list_fn_cmp)_aur_pkg_cmp);
 
   return agg;
 
