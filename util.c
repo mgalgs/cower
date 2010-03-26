@@ -40,7 +40,6 @@ static char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
 
 alpm_list_t *agg_search_results(alpm_list_t *agg, json_t *search) {
 
-  alpm_list_t *i;
   aur_pkg_t *aur_pkg;
   int n;
   json_t *j_pkg;
@@ -208,37 +207,29 @@ void print_pkg_info(json_t *pkg) {
 
 }
 
-void print_pkg_search(json_t *search) {
+void print_pkg_search(alpm_list_t *search) {
 
-  json_t *pkg_array, *pkg;
-  unsigned int i;
-  const char *name, *ver, *desc;
-  int ood;
+  alpm_list_t *i;
+  aur_pkg_t *pkg;
 
-  pkg_array = json_object_get(search, "results");
+  for (i = search; i; i = alpm_list_next(i)) {
 
-  for (i = 0; i < json_array_size(pkg_array); i++) {
-    pkg = json_array_get(pkg_array, i);
-
-    name = json_string_value(json_object_get(pkg, "Name"));
-    ver  = json_string_value(json_object_get(pkg, "Version"));
-    desc = json_string_value(json_object_get(pkg, "Description"));
-    ood  = atoi(json_string_value(json_object_get(pkg, "OutOfDate")));
+    pkg = (aur_pkg_t*)alpm_list_getdata(i);
 
     if (config->quiet) {
       if (config->color) {
-        cprintf("%<%s%>\n", WHITE, name);
+        cprintf("%<%s%>\n", WHITE, pkg->name);
       } else {
-        printf("%s\n", name);
+        printf("%s\n", pkg->name);
       }
     } else {
       if (config->color) {
         cprintf("%<aur/%>%<%s%> %<%s%>\n",
-          MAGENTA, WHITE, name, ood ? RED : GREEN, ver);
+          MAGENTA, WHITE, pkg->name, pkg->ood ? RED : GREEN, pkg->ver);
       } else {
-        printf("aur/%s %s\n", name, ver);
+        printf("aur/%s %s\n", pkg->name, pkg->ver);
       }
-      printf("    %s\n", desc);
+      printf("    %s\n", pkg->desc);
     }
 
   }
