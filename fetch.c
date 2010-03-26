@@ -34,6 +34,35 @@
 extern CURL *curl; /* Global CURL object */
 
 /** 
+* @brief write CURL response to a struct
+* 
+* @param ptr      pointer to the data retrieved by CURL
+* @param size     size of each element
+* @param nmemb    number of elements in the stream
+* @param stream   data structure to append to
+* 
+* @return number of bytes written
+*/
+static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
+
+  struct write_result *result = (struct write_result *)stream;
+
+  if(result->pos + size * nmemb >= JSON_BUFFER_SIZE - 1) {
+    if (config->color) {
+      cfprintf(stderr, "%<curl error:%> buffer too small.\n", RED);
+    } else {
+      fprintf(stderr, "curl error: buffer too small.\n");
+    }
+    return 0;
+  }
+
+  memcpy(result->data + result->pos, ptr, size * nmemb);
+  result->pos += size * nmemb;
+
+  return size * nmemb;
+}
+
+/** 
 * @brief fetch a JSON from the AUR via it's RPC interface
 * 
 * @param url      URL to fetch
@@ -94,34 +123,5 @@ char *curl_get_json(const char *url) {
   data[write_result.pos] = '\0';
 
   return data;
-}
-
-/** 
-* @brief write CURL response to a struct
-* 
-* @param ptr      pointer to the data retrieved by CURL
-* @param size     size of each element
-* @param nmemb    number of elements in the stream
-* @param stream   data structure to append to
-* 
-* @return number of bytes written
-*/
-static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
-
-  struct write_result *result = (struct write_result *)stream;
-
-  if(result->pos + size * nmemb >= JSON_BUFFER_SIZE - 1) {
-    if (config->color) {
-      cfprintf(stderr, "%<curl error:%> buffer too small.\n", RED);
-    } else {
-      fprintf(stderr, "curl error: buffer too small.\n");
-    }
-    return 0;
-  }
-
-  memcpy(result->data + result->pos, ptr, size * nmemb);
-  result->pos += size * nmemb;
-
-  return size * nmemb;
 }
 
