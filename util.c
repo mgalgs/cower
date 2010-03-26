@@ -38,6 +38,14 @@ static char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
                            "science", "system", "x11", "xfce", "kernels" };
 
 
+/** 
+* @brief aggregate a search JSON array into an alpm_list_t
+* 
+* @param agg      alpm_list_t to aggregate into
+* @param search   JSON to be aggregated
+* 
+* @return head of the alpm_list_t
+*/
 alpm_list_t *agg_search_results(alpm_list_t *agg, json_t *search) {
 
   alpm_list_t *new_search;
@@ -59,34 +67,54 @@ alpm_list_t *agg_search_results(alpm_list_t *agg, json_t *search) {
 
 }
 
-char *itoa(unsigned int num, int base){
+/** 
+* @brief front end to c_vfprintf
+* 
+* @param fd       file descriptor to write to
+* @param fmt      format describing output
+* @param ...      data to replace patterns in fmt
+* 
+* @return number of characters written
+*/
+int cfprintf(FILE *fd, const char* fmt, ...) {
+  va_list args;
+  int result;
 
-   static char retbuf[33];
-   char *p;
+  va_start(args, fmt);
+  result = c_vfprintf(fd, fmt, args);
+  va_end(args);
 
-   if (base < 2 || base > 16)
-     return NULL;
-
-   p = &retbuf[sizeof(retbuf)-1];
-   *p = '\0';
-
-   do {
-     *--p = "0123456789abcdef"[num % base];
-     num /= base;
-   } while (num != 0);
-
-   return p;
+  return result;
 }
 
-/* Colorized printing with flexible output
- *
- * Limitation: only fixed width fields
- * Supports %d, %c, %s, %l
- * Pass a number to %! in fmt to turn on color
- * Use %@ to turn off color
- *
- * Returns: numbers of chars written (including term escape sequences)
- */
+/** 
+* @brief front end to c_vfprintf
+* 
+* @param fmt      format describing output
+* @param ...      data to replace patterns in fmt
+* 
+* @return number of characters written
+*/
+int cprintf(const char* fmt, ...) {
+  va_list args;
+  int result;
+
+  va_start(args, fmt);
+  result = c_vfprintf(stdout, fmt, args);
+  va_end(args);
+
+  return result;
+}
+
+/** 
+* @brief slimmed down printf with added patterns for color
+* 
+* @param fd       file descriptor to write to
+* @param fmt      string describing output
+* @param args     data to replace patterns in fmt
+* 
+* @return number of characters printed
+*/
 static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
 
   const char *p;
@@ -142,28 +170,52 @@ static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
   return count;
 }
 
-int cfprintf(FILE *fd, const char* fmt, ...) {
-  va_list args;
-  int result;
+/** 
+* @brief check for existance of a file or directory
+* 
+* @param filename file or directory to check for existance of
+* 
+* @return 1 if exists, else 0
+*/
+int file_exists(const char* filename) {
 
-  va_start(args, fmt);
-  result = c_vfprintf(fd, fmt, args);
-  va_end(args);
+  struct stat st;
 
-  return result;
+  return ! stat(filename, &st);
 }
 
-int cprintf(const char* fmt, ...) {
-  va_list args;
-  int result;
+/** 
+* @brief convert int to ascii representation
+* 
+* @param num      number to convert
+* @param base     numerical base to convert to
+* 
+* @return ascii representation of the num parameter
+*/
+char *itoa(unsigned int num, int base){
 
-  va_start(args, fmt);
-  result = c_vfprintf(stdout, fmt, args);
-  va_end(args);
+   static char retbuf[33];
+   char *p;
 
-  return result;
+   if (base < 2 || base > 16)
+     return NULL;
+
+   p = &retbuf[sizeof(retbuf)-1];
+   *p = '\0';
+
+   do {
+     *--p = "0123456789abcdef"[num % base];
+     num /= base;
+   } while (num != 0);
+
+   return p;
 }
 
+/** 
+* @brief print full information about a AUR package
+* 
+* @param pkg      JSON describing the package
+*/
 void print_pkg_info(json_t *pkg) {
 
   json_t *pkginfo;
@@ -211,6 +263,11 @@ void print_pkg_info(json_t *pkg) {
 
 }
 
+/** 
+* @brief print aggregated search results.
+* 
+* @param search     alpm_list_t packed with aur_pkg_t structs.
+*/
 void print_pkg_search(alpm_list_t *search) {
 
   alpm_list_t *i;
@@ -238,11 +295,3 @@ void print_pkg_search(alpm_list_t *search) {
 
   }
 }
-
-int file_exists(const char* filename) {
-
-  struct stat st;
-
-  return ! stat(filename, &st);
-}
-
