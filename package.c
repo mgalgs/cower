@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <alpm.h>
 #include <jansson.h>
 
 #include "package.h"
@@ -29,6 +30,7 @@ int _aur_pkg_cmp(void *p1, void *p2) {
 }
 
 void _aur_pkg_free(void *pkg) {
+
   FREE(((aur_pkg_t*)pkg)->id);
   FREE(((aur_pkg_t*)pkg)->name);
   FREE(((aur_pkg_t*)pkg)->ver);
@@ -38,6 +40,8 @@ void _aur_pkg_free(void *pkg) {
   FREE(((aur_pkg_t*)pkg)->urlpath);
   FREE(((aur_pkg_t*)pkg)->lic);
   FREE(((aur_pkg_t*)pkg)->votes);
+  
+  FREE(pkg);
 }
 
 aur_pkg_t *json_to_aur_pkg(json_t* j) {
