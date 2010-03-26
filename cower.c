@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Standard */
+/* standard */
 #include <alpm.h>
 #include <getopt.h>
 #include <linux/limits.h>
@@ -23,11 +23,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Non-standard */
+/* non-standard */
 #include <curl/curl.h>
 #include <jansson.h>
 
-/* Local */
+/* local */
 #include "alpmhelper.h"
 #include "aur.h"
 #include "conf.h"
@@ -195,7 +195,7 @@ int main(int argc, char **argv) {
 
     }
   } else if (config->op & OP_SEARCH) { /* 1 */
-    /* TODO: Combine all searches, sort, remove dupes, and print once */
+    /* TODO: remove dupes in results */
     curl = curl_easy_init();
     alpm_list_t *i;
     alpm_list_t *agg = NULL;
@@ -228,7 +228,7 @@ int main(int argc, char **argv) {
       json_decref(search);
     }
 
-    /* Finally, print the aggregated search results */
+    /* print the search results */
     print_pkg_search(agg);
 
     alpm_list_free_inner(agg, _aur_pkg_free);
