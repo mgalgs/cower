@@ -15,18 +15,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Standard */
+/* standard */
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
-/* Non-standard */
+/* non-standard */
 #include <alpm.h>
 #include <jansson.h>
 
-/* Local */
+/* local */
 #include "aur.h"
 #include "conf.h"
 #include "package.h"
