@@ -15,43 +15,31 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Standard */
+/* standard */
 #include <curl/curl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* Non-standard */
+/* non-standard */
 #include <alpm.h>
 #include <jansson.h>
 
-/* Local */
+/* local */
 #include "aur.h"
 #include "conf.h"
 #include "fetch.h"
 #include "util.h"
 
-extern CURL *curl;
+extern CURL *curl; /* Global CURL object */
 
-static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
-
-  struct write_result *result = (struct write_result *)stream;
-
-  if(result->pos + size * nmemb >= JSON_BUFFER_SIZE - 1) {
-    if (config->color) {
-      cfprintf(stderr, "%<curl error:%> buffer too small.\n", RED);
-    } else {
-      fprintf(stderr, "curl error: buffer too small.\n");
-    }
-    return 0;
-  }
-
-  memcpy(result->data + result->pos, ptr, size * nmemb);
-  result->pos += size * nmemb;
-
-  return size * nmemb;
-}
-
+/** 
+* @brief fetch a JSON from the AUR via it's RPC interface
+* 
+* @param url      URL to fetch
+* 
+* @return string representation of the JSON
+*/
 char *curl_get_json(const char *url) {
 
   CURLcode status;
@@ -106,5 +94,34 @@ char *curl_get_json(const char *url) {
   data[write_result.pos] = '\0';
 
   return data;
+}
+
+/** 
+* @brief write CURL response to a struct
+* 
+* @param ptr      pointer to the data retrieved by CURL
+* @param size     size of each element
+* @param nmemb    number of elements in the stream
+* @param stream   data structure to append to
+* 
+* @return number of bytes written
+*/
+static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
+
+  struct write_result *result = (struct write_result *)stream;
+
+  if(result->pos + size * nmemb >= JSON_BUFFER_SIZE - 1) {
+    if (config->color) {
+      cfprintf(stderr, "%<curl error:%> buffer too small.\n", RED);
+    } else {
+      fprintf(stderr, "curl error: buffer too small.\n");
+    }
+    return 0;
+  }
+
+  memcpy(result->data + result->pos, ptr, size * nmemb);
+  result->pos += size * nmemb;
+
+  return size * nmemb;
 }
 
