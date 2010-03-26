@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Standard */
+/* standard */
 #include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,12 +23,12 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-/* Non-standard */
+/* non-standard */
 #include <alpm.h>
 #include <curl/curl.h>
 #include <jansson.h>
 
-/* Local */
+/* local */
 #include "aur.h"
 #include "conf.h"
 #include "fetch.h"
@@ -92,6 +92,13 @@ int aur_find_updates(alpm_list_t *foreign) {
   return ret;
 }
 
+/** 
+* @brief download a taurball described by a JSON
+* 
+* @param root   the json describing the taurball
+* 
+* @return       0 on success, 1 on failure
+*/
 int aur_get_tarball(json_t *root) {
 
   CURL *curl;
@@ -182,6 +189,14 @@ int aur_get_tarball(json_t *root) {
   return result;
 }
 
+/** 
+* @brief send a query to the AUR's rpc interface
+* 
+* @param type   search or info
+* @param arg    argument to query
+* 
+* @return       a JSON loaded with the results of the query
+*/
 json_t *aur_rpc_query(int type, const char* arg) {
 
   char *text;
