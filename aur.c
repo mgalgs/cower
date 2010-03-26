@@ -184,7 +184,7 @@ int aur_get_tarball(json_t *root) {
     }
   }
 
-  free((void*)dir);
+  FREE(dir);
 
   return result;
 }

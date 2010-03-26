@@ -47,7 +47,7 @@ int config_free(config_t *oldconfig) {
   }
 
   /* free malloc'd strings within config */
-  free((void*)oldconfig->download_dir);
+  FREE(oldconfig->download_dir);
   free(oldconfig);
   oldconfig = NULL;
 
