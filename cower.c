@@ -43,16 +43,16 @@ static int parseargs(int argc, char **argv) {
   int option_index = 0;
   static struct option opts[] = {
     /* Operations */
-    {"search",    no_argument,    0, 's'},
-    {"update",    no_argument,    0, 'u'},
-    {"info",    no_argument,    0, 'i'},
-    {"download",  no_argument,    0, 'd'},
+    {"search",    no_argument,        0, 's'},
+    {"update",    no_argument,        0, 'u'},
+    {"info",    no_argument,          0, 'i'},
+    {"download",  no_argument,        0, 'd'},
 
     /* Options */
-    {"color",     no_argument,    0, 'c'},
-    {"verbose",   no_argument,    0, 'v'},
-    {"force",     no_argument,    0, 'f'},
-    {"quiet",     no_argument,    0, 'q'},
+    {"color",     no_argument,        0, 'c'},
+    {"verbose",   no_argument,        0, 'v'},
+    {"force",     no_argument,        0, 'f'},
+    {"quiet",     no_argument,        0, 'q'},
     {"target",    required_argument,  0, 't'},
     {0, 0, 0, 0}
   };
