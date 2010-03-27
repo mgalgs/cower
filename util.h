@@ -14,8 +14,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _COWER_UTIL_H
-#define _COWER_UTIL_H
+#ifndef _UTIL_H
+#define _UTIL_H
 
 /* constants for cfprintf */
 #define C_ON    "\033[1;3"
@@ -36,6 +36,7 @@ enum {
   FG      = 8,  BOLDFG      = 17
 };
 
+alpm_list_t *agg_search_results(alpm_list_t*, json_t*);
 char *itoa(unsigned int, int);
 int cfprintf(FILE*, const char*, ...);
 int cprintf(const char*, ...);
@@ -43,4 +44,4 @@ int file_exists(const char*);
 void print_pkg_info(json_t*);
 void print_pkg_search(alpm_list_t*);
 
-#endif /* _COWER_UTIL_H */
+#endif /* _UTIL_H */
