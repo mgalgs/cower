@@ -18,8 +18,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _COWER_CONF_H
-#define _COWER_CONF_H
+#ifndef _CONF_H
+#define _CONF_H
 
 typedef struct __config_t {
 
@@ -47,5 +47,5 @@ extern config_t *config;
 int config_free(config_t *oldconfig);
 config_t *config_new(void);
 
-#endif /* _COWER_CONF_H */
+#endif /* _CONF_H */
 

@@ -25,4 +25,4 @@ struct write_result {
 
 char *curl_get_json(const char*);
 
-#endif /* _FETCh_H */
+#endif /* _FETCH_H */
