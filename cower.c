@@ -200,7 +200,7 @@ int main(int argc, char **argv) {
     alpm_list_t *i;
     alpm_list_t *agg = NULL;
     for (i = targets; i; i = alpm_list_next(i)) {
-      if (strlen(i->data) < 3) { /* Enforce minimum search length */
+      if (strlen(i->data) < 2) { /* Enforce minimum search length */
         if (config->color) {
           cfprintf(stderr, "%<error:%> search string '%s' too short.\n",
             RED, (const char*)i->data);
