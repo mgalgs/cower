@@ -131,6 +131,15 @@ alpm_list_t *agg_search_results(alpm_list_t *agg, json_t *search) {
 
 }
 
+/** 
+* @brief modified merge sort which deletes duplicates
+* 
+* @param left     left side of merge
+* @param right    right side of merge
+* @param fn       callback function for deleting data
+* 
+* @return the merged list
+*/
 alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm_list_fn_cmp fn) {
   alpm_list_t *newlist, *lp;
 
@@ -139,20 +148,20 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
   if (right == NULL)
     return left;
 
-  int compare;
-NO_THIS_IS_EVIL:;
-  compare = fn(left->data, right->data);
-  if (compare > 0) {
-    newlist = right;
-    right = right->next;
-  }
-  else if (compare < 0) {
-    newlist = left;
-    left = left->next;
-  } else {
-    left = alpm_list_remove_item(left, left, _aur_pkg_free);
-    goto NO_THIS_IS_EVIL;
-  }
+  int compare = 0;
+  do {
+    compare = fn(left->data, right->data);
+    if (compare > 0) {
+      newlist = right;
+      right = right->next;
+    }
+    else if (compare < 0) {
+      newlist = left;
+      left = left->next;
+    } else {
+      left = alpm_list_remove_item(left, left, _aur_pkg_free);
+    }
+  } while (compare == 0);
 
   newlist->prev = NULL;
   newlist->next = NULL;
@@ -195,8 +204,15 @@ NO_THIS_IS_EVIL:;
 }
 
 
-/* Removes a single node from a linked list and returns
- * next item in the list or NULL */
+/** 
+* @brief Remove a specific node from a list
+* 
+* @param haystack     list to remove from
+* @param needle       node within list to remove
+* @param fn           comparison function
+* 
+* @return the node following the removed node
+*/
 alpm_list_t *alpm_list_remove_item(alpm_list_t *haystack, alpm_list_t *needle, alpm_list_fn_free fn) {
 
   alpm_list_t *tmp = NULL;
