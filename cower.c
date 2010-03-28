@@ -111,7 +111,7 @@ static int parseargs(int argc, char **argv) {
 }
 
 static void usage() {
-printf("cower v1.0.0\n\
+printf("cower v1.0.1\n\
 Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
 \n\
  Operations:\n\
