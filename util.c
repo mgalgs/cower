@@ -195,7 +195,6 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
     right->prev = lp;
   }
 
-  lp = newlist;
   while(lp && lp->next) {
     lp = lp->next;
   }
