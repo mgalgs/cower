@@ -141,14 +141,15 @@ alpm_list_t *agg_search_results(alpm_list_t *agg, json_t *search) {
 * @return the merged list
 */
 alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm_list_fn_cmp fn) {
-  alpm_list_t *newlist, *lp;
+
+  alpm_list_t *lp, *newlist;
+  int compare;
 
   if (left == NULL)
     return right;
   if (right == NULL)
     return left;
 
-  int compare = 0;
   do {
     compare = fn(left->data, right->data);
     if (compare > 0) {
