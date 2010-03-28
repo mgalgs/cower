@@ -139,13 +139,19 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
   if (right == NULL)
     return left;
 
-  if (fn(left->data, right->data) < 0) {
-    newlist = left;
-    left = left->next;
-  }
-  else {
+  int compare;
+NO_THIS_IS_EVIL:;
+  compare = fn(left->data, right->data);
+  if (compare > 0) {
     newlist = right;
     right = right->next;
+  }
+  else if (compare < 0) {
+    newlist = left;
+    left = left->next;
+  } else {
+    left = alpm_list_remove_item(left, left, _aur_pkg_free);
+    goto NO_THIS_IS_EVIL;
   }
 
   newlist->prev = NULL;
@@ -153,7 +159,7 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
   lp = newlist;
 
   while ((left != NULL) && (right != NULL)) {
-    int compare = fn(left->data, right->data);
+    compare = fn(left->data, right->data);
     if (compare < 0) {
       lp->next = left;
       left->prev = lp;
@@ -179,8 +185,6 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
     right->prev = lp;
   }
 
-  /* Find our tail pointer
-   * TODO maintain this in the algorithm itself */
   lp = newlist;
   while(lp && lp->next) {
     lp = lp->next;
