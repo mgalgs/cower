@@ -111,7 +111,7 @@ static int parseargs(int argc, char **argv) {
 }
 
 static void usage() {
-printf("cower v1.0.1\n\
+printf("cower v%s\n\
 Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
 \n\
  Operations:\n\
@@ -120,7 +120,7 @@ Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
   -s, --search            search for PACKAGE(s)\n\
   -u, --update            check for updates against AUR. If the \n\
                             --download flag is passed as well,\n\
-                            fetch each available update.\n\n");
+                            fetch each available update.\n\n", VERSION);
 printf(" General options:\n\
   -c, --color             use colored output\n\
   -f, --force             overwrite existing files when dowloading\n\
