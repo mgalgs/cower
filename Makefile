@@ -7,25 +7,25 @@ OBJ=alpmhelper.o aur.o conf.o fetch.o package.o util.o
 all: cower
 
 cower: cower.c $(OBJ)
-	$(CC) $(CFLAGS) $< $(OBJ) -o $@ $(LDFLAGS) $(MACROS)
+	$(CC) $(CFLAGS) $(MACROS) $(LDFLAGS) $< $(OBJ) -o $@
 
 alpmhelper.o: alpmhelper.c alpmhelper.h
-	$(CC) $(CFLAGS) -c $(MACROS) $<
+	$(CC) $(CFLAGS) $(MACROS) $< -c
 
 aur.o: aur.c aur.h
-	$(CC) $(CFLAGS) -c $(MACROS) $<
+	$(CC) $(CFLAGS) $(MACROS) $< -c
 
 conf.o: conf.c conf.h
-	$(CC) $(CFLAGS) -c $(MACROS) $<
+	$(CC) $(CFLAGS) $(MACROS) $< -c
 
 fetch.o: fetch.c fetch.h
-	$(CC) $(CFLAGS) -c $(MACROS) $<
+	$(CC) $(CFLAGS) $(MACROS) $< -c
 
 package.o: package.c package.h
-	$(CC) $(CFLAGS) -c $(MACROS) $<
+	$(CC) $(CFLAGS) $(MACROS) $< -c
 
 util.o: util.c util.h
-	$(CC) $(CFLAGS) -c $(MACROS) $<
+	$(CC) $(CFLAGS) $(MACROS) $< -c
 
 clean:
 	@rm *.o
