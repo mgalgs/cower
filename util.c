@@ -125,11 +125,110 @@ alpm_list_t *agg_search_results(alpm_list_t *agg, json_t *search) {
     new_search = alpm_list_add_sorted(new_search, aur_pkg, (alpm_list_fn_cmp)_aur_pkg_cmp);
   }
 
-  agg = alpm_list_mmerge(agg, new_search, (alpm_list_fn_cmp)_aur_pkg_cmp);
+  agg = alpm_list_mmerge_dedupe(agg, new_search, (alpm_list_fn_cmp)_aur_pkg_cmp);
 
   return agg;
 
 }
+
+alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm_list_fn_cmp fn) {
+  alpm_list_t *newlist, *lp;
+
+  if (left == NULL)
+    return right;
+  if (right == NULL)
+    return left;
+
+  if (fn(left->data, right->data) < 0) {
+    newlist = left;
+    left = left->next;
+  }
+  else {
+    newlist = right;
+    right = right->next;
+  }
+
+  newlist->prev = NULL;
+  newlist->next = NULL;
+  lp = newlist;
+
+  while ((left != NULL) && (right != NULL)) {
+    int compare = fn(left->data, right->data);
+    if (compare < 0) {
+      lp->next = left;
+      left->prev = lp;
+      left = left->next;
+    }
+    else if (compare > 0) {
+      lp->next = right;
+      right->prev = lp;
+      right = right->next;
+    } else {
+      left = alpm_list_remove_item(left, left, _aur_pkg_free);
+      continue;
+    }
+    lp = lp->next;
+    lp->next = NULL;
+  }
+  if (left != NULL) {
+    lp->next = left;
+    left->prev = lp;
+  }
+  else if (right != NULL) {
+    lp->next = right;
+    right->prev = lp;
+  }
+
+  /* Find our tail pointer
+   * TODO maintain this in the algorithm itself */
+  lp = newlist;
+  while(lp && lp->next) {
+    lp = lp->next;
+  }
+  newlist->prev = lp;
+
+  return(newlist);
+}
+
+
+/* Removes a single node from a linked list and returns
+ * next item in the list or NULL */
+alpm_list_t *alpm_list_remove_item(alpm_list_t *haystack, alpm_list_t *needle, alpm_list_fn_free fn) {
+
+  alpm_list_t *tmp = NULL;
+
+  if (needle == haystack) {
+    haystack = needle->next;
+    if (haystack) {
+      haystack->prev = needle->prev;
+    }
+    needle->prev = NULL;
+  } else if (needle == haystack->prev) {
+    if (needle->prev) {
+      needle->prev->next = needle->next;
+      haystack->prev = needle->prev;
+      needle->prev = NULL;
+    }
+  } else {
+    if (needle->next) {
+      needle->next->prev = needle->prev;
+    }
+    if (needle->prev) {
+      needle->prev->next = needle->next;
+    }
+  }
+
+  tmp = needle->next;
+
+  if (needle->data) {
+    fn(needle->data);
+  }
+
+  free(needle);
+
+  return tmp;
+}
+
 
 /** 
 * @brief front end to c_vfprintf
