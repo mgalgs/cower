@@ -113,7 +113,7 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
 */
 alpm_list_t *alpm_list_remove_item(alpm_list_t *haystack, alpm_list_t *needle, alpm_list_fn_free fn) {
 
-  alpm_list_t *tmp = NULL;
+  alpm_list_t *next = NULL;
 
   if (needle == haystack) {
     haystack = needle->next;
@@ -136,7 +136,7 @@ alpm_list_t *alpm_list_remove_item(alpm_list_t *haystack, alpm_list_t *needle, a
     }
   }
 
-  tmp = needle->next;
+  next = needle->next;
 
   if (needle->data) {
     fn(needle->data);
@@ -144,7 +144,7 @@ alpm_list_t *alpm_list_remove_item(alpm_list_t *haystack, alpm_list_t *needle, a
 
   free(needle);
 
-  return tmp;
+  return next;
 }
 
 /** 
