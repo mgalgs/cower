@@ -40,7 +40,7 @@
 * @return number of bytes written
 */
 static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
-  fprintf(stderr, "DEBUG :: Entering write_response\n");
+
   struct write_result *result = (struct write_result *)stream;
 
   if(result->pos + size * nmemb >= JSON_BUFFER_SIZE - 1) {
@@ -54,8 +54,6 @@ static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream)
 
   memcpy(result->data + result->pos, ptr, size * nmemb);
   result->pos += size * nmemb;
-
-  fprintf(stderr, "DEBUG :: Leaving write_response\n");
 
   return size * nmemb;
 }
@@ -167,7 +165,6 @@ int aur_get_tarball(json_t *root) {
 * @return string representation of the JSON
 */
 char *curl_get_json(const char *url) {
-  fprintf(stderr, "DEBUG :: Fetching JSON\n");
 
   CURLcode status;
   char *data;
@@ -195,6 +192,7 @@ char *curl_get_json(const char *url) {
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_response);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &write_result);
+  curl_easy_setopt(curl, CURLOPT_ENCODING, "deflate, gzip");
 
   status = curl_easy_perform(curl);
   if(status != 0) {
@@ -224,7 +222,6 @@ char *curl_get_json(const char *url) {
 
   curl_easy_cleanup(curl);
 
-  fprintf(stderr, "DEBUG :: Returning JSON\n");
   return data;
 }
 
