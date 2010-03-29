@@ -1,5 +1,5 @@
 /*
- *  aur.c
+ *  download.c
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,81 +15,47 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* standard */
 #include <linux/limits.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
-#include <unistd.h>
 
-/* non-standard */
 #include <alpm.h>
-#include <curl/curl.h>
 #include <jansson.h>
 
-/* local */
-#include "aur.h"
 #include "conf.h"
-#include "fetch.h"
+#include "download.h"
 #include "util.h"
 
 /** 
-* @brief search for updates to foreign packages
+* @brief write CURL response to a struct
 * 
-* @param foreign  an alpm_list_t of foreign pacman packages
+* @param ptr      pointer to the data retrieved by CURL
+* @param size     size of each element
+* @param nmemb    number of elements in the stream
+* @param stream   data structure to append to
 * 
-* @return number of updates available
+* @return number of bytes written
 */
-int aur_find_updates(alpm_list_t *foreign) {
+static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
 
-  alpm_list_t *i;
-  int ret = 0;
+  struct write_result *result = (struct write_result *)stream;
 
-  /* Iterate over foreign packages */
-  for (i = foreign; i; i = alpm_list_next(i)) {
-    pmpkg_t *pmpkg = alpm_list_getdata(i);
-
-    /* Do I exist in the AUR? */
-    json_t *infojson = aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO,
-      alpm_pkg_get_name(pmpkg));
-
-    if (infojson == NULL) { /* Not found, next candidate */
-      json_decref(infojson);
-      continue;
+  if(result->pos + size * nmemb >= JSON_BUFFER_SIZE - 1) {
+    if (config->color) {
+      cfprintf(stderr, "%<curl error:%> buffer too small.\n", RED);
+    } else {
+      fprintf(stderr, "curl error: buffer too small.\n");
     }
-
-    json_t *pkg;
-    const char *remote_ver, *local_ver;
-
-    pkg = json_object_get(infojson, "results");
-    remote_ver = json_string_value(json_object_get(pkg, "Version"));
-    local_ver = alpm_pkg_get_version(pmpkg);
-
-    /* Version check */
-    if (alpm_pkg_vercmp(remote_ver, local_ver) <= 0) {
-      json_decref(infojson);
-      continue;
-    }
-
-    ret++; /* Found an update, increment */
-    if (config->op & OP_DL) /* -d found with -u */
-      aur_get_tarball(infojson);
-    else {
-      if (config->color) {
-        cprintf("%<%s%>", WHITE, alpm_pkg_get_name(pmpkg));
-        if (! config->quiet)
-          cprintf(" %<%s%> -> %<%s%>\n", GREEN, local_ver, GREEN, remote_ver);
-      } else {
-        if (! config->quiet)
-          printf("%s %s -> %s\n", alpm_pkg_get_name(pmpkg), local_ver, remote_ver);
-        else
-          printf("%s\n", alpm_pkg_get_name(pmpkg));
-      }
-    }
+    return 0;
   }
 
-  return ret;
+  memcpy(result->data + result->pos, ptr, size * nmemb);
+  result->pos += size * nmemb;
+
+  return size * nmemb;
 }
 
 /** 
@@ -189,51 +155,67 @@ int aur_get_tarball(json_t *root) {
   return result;
 }
 
+
 /** 
-* @brief send a query to the AUR's rpc interface
+* @brief fetch a JSON from the AUR via it's RPC interface
 * 
-* @param type   search or info
-* @param arg    argument to query
+* @param url      URL to fetch
 * 
-* @return       a JSON loaded with the results of the query
+* @return string representation of the JSON
 */
-json_t *aur_rpc_query(int type, const char* arg) {
+char *curl_get_json(const char *url) {
 
-  char *text;
-  char url[AUR_RPC_URL_SIZE];
-  json_t *root, *return_type;
-  json_error_t error;
+  CURLcode status;
+  char *data;
+  long code;
 
-  /* Format URL to pass to curl */
-  snprintf(url, AUR_RPC_URL_SIZE, AUR_RPC_URL,
-    type == AUR_RPC_QUERY_TYPE_INFO ? "info" : "search", arg);
-
-  text = curl_get_json(url);
-  if(!text)
-    return NULL;
-
-  /* Fetch JSON */
-  root = json_loads(text, &error);
-  free(text);
-
-  /* Check for error */
-  if(!root) {
+  data = malloc(JSON_BUFFER_SIZE);
+  if(!curl || !data) {
     if (config->color) {
-      cfprintf(stderr, "%<error:%> could not create JSON. Please report this error.\n",
-        RED);
+      cfprintf(stderr, "%<error:%> could not allocate %d bytes.\n",
+        RED, JSON_BUFFER_SIZE);
     } else {
-      fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
+      fprintf(stderr, "error: could not allocate %d bytes.\n",
+        JSON_BUFFER_SIZE);
     }
     return NULL;
   }
 
-  /* Check return type in JSON */
-  return_type = json_object_get(root, "type");
-  if (! strcmp(json_string_value(return_type), "error")) {
-    json_decref(root);
+  struct write_result write_result = {
+    .data = data,
+    .pos = 0
+  };
+
+  curl_easy_setopt(curl, CURLOPT_URL, url);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_response);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &write_result);
+
+  status = curl_easy_perform(curl);
+  if(status != 0) {
+    if (config->color) {
+      cfprintf(stderr, "%<curl error:%> unable to request data from %s\n", RED, url);
+    } else {
+      fprintf(stderr, "curl error: unable to request data from %s\n", url);
+    }
+    fprintf(stderr, "%s\n", curl_easy_strerror(status));
+    free(data);
     return NULL;
   }
 
-  return root; /* This needs to be freed in the calling function */
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+  if(code != 200) {
+    if (config->color) {
+      cfprintf(stderr, "%<curl error:%> server responded with code %l", RED, code);
+    } else {
+      fprintf(stderr, "curl error: server responded with code %ld\n", code);
+    }
+    free(data);
+    return NULL;
+  }
+
+  /* zero-terminate the result */
+  data[write_result.pos] = '\0';
+
+  return data;
 }
 

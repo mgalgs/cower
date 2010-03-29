@@ -1,5 +1,5 @@
 /*
- *  aur.h
+ *  search.h
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,26 +15,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _AUR_H
-#define _AUR_H
+#ifndef _SEARCH_H
+#define _SEARCH_H
 
-#define AUR_PKG_URL     "http://aur.archlinux.org%s"
-#define AUR_RPC_URL     "http://aur.archlinux.org/rpc.php?type=%s&arg=%s"
-#define AUR_PKG_URL_FORMAT  "http://aur.archlinux.org/packages.php?ID="
-
-#define AUR_RPC_URL_SIZE  256
-#define JSON_BUFFER_SIZE  (1024 * 1024) /* 1MiB */
-
-#define AUR_RPC_QUERY_TYPE_INFO   1
-#define AUR_RPC_QUERY_TYPE_SEARCH 2
-
-/* Updates */
-int aur_find_updates(alpm_list_t*);
-
-/* Download */
-int aur_get_tarball(json_t*);
-
-/* RPC Query */
+pmdb_t *alpm_sync_search(alpm_list_t*);
 json_t *aur_rpc_query(int, const char*);
+int is_in_pacman(const char*);
 
-#endif /* _AUR_H */
+#endif /* _SEARCH_H */

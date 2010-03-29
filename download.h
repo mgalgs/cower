@@ -1,5 +1,5 @@
 /*
- *  alpmhelper.h
+ *  download.h
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,12 +15,29 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _ALPMHELPER_H
-#define _ALPMHELPER_H
+#ifndef _DOWNLOAD_H
+#define _DOWNLOAD_H
 
-void alpm_quick_init(void);
-alpm_list_t *alpm_query_search(alpm_list_t*);
-pmdb_t *alpm_sync_search(alpm_list_t*);
-int is_in_pacman(const char*);
+#include <curl/curl.h>
 
-#endif /* _ALPMHELPER_H */
+#define AUR_PKG_URL         "http://aur.archlinux.org%s"
+#define AUR_RPC_URL         "http://aur.archlinux.org/rpc.php?type=%s&arg=%s"
+#define AUR_PKG_URL_FORMAT  "http://aur.archlinux.org/packages.php?ID="
+
+#define AUR_RPC_URL_SIZE    256
+#define JSON_BUFFER_SIZE    (1024 * 1024) /* 1MiB */
+
+#define AUR_RPC_QUERY_TYPE_INFO   1
+#define AUR_RPC_QUERY_TYPE_SEARCH 2
+
+struct write_result {
+  char *data;
+  int pos;
+};
+
+extern CURL *curl; /* Global CURL object */
+
+int aur_get_tarball(json_t*);
+char *curl_get_json(const char*);
+
+#endif /* _DOWNLOAD_H */

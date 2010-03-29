@@ -1,5 +1,5 @@
 /*
- *  alpmhelper.c
+ *  search.c
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,59 +15,29 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Standard */
+/* standard */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
-/* Non-standard */
+/* non-standard */
 #include <alpm.h>
 #include <jansson.h>
 
-/* Local */
-#include "alpmhelper.h"
+/* local */
+#include "alpmutil.h"
+#include "download.h"
 #include "conf.h"
+#include "search.h"
 #include "util.h"
 
-static pmdb_t *db_local;
-
-void alpm_quick_init() {
-
-  /* TODO: Parse pacman config */
-  alpm_initialize();
-  alpm_option_set_root("/");
-  alpm_option_set_dbpath("/var/lib/pacman/");
-  alpm_db_register_sync("testing");
-  alpm_db_register_sync("community-testing");
-  alpm_db_register_sync("core");
-  alpm_db_register_sync("extra");
-  alpm_db_register_sync("community");
-  db_local = alpm_db_register_local();
-}
-
-static int is_foreign(pmpkg_t *pkg) {
-
-  const char *pkgname = alpm_pkg_get_name(pkg);
-  alpm_list_t *j;
-  alpm_list_t *sync_dbs = alpm_option_get_syncdbs();
-
-  int match = 0;
-  for(j = sync_dbs; j; j = alpm_list_next(j)) {
-    pmdb_t *db = alpm_list_getdata(j);
-    pmpkg_t *findpkg = alpm_db_get_pkg(db, pkgname);
-    if(findpkg) {
-      match = 1;
-      break;
-    }
-  }
-  if(match == 0) {
-    return 1 ;
-  }
-  return 0;
-}
-
-/* Equivalent of pacman -Qs or -Qm */
+/** 
+* @brief search alpm's local db for a package
+* 
+* @param target alpm_list_t carrying packages to search for
+* 
+* @return 
+*/
 alpm_list_t *alpm_query_search(alpm_list_t *target) {
 
   alpm_list_t *i, *searchlist, *ret = NULL;
@@ -102,7 +72,13 @@ alpm_list_t *alpm_query_search(alpm_list_t *target) {
 }
 
 
-/* Semi-equivalent to pacman -Si. Quits as soon as a pkg is found */
+/** 
+* @brief search alpm's sync DBs for a package
+* 
+* @param target   alpm_list_t with packages to search for
+* 
+* @return DB package was found in, or NULL
+*/
 pmdb_t *alpm_sync_search(alpm_list_t *target) {
 
   pmdb_t *db = NULL;
@@ -126,6 +102,13 @@ pmdb_t *alpm_sync_search(alpm_list_t *target) {
   return NULL; /* Not found */
 }
 
+/** 
+* @brief checks for a package by name in pacman's sync DBs
+* 
+* @param target   package name to find
+* 
+* @return 1 on success, 0 on failure
+*/
 int is_in_pacman(const char *target) {
 
   pmdb_t *found_in;
@@ -143,9 +126,57 @@ int is_in_pacman(const char *target) {
     }
 
     alpm_list_free(p);
-    return 1;
+    return TRUE;
   }
 
   alpm_list_free(p);
-  return 0;
+  return FALSE;
 }
+/** 
+* @brief send a query to the AUR's rpc interface
+* 
+* @param type   search or info
+* @param arg    argument to query
+* 
+* @return       a JSON loaded with the results of the query
+*/
+json_t *aur_rpc_query(int type, const char* arg) {
+
+  char *text;
+  char url[AUR_RPC_URL_SIZE];
+  json_t *root, *return_type;
+  json_error_t error;
+
+  /* Format URL to pass to curl */
+  snprintf(url, AUR_RPC_URL_SIZE, AUR_RPC_URL,
+    type == AUR_RPC_QUERY_TYPE_INFO ? "info" : "search", arg);
+
+  text = curl_get_json(url);
+  if(!text)
+    return NULL;
+
+  /* Fetch JSON */
+  root = json_loads(text, &error);
+  free(text);
+
+  /* Check for error */
+  if(!root) {
+    if (config->color) {
+      cfprintf(stderr, "%<error:%> could not create JSON. Please report this error.\n",
+        RED);
+    } else {
+      fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
+    }
+    return NULL;
+  }
+
+  /* Check return type in JSON */
+  return_type = json_object_get(root, "type");
+  if (! strcmp(json_string_value(return_type), "error")) {
+    json_decref(root);
+    return NULL;
+  }
+
+  return root; /* This needs to be freed in the calling function */
+}
+

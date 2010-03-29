@@ -1,5 +1,5 @@
 /*
- *  fetch.h
+ *  update.h
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,14 +15,5 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _FETCH_H
-#define _FETCH_H
+int aur_find_updates(alpm_list_t*);
 
-struct write_result {
-  char *data;
-  int pos;
-};
-
-char *curl_get_json(const char*);
-
-#endif /* _FETCH_H */

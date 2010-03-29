@@ -16,15 +16,13 @@
  */
 
 /* standard */
-#include <alpm.h>
 #include <getopt.h>
-#include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 /* non-standard */
-#include <curl/curl.h>
+#include <alpm.h>
 #include <jansson.h>
 
 /* local */
