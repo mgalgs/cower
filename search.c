@@ -39,16 +39,15 @@
 * 
 * @return       a JSON loaded with the results of the query
 */
-json_t *aur_rpc_query(int type, const char* arg) {
+json_t *aur_rpc_query(const char *query_type, const char* arg) {
 
   char *text;
-  char url[AUR_RPC_URL_SIZE];
+  char url[AUR_URL_SIZE];
   json_t *root, *return_type;
   json_error_t error;
 
   /* Format URL to pass to curl */
-  snprintf(url, AUR_RPC_URL_SIZE, AUR_RPC_URL,
-    type == AUR_RPC_QUERY_TYPE_INFO ? "info" : "search", arg);
+  snprintf(url, AUR_URL_SIZE, AUR_RPC_URL, query_type, arg);
 
   text = curl_get_json(url);
   if(!text)

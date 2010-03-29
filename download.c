@@ -40,7 +40,7 @@
 * @return number of bytes written
 */
 static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
-
+  fprintf(stderr, "DEBUG :: Entering write_response\n");
   struct write_result *result = (struct write_result *)stream;
 
   if(result->pos + size * nmemb >= JSON_BUFFER_SIZE - 1) {
@@ -54,6 +54,8 @@ static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream)
 
   memcpy(result->data + result->pos, ptr, size * nmemb);
   result->pos += size * nmemb;
+
+  fprintf(stderr, "DEBUG :: Leaving write_response\n");
 
   return size * nmemb;
 }
@@ -70,7 +72,7 @@ int aur_get_tarball(json_t *root) {
   CURL *curl;
   FILE *fd;
   const char *dir, *filename, *pkgname;
-  char fullpath[PATH_MAX], url[128];
+  char fullpath[PATH_MAX], url[AUR_URL_SIZE];
   int result = 0;
   json_t *pkginfo;
 
@@ -93,7 +95,7 @@ int aur_get_tarball(json_t *root) {
   pkgname = json_string_value(json_object_get(pkginfo, "Name"));
 
   /* Build URL. Need this to get the taurball, durp */
-  snprintf(url, 128, AUR_PKG_URL,
+  snprintf(url, AUR_URL_SIZE, AUR_PKG_URL,
     json_string_value(json_object_get(pkginfo, "URLPath")));
 
   /* Pointer to the 'basename' of the URL Path */
@@ -121,6 +123,7 @@ int aur_get_tarball(json_t *root) {
       curl = curl_easy_init();
       curl_easy_setopt(curl, CURLOPT_URL, url);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, fd);
+      curl_easy_setopt(curl, CURLOPT_ENCODING, "deflate, gzip");
       result = curl_easy_perform(curl);
 
       curl_easy_cleanup(curl);
@@ -164,10 +167,13 @@ int aur_get_tarball(json_t *root) {
 * @return string representation of the JSON
 */
 char *curl_get_json(const char *url) {
+  fprintf(stderr, "DEBUG :: Fetching JSON\n");
 
   CURLcode status;
   char *data;
   long code;
+
+  curl = curl_easy_init();
 
   data = malloc(JSON_BUFFER_SIZE);
   if(!curl || !data) {
@@ -216,6 +222,9 @@ char *curl_get_json(const char *url) {
   /* zero-terminate the result */
   data[write_result.pos] = '\0';
 
+  curl_easy_cleanup(curl);
+
+  fprintf(stderr, "DEBUG :: Returning JSON\n");
   return data;
 }
 

@@ -34,8 +34,7 @@
 #include "update.h"
 #include "util.h"
 
-CURL *curl; /* curl agent for interaction with AUR */
-int oper_mask = 0, opt_mask = 0; /* Runtime Config */
+extern CURL *curl; /* curl agent for interaction with AUR */
 
 static alpm_list_t *targets; /* Package argument list */
 
@@ -140,7 +139,6 @@ int main(int argc, char **argv) {
    * being passed along with it.
    */
   if (config->op & OP_UPDATE) { /* 8 */
-    curl = curl_easy_init();
     alpm_quick_init();
     alpm_list_t *foreign = alpm_query_search(NULL);
 
@@ -153,13 +151,11 @@ int main(int argc, char **argv) {
      * sync, do an info query on the package in the AUR. Does it exist?
      * If yes, pass it to aur_get_tarball.
      */
-    curl = curl_easy_init();
     alpm_quick_init();
     alpm_list_t *i;
     for (i = targets; i; i = alpm_list_next(i)) {
       if (! is_in_pacman((const char*)i->data)) { /* Not found in pacman */
-        json_t *infojson = 
-          aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO, i->data);
+        json_t *infojson = aur_rpc_query(AUR_QUERY_TYPE_INFO, i->data);
         if (infojson) { /* Found it in the AUR */
           aur_get_tarball(infojson);
           json_decref(infojson);
@@ -174,10 +170,9 @@ int main(int argc, char **argv) {
       }
     }
   } else if (config->op & OP_INFO) { /* 2 */
-    curl = curl_easy_init();
     alpm_list_t *i;
     for (i = targets; i; i = alpm_list_next(i)) {
-      json_t *search = aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO, i->data);
+      json_t *search = aur_rpc_query(AUR_QUERY_TYPE_INFO, i->data);
 
       if (search) {
         print_pkg_info(search);
@@ -193,8 +188,6 @@ int main(int argc, char **argv) {
 
     }
   } else if (config->op & OP_SEARCH) { /* 1 */
-    /* TODO: remove dupes in results */
-    curl = curl_easy_init();
     alpm_list_t *i;
     alpm_list_t *agg = NULL;
     for (i = targets; i; i = alpm_list_next(i)) {
@@ -209,7 +202,7 @@ int main(int argc, char **argv) {
         continue;
       }
 
-      json_t *search = aur_rpc_query(AUR_RPC_QUERY_TYPE_SEARCH, i->data);
+      json_t *search = aur_rpc_query(AUR_QUERY_TYPE_SEARCH, i->data);
 
       if (! search) {
         if (config->color) {
@@ -220,7 +213,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
       }
 
-      /* Aggregate searches into a single list */
+      /* Aggregate searches into a single list and remove dupes */
       agg = agg_search_results(agg, json_object_get(search, "results"));
 
       json_decref(search);
@@ -237,7 +230,6 @@ int main(int argc, char **argv) {
   }
 
   /* Compulsory cleanup */
-  curl_easy_cleanup(curl);
   curl_global_cleanup();
   alpm_list_free(targets);
   alpm_release();

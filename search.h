@@ -18,6 +18,6 @@
 #ifndef _SEARCH_H
 #define _SEARCH_H
 
-json_t *aur_rpc_query(int, const char*);
+json_t *aur_rpc_query(const char*, const char*);
 
 #endif /* _SEARCH_H */

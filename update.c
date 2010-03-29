@@ -44,7 +44,7 @@ int aur_find_updates(alpm_list_t *targets) {
     pmpkg_t *pmpkg = alpm_list_getdata(i);
 
     /* Do I exist in the AUR? */
-    json_t *infojson = aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO,
+    json_t *infojson = aur_rpc_query(AUR_QUERY_TYPE_INFO,
       alpm_pkg_get_name(pmpkg));
 
     if (infojson == NULL) { /* Not found, next candidate */

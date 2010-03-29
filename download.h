@@ -24,18 +24,18 @@
 #define AUR_RPC_URL         "http://aur.archlinux.org/rpc.php?type=%s&arg=%s"
 #define AUR_PKG_URL_FORMAT  "http://aur.archlinux.org/packages.php?ID="
 
-#define AUR_RPC_URL_SIZE    256
-#define JSON_BUFFER_SIZE    (1024 * 1024) /* 1MiB */
+#define AUR_URL_SIZE    256
+#define JSON_BUFFER_SIZE    (2048 * 1024) /* 2MiB */
 
-#define AUR_RPC_QUERY_TYPE_INFO   1
-#define AUR_RPC_QUERY_TYPE_SEARCH 2
+#define AUR_QUERY_TYPE_INFO   "info"
+#define AUR_QUERY_TYPE_SEARCH "search"
 
 struct write_result {
   char *data;
   int pos;
 };
 
-extern CURL *curl; /* Global CURL object */
+CURL *curl; /* Global CURL object */
 
 int aur_get_tarball(json_t*);
 char *curl_get_json(const char*);
