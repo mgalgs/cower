@@ -15,5 +15,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _UPDATE_H
+#define _UPDATE_H
+
 int aur_find_updates(alpm_list_t*);
 
+#endif /* _UPDATE_H */
