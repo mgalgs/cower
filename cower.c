@@ -28,10 +28,12 @@
 #include <jansson.h>
 
 /* local */
-#include "alpmhelper.h"
-#include "aur.h"
+#include "alpmutil.h"
 #include "conf.h"
+#include "download.h"
 #include "package.h"
+#include "search.h"
+#include "update.h"
 #include "util.h"
 
 CURL *curl; /* curl agent for interaction with AUR */
@@ -157,9 +159,7 @@ int main(int argc, char **argv) {
     alpm_quick_init();
     alpm_list_t *i;
     for (i = targets; i; i = alpm_list_next(i)) {
-      int result;
-      result = is_in_pacman((const char*)i->data);
-      if (! result) { /* Not found in pacman */
+      if (! is_in_pacman((const char*)i->data)) { /* Not found in pacman */
         json_t *infojson = 
           aur_rpc_query(AUR_RPC_QUERY_TYPE_INFO, i->data);
         if (infojson) { /* Found it in the AUR */
