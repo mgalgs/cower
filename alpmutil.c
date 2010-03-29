@@ -84,7 +84,7 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
       newlist = left;
       left = left->next;
     } else {
-      left = alpm_list_remove_item(left, left, _aur_pkg_free);
+      left = alpm_list_remove_item(left, left, aur_pkg_free);
     }
   } while (compare == 0);
 
@@ -104,7 +104,7 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
       right->prev = lp;
       right = right->next;
     } else {
-      left = alpm_list_remove_item(left, left, _aur_pkg_free);
+      left = alpm_list_remove_item(left, left, aur_pkg_free);
       continue;
     }
     lp = lp->next;

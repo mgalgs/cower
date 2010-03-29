@@ -45,7 +45,7 @@ int _aur_pkg_cmp(void *p1, void *p2) {
 * 
 * @param pkg  aur_pkg_t struct inside linked list
 */
-void _aur_pkg_free(void *pkg) {
+void aur_pkg_free(void *pkg) {
 
   FREE(((aur_pkg_t*)pkg)->id);
   FREE(((aur_pkg_t*)pkg)->name);

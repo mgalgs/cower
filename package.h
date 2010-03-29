@@ -32,7 +32,7 @@ typedef struct __aur_pkg_t {
 } aur_pkg_t;
 
 int _aur_pkg_cmp(void*, void*);
-void _aur_pkg_free(void*);
+void aur_pkg_free(void*);
 aur_pkg_t *json_to_aur_pkg(json_t*);
 
 #endif /* _PACKAGE_H */

@@ -229,7 +229,7 @@ int main(int argc, char **argv) {
     /* print the search results */
     print_pkg_search(agg);
 
-    alpm_list_free_inner(agg, _aur_pkg_free);
+    alpm_list_free_inner(agg, aur_pkg_free);
     alpm_list_free(agg);
   } else {
     usage();
