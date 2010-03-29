@@ -40,6 +40,7 @@
 * @return number of bytes written
 */
 static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
+/* TODO: Expand the write_result struct dynamically using realloc() */
 
   struct write_result *result = (struct write_result *)stream;
 
@@ -67,7 +68,6 @@ static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream)
 */
 int aur_get_tarball(json_t *root) {
 
-  CURL *curl;
   FILE *fd;
   const char *dir, *filename, *pkgname;
   char fullpath[PATH_MAX], url[AUR_URL_SIZE];
