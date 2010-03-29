@@ -15,8 +15,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _ALPMHELPER_H
-#define _ALPMHELPER_H
+#ifndef _ALPMUTIL_H
+#define _ALPMUTIL_H
 static pmdb_t *db_local;
 
 alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t*, alpm_list_t*, alpm_list_fn_cmp);
@@ -26,4 +26,4 @@ void alpm_quick_init(void);
 int is_foreign(pmpkg_t*);
 
 
-#endif /* _ALPMHELPER_H */
+#endif /* _ALPMUTIL_H */
