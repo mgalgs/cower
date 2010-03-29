@@ -27,8 +27,9 @@
 #include <jansson.h>
 
 /* local */
-#include "aur.h"
 #include "conf.h"
+#include "alpmutil.h"
+#include "download.h"
 #include "package.h"
 #include "util.h"
 
@@ -102,12 +103,12 @@ static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
   return count;
 }
 
-/** 
+/**
 * @brief aggregate a search JSON array into an alpm_list_t
-* 
+*
 * @param agg      alpm_list_t to aggregate into
 * @param search   JSON to be aggregated
-* 
+*
 * @return head of the alpm_list_t
 */
 alpm_list_t *agg_search_results(alpm_list_t *agg, json_t *search) {
@@ -129,124 +130,6 @@ alpm_list_t *agg_search_results(alpm_list_t *agg, json_t *search) {
 
   return agg;
 
-}
-
-/** 
-* @brief modified merge sort which deletes duplicates
-* 
-* @param left     left side of merge
-* @param right    right side of merge
-* @param fn       callback function for deleting data
-* 
-* @return the merged list
-*/
-alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm_list_fn_cmp fn) {
-
-  alpm_list_t *lp, *newlist;
-  int compare;
-
-  if (left == NULL)
-    return right;
-  if (right == NULL)
-    return left;
-
-  do {
-    compare = fn(left->data, right->data);
-    if (compare > 0) {
-      newlist = right;
-      right = right->next;
-    }
-    else if (compare < 0) {
-      newlist = left;
-      left = left->next;
-    } else {
-      left = alpm_list_remove_item(left, left, _aur_pkg_free);
-    }
-  } while (compare == 0);
-
-  newlist->prev = NULL;
-  newlist->next = NULL;
-  lp = newlist;
-
-  while ((left != NULL) && (right != NULL)) {
-    compare = fn(left->data, right->data);
-    if (compare < 0) {
-      lp->next = left;
-      left->prev = lp;
-      left = left->next;
-    }
-    else if (compare > 0) {
-      lp->next = right;
-      right->prev = lp;
-      right = right->next;
-    } else {
-      left = alpm_list_remove_item(left, left, _aur_pkg_free);
-      continue;
-    }
-    lp = lp->next;
-    lp->next = NULL;
-  }
-  if (left != NULL) {
-    lp->next = left;
-    left->prev = lp;
-  }
-  else if (right != NULL) {
-    lp->next = right;
-    right->prev = lp;
-  }
-
-  while(lp && lp->next) {
-    lp = lp->next;
-  }
-  newlist->prev = lp;
-
-  return(newlist);
-}
-
-
-/** 
-* @brief Remove a specific node from a list
-* 
-* @param haystack     list to remove from
-* @param needle       node within list to remove
-* @param fn           comparison function
-* 
-* @return the node following the removed node
-*/
-alpm_list_t *alpm_list_remove_item(alpm_list_t *haystack, alpm_list_t *needle, alpm_list_fn_free fn) {
-
-  alpm_list_t *tmp = NULL;
-
-  if (needle == haystack) {
-    haystack = needle->next;
-    if (haystack) {
-      haystack->prev = needle->prev;
-    }
-    needle->prev = NULL;
-  } else if (needle == haystack->prev) {
-    if (needle->prev) {
-      needle->prev->next = needle->next;
-      haystack->prev = needle->prev;
-      needle->prev = NULL;
-    }
-  } else {
-    if (needle->next) {
-      needle->next->prev = needle->prev;
-    }
-    if (needle->prev) {
-      needle->prev->next = needle->next;
-    }
-  }
-
-  tmp = needle->next;
-
-  if (needle->data) {
-    fn(needle->data);
-  }
-
-  free(needle);
-
-  return tmp;
 }
 
 

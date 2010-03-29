@@ -22,6 +22,8 @@
 #define C_OFF     "\033[1;m"
 
 #define FREE(p) do { free((void*)p); p = NULL; } while (0)
+#define TRUE  1
+#define FALSE 0
 
 /* colors */
 enum {
@@ -37,8 +39,6 @@ enum {
 };
 
 alpm_list_t *agg_search_results(alpm_list_t*, json_t*);
-alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t*, alpm_list_t*, alpm_list_fn_cmp);
-alpm_list_t *alpm_list_remove_item(alpm_list_t*, alpm_list_t*, alpm_list_fn_free);
 char *itoa(unsigned int, int);
 int cfprintf(FILE*, const char*, ...);
 int cprintf(const char*, ...);
