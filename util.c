@@ -183,7 +183,7 @@ int file_exists(const char* filename) {
 
   struct stat st;
 
-  return ! stat(filename, &st);
+  return ! stat(filename, &st) ? TRUE : FALSE;
 }
 
 /** 
@@ -295,5 +295,26 @@ void print_pkg_search(alpm_list_t *search) {
       printf("    %s\n", pkg->desc);
     }
 
+  }
+}
+
+/** 
+* @brief print line indicating a package update
+* 
+* @param pkg          package name
+* @param local_ver    locally installed version
+* @param remote_ver   remotely available version
+*/
+void print_pkg_update(const char *pkg, const char *local_ver, const char *remote_ver) {
+
+  if (config->color) {
+    cprintf("%<%s%>", WHITE, pkg);
+    if (! config->quiet)
+      cprintf(" %<%s%> -> %<%s%>\n", GREEN, local_ver, GREEN, remote_ver);
+  } else {
+    if (! config->quiet)
+      printf("%s %s -> %s\n", pkg, local_ver, remote_ver);
+    else
+      printf("%s\n", pkg);
   }
 }

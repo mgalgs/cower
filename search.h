@@ -18,8 +18,6 @@
 #ifndef _SEARCH_H
 #define _SEARCH_H
 
-pmdb_t *alpm_sync_search(alpm_list_t*);
 json_t *aur_rpc_query(int, const char*);
-int is_in_pacman(const char*);
 
 #endif /* _SEARCH_H */

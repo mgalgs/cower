@@ -28,19 +28,19 @@
 #include "util.h"
 
 /** 
-* @brief search for updates to foreign packages
+* @brief search for updates to targets packages
 * 
-* @param foreign  an alpm_list_t of foreign pacman packages
+* @param targets  an alpm_list_t of candidate pacman packages
 * 
 * @return number of updates available
 */
-int aur_find_updates(alpm_list_t *foreign) {
+int aur_find_updates(alpm_list_t *targets) {
 
   alpm_list_t *i;
   int ret = 0;
 
-  /* Iterate over foreign packages */
-  for (i = foreign; i; i = alpm_list_next(i)) {
+  /* Iterate over targets packages */
+  for (i = targets; i; i = alpm_list_next(i)) {
     pmpkg_t *pmpkg = alpm_list_getdata(i);
 
     /* Do I exist in the AUR? */
@@ -69,16 +69,7 @@ int aur_find_updates(alpm_list_t *foreign) {
     if (config->op & OP_DL) /* -d found with -u */
       aur_get_tarball(infojson);
     else {
-      if (config->color) {
-        cprintf("%<%s%>", WHITE, alpm_pkg_get_name(pmpkg));
-        if (! config->quiet)
-          cprintf(" %<%s%> -> %<%s%>\n", GREEN, local_ver, GREEN, remote_ver);
-      } else {
-        if (! config->quiet)
-          printf("%s %s -> %s\n", alpm_pkg_get_name(pmpkg), local_ver, remote_ver);
-        else
-          printf("%s\n", alpm_pkg_get_name(pmpkg));
-      }
+      print_pkg_update(alpm_pkg_get_name(pmpkg), local_ver, remote_ver);
     }
   }
 
