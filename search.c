@@ -32,11 +32,11 @@
 #include "util.h"
 
 /** 
-* @brief search alpm's local db for a package
+* @brief search alpm's local db for package
 * 
 * @param target alpm_list_t carrying packages to search for
 * 
-* @return 
+* @return a list of packages fufilling the criteria
 */
 alpm_list_t *alpm_query_search(alpm_list_t *target) {
 
