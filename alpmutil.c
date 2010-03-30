@@ -61,6 +61,7 @@ static int is_foreign(pmpkg_t *pkg) {
 * @param left     left side of merge
 * @param right    right side of merge
 * @param fn       callback function for comparing data
+* @param fnf      callback function for deleting data
 * 
 * @return the merged list
 */
@@ -130,8 +131,8 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
 /** 
 * @brief Remove a specific node from a list
 * 
-* @param haystack     list to remove from
-* @param needle       node within list to remove
+* @param listhead     list to remove from
+* @param target       node within list to remove
 * @param fn           comparison function
 * 
 * @return the node following the removed node
