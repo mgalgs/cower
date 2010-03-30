@@ -23,7 +23,7 @@
 #include "conf.h"
 #include "util.h"
 
-static pmdb_t *db_local;
+pmdb_t *db_local;
 
 /** 
 * @brief determine is a package is in pacman's sync DBs
@@ -191,12 +191,14 @@ alpm_list_t *alpm_query_search(alpm_list_t *target) {
     return NULL;
   }
 
-  for(i = searchlist; i; i = alpm_list_next(i)) {
-    pmpkg_t *pkg = alpm_list_getdata(i);
+  if (!target) {
+    for(i = searchlist; i; i = alpm_list_next(i)) {
+      pmpkg_t *pkg = alpm_list_getdata(i);
 
-    /* TODO: Reuse alpm_sync_search for this */
-    if (!target && is_foreign(pkg)) {
-      ret = alpm_list_add(ret, pkg);
+      /* TODO: Reuse alpm_sync_search for this? */
+      if (is_foreign(pkg)) {
+        ret = alpm_list_add(ret, pkg);
+      }
     }
   }
 

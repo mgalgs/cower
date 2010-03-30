@@ -57,7 +57,11 @@ static int parseargs(int argc, char **argv) {
     switch (opt) {
       /* Operations */
       case 'd':
-        config->op |= OP_DL;
+        if (! (config->op & OP_DL)) {
+          config->op |= OP_DL;
+        } else {
+          config->getdeps = 1;
+        }
         break;
       case 'i':
         config->op |= OP_INFO;
@@ -107,6 +111,8 @@ Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
 \n\
  Operations:\n\
   -d, --download          download PACKAGE(s)\n\
+                            pass twice to download dependencies\n\
+                            from the AUR\n\
   -i, --info              show info for PACKAGE(s)\n\
   -s, --search            search for PACKAGE(s)\n\
   -u, --update            check for updates against AUR. If the \n\
@@ -127,6 +133,17 @@ int main(int argc, char **argv) {
 
   int ret;
   ret = parseargs(argc, argv);
+
+  if (config->verbose >= 2) {
+    printf("DEBUG => Options selected:\n");
+    printf("\tconfig->op = %d\n", config->op);
+    if (config->color) printf("\t--color\n");
+    if (config->getdeps) printf("\t-dd\n");
+    if (config->force) printf("\t--force\n");
+    if (config->verbose > 0) printf("\t--verbose=%d\n", config->verbose);
+    if (config->quiet) printf("\t--quiet\n");
+    if (config->download_dir) printf("\t--target=%s\n", config->download_dir);
+  }
 
   /* Order matters somewhat. Update must come before download
    * to ensure that we catch the possibility of a download flag

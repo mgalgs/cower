@@ -23,6 +23,7 @@
 #include <sys/wait.h>
 
 #include "conf.h"
+#include "depends.h"
 #include "download.h"
 #include "util.h"
 
@@ -148,6 +149,17 @@ int aur_get_tarball(json_t *root) {
       }
       result = 1;
     }
+  }
+
+  /* Check for -dd. If found, pass path to dep parsing */
+  if (config->getdeps) {
+    char *pbpath = calloc(1, PATH_MAX + 1);
+    pbpath = strncat(pbpath, dir, strlen(dir));
+    pbpath = strcat(pbpath, "/");
+    pbpath = strncat(pbpath, pkgname, strlen(pkgname));
+    pbpath = strcat(pbpath, "/PKGBUILD\0");
+    get_pkg_dependencies(pbpath);
+    free(pbpath);
   }
 
   FREE(dir);
