@@ -16,6 +16,7 @@
  */
 
 /* standard */
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -315,3 +316,42 @@ void print_pkg_update(const char *pkg, const char *local_ver, const char *remote
       printf("%s\n", pkg);
   }
 }
+
+/** 
+* @brief trim whitespace from string
+* 
+* @param str    string to trim
+* 
+* @return trimmed string
+*/
+char *strtrim(char *str) {
+
+  char *pch = str;
+
+  if(str == NULL || *str == '\0') {
+    /* string is empty, so we're done. */
+    return(str);
+  }
+
+  while(isspace(*pch)) {
+  pch++;
+  }
+  if(pch != str) {
+  memmove(str, pch, (strlen(pch) + 1));
+  }
+
+  /* check if there wasn't anything but whitespace in the string. */
+  if(*str == '\0') {
+  return(str);
+  }
+
+    pch = (str + (strlen(str) - 1));
+    while(isspace(*pch)) {
+    pch--;
+  }
+
+  *++pch = '\0';
+
+  return(str);
+}
+

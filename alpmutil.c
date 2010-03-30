@@ -15,6 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <linux/limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -211,16 +212,64 @@ alpm_list_t *alpm_query_search(alpm_list_t *target) {
 */
 void alpm_quick_init() {
 
-  /* TODO: Parse pacman config */
+  FILE *pacfd;
+  char *ptr, *section = NULL;
+  char line[PATH_MAX + 1];
+
   alpm_initialize();
+
   alpm_option_set_root("/");
-  alpm_option_set_dbpath("/var/lib/pacman/");
-  alpm_db_register_sync("testing");
-  alpm_db_register_sync("community-testing");
-  alpm_db_register_sync("core");
-  alpm_db_register_sync("extra");
-  alpm_db_register_sync("community");
+  alpm_option_set_dbpath("/var/lib/pacman");
   db_local = alpm_db_register_local();
+
+  pacfd = fopen(PACCONF, "r");
+  if (! pacfd) {
+    fprintf(stderr, "error: could not locate pacman config\n");
+    return;
+  }
+
+  while (fgets(line, PATH_MAX, pacfd)) {
+    strtrim(line); /* Trim whitespace from both ends */
+
+    /* Strip out comments */
+    if (line[0] == '#' || strlen(line) == 0) {
+      continue;
+    }
+    if ((ptr = strchr(line, '#'))) {
+      *ptr = '\0';
+    }
+
+    if (line[0] == '[' || line[(strlen(line) - 1)] == ']') { /* New section */
+      ptr = line;
+      ptr++;
+      if (section) {
+        free(section);
+
+      }
+      section = strdup(ptr);
+      section[strlen(section) - 1] = '\0';
+
+    if (strcmp(section, "options") != 0) {
+      alpm_db_register_sync(section);
+    }
+  } else {
+      char *key;
+      key = line;
+      ptr = line;
+      strsep(&ptr, "=");
+      strtrim(key);
+      strtrim(ptr);
+
+      if (strcmp(key, "RootDir") == 0) {
+        alpm_option_set_root(ptr);
+      } else if (strcmp(key, "DBPath") == 0) {
+        alpm_option_set_dbpath(ptr);
+      }
+    }
+  }
+
+  free(section);
+  fclose(pacfd);
 }
 
 

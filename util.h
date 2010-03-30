@@ -49,5 +49,6 @@ int file_exists(const char*);
 void print_pkg_info(json_t*);
 void print_pkg_search(alpm_list_t*);
 void print_pkg_update(const char*, const char*, const char*);
+char *strtrim(char*);
 
 #endif /* _UTIL_H */
