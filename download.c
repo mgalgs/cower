@@ -29,6 +29,14 @@
 #include "download.h"
 #include "util.h"
 
+static void *myrealloc(void *ptr, size_t size) {
+
+  if (ptr)
+    return realloc(ptr, size);
+  else
+    return calloc(1, size);
+}
+
 /** 
 * @brief write CURL response to a struct
 * 
@@ -40,23 +48,17 @@
 * @return number of bytes written
 */
 static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
-/* TODO: Expand the write_result struct dynamically using realloc() */
 
-  struct write_result *result = (struct write_result *)stream;
+  struct write_result *mem = (struct write_result*)stream;
+  size_t realsize = nmemb * size;
 
-  if(result->pos + size * nmemb >= JSON_BUFFER_SIZE - 1) {
-    if (config->color) {
-      cfprintf(stderr, "%<curl error:%> buffer too small.\n", RED);
-    } else {
-      fprintf(stderr, "curl error: buffer too small.\n");
-    }
-    return 0;
+  mem->memory = myrealloc(mem->memory, mem->size + realsize + 1);
+  if (mem->memory) {
+    memcpy(&(mem->memory[mem->size]), ptr, realsize);
+    mem->size += realsize;
+    mem->memory[mem->size] = 0;
   }
-
-  memcpy(result->data + result->pos, ptr, size * nmemb);
-  result->pos += size * nmemb;
-
-  return size * nmemb;
+  return realsize;
 }
 
 /** 
@@ -167,31 +169,17 @@ int aur_get_tarball(json_t *root) {
 char *curl_get_json(const char *url) {
 
   CURLcode status;
-  char *data;
   long code;
 
   curl = curl_easy_init();
 
-  data = malloc(JSON_BUFFER_SIZE);
-  if(!curl || !data) {
-    if (config->color) {
-      cfprintf(stderr, "%<error:%> could not allocate %d bytes.\n",
-        RED, JSON_BUFFER_SIZE);
-    } else {
-      fprintf(stderr, "error: could not allocate %d bytes.\n",
-        JSON_BUFFER_SIZE);
-    }
-    return NULL;
-  }
-
-  struct write_result write_result = {
-    .data = data,
-    .pos = 0
-  };
+  struct write_result response;
+  response.memory = NULL;
+  response.size = 0;
 
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_response);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &write_result);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
   curl_easy_setopt(curl, CURLOPT_ENCODING, "deflate, gzip");
 
   status = curl_easy_perform(curl);
@@ -202,7 +190,6 @@ char *curl_get_json(const char *url) {
       fprintf(stderr, "curl error: unable to request data from %s\n", url);
     }
     fprintf(stderr, "%s\n", curl_easy_strerror(status));
-    free(data);
     return NULL;
   }
 
@@ -213,15 +200,11 @@ char *curl_get_json(const char *url) {
     } else {
       fprintf(stderr, "curl error: server responded with code %ld\n", code);
     }
-    free(data);
     return NULL;
   }
 
-  /* zero-terminate the result */
-  data[write_result.pos] = '\0';
-
   curl_easy_cleanup(curl);
 
-  return data;
+  return response.memory;
 }
 

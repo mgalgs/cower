@@ -25,14 +25,13 @@
 #define AUR_PKG_URL_FORMAT  "http://aur.archlinux.org/packages.php?ID="
 
 #define AUR_URL_SIZE    256
-#define JSON_BUFFER_SIZE    (2048 * 1024) /* 2MiB */
 
 #define AUR_QUERY_TYPE_INFO   "info"
 #define AUR_QUERY_TYPE_SEARCH "search"
 
 struct write_result {
-  char *data;
-  int pos;
+  char *memory;
+  size_t size;
 };
 
 CURL *curl; /* Global CURL object */

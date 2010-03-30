@@ -130,6 +130,7 @@ printf(" General options:\n\
 int main(int argc, char **argv) {
 
   config = config_new();
+  curl_global_init(CURL_GLOBAL_NOTHING);
 
   int ret;
   ret = parseargs(argc, argv);
