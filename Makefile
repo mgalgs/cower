@@ -2,7 +2,7 @@ VERSION=-DVERSION=\"$(shell git describe)\"
 MACROS=-D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 CFLAGS=-O2 -pipe -Wall -pedantic -std=c99
 LDFLAGS=-ljansson -lcurl -lalpm
-OBJ=alpmutil.o conf.o download.o package.o search.o update.o util.o
+OBJ=alpmutil.o conf.o download.o package.o search.o util.o
 
 all: cower
 

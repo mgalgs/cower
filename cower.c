@@ -28,8 +28,6 @@
 #include "update.h"
 #include "util.h"
 
-extern CURL *curl; /* curl agent for interaction with AUR */
-
 static alpm_list_t *targets; /* Package argument list */
 
 static int parseargs(int argc, char **argv) {
@@ -140,7 +138,7 @@ int main(int argc, char **argv) {
     alpm_list_t *foreign = alpm_query_search(NULL);
 
     if (foreign) {
-      aur_find_updates(foreign);
+      get_pkg_availability(foreign);
     }
     alpm_list_free(foreign);
   } else if (config->op & OP_DL) { /* 4 */

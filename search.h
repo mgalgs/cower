@@ -18,6 +18,10 @@
 #ifndef _SEARCH_H
 #define _SEARCH_H
 
+#include <alpm.h>
+#include <jansson.h>
+
 json_t *aur_rpc_query(const char*, const char*);
+int get_pkg_availability(alpm_list_t*);
 
 #endif /* _SEARCH_H */

@@ -20,10 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* non-standard */
-#include <alpm.h>
-#include <jansson.h>
-
 /* local */
 #include "alpmutil.h"
 #include "download.h"
@@ -76,5 +72,63 @@ json_t *aur_rpc_query(const char *query_type, const char* arg) {
   }
 
   return root; /* This needs to be freed in the calling function */
+}
+
+
+/** 
+* @brief search for target packages
+* 
+* @param targets  an alpm_list_t of candidate pacman packages
+* 
+* @return number of packages available in AUR
+*/
+int get_pkg_availability(alpm_list_t *targets) {
+
+  alpm_list_t *i;
+  int ret = 0;
+
+  /* Iterate over targets packages */
+  for (i = targets; i; i = alpm_list_next(i)) {
+    pmpkg_t *pmpkg = alpm_list_getdata(i);
+
+    if (config->verbose > 0) {
+      if (config->color) {
+        cprintf("Checking %<%s%> for updates...\n", WHITE, alpm_pkg_get_name(pmpkg));
+      } else {
+        printf("Checking %s for updates...\n", alpm_pkg_get_name(pmpkg));
+      }
+    }
+
+    /* Do I exist in the AUR? */
+    json_t *infojson = aur_rpc_query(AUR_QUERY_TYPE_INFO,
+      alpm_pkg_get_name(pmpkg));
+
+    if (infojson == NULL) { /* Not found, next candidate */
+      json_decref(infojson);
+      continue;
+    }
+
+    json_t *pkg;
+    const char *remote_ver, *local_ver;
+
+    pkg = json_object_get(infojson, "results");
+    remote_ver = json_string_value(json_object_get(pkg, "Version"));
+    local_ver = alpm_pkg_get_version(pmpkg);
+
+    /* Version check */
+    if (alpm_pkg_vercmp(remote_ver, local_ver) <= 0) {
+      json_decref(infojson);
+      continue;
+    }
+
+    ret++; /* Found an update, increment */
+    if (config->op & OP_DL) /* -d found with -u */
+      aur_get_tarball(infojson);
+    else {
+      print_pkg_update(alpm_pkg_get_name(pmpkg), local_ver, remote_ver);
+    }
+  }
+
+  return ret;
 }
 
