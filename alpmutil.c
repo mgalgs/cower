@@ -56,15 +56,15 @@ static int is_foreign(pmpkg_t *pkg) {
 }
 
 /** 
-* @brief modified merge sort which deletes duplicates
+* @brief merge sort with duplicate deletion
 * 
 * @param left     left side of merge
 * @param right    right side of merge
-* @param fn       callback function for deleting data
+* @param fn       callback function for comparing data
 * 
 * @return the merged list
 */
-alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm_list_fn_cmp fn) {
+alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm_list_fn_cmp fn, alpm_list_fn_free fnf) {
 
   alpm_list_t *lp, *newlist;
   int compare;
@@ -84,7 +84,7 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
       newlist = left;
       left = left->next;
     } else {
-      left = alpm_list_remove_item(left, left, aur_pkg_free);
+      left = alpm_list_remove_item(left, left, fnf);
     }
   } while (compare == 0);
 
@@ -104,7 +104,7 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
       right->prev = lp;
       right = right->next;
     } else {
-      left = alpm_list_remove_item(left, left, aur_pkg_free);
+      left = alpm_list_remove_item(left, left, fnf);
       continue;
     }
     lp = lp->next;
@@ -136,38 +136,38 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
 * 
 * @return the node following the removed node
 */
-alpm_list_t *alpm_list_remove_item(alpm_list_t *haystack, alpm_list_t *needle, alpm_list_fn_free fn) {
+alpm_list_t *alpm_list_remove_item(alpm_list_t *listhead, alpm_list_t *target, alpm_list_fn_free fn) {
 
   alpm_list_t *next = NULL;
 
-  if (needle == haystack) {
-    haystack = needle->next;
-    if (haystack) {
-      haystack->prev = needle->prev;
+  if (target == listhead) {
+    listhead = target->next;
+    if (listhead) {
+      listhead->prev = target->prev;
     }
-    needle->prev = NULL;
-  } else if (needle == haystack->prev) {
-    if (needle->prev) {
-      needle->prev->next = needle->next;
-      haystack->prev = needle->prev;
-      needle->prev = NULL;
+    target->prev = NULL;
+  } else if (target == listhead->prev) {
+    if (target->prev) {
+      target->prev->next = target->next;
+      listhead->prev = target->prev;
+      target->prev = NULL;
     }
   } else {
-    if (needle->next) {
-      needle->next->prev = needle->prev;
+    if (target->next) {
+      target->next->prev = target->prev;
     }
-    if (needle->prev) {
-      needle->prev->next = needle->next;
+    if (target->prev) {
+      target->prev->next = target->next;
     }
   }
 
-  next = needle->next;
+  next = target->next;
 
-  if (needle->data) {
-    fn(needle->data);
+  if (target->data) {
+    fn(target->data);
   }
 
-  free(needle);
+  free(target);
 
   return next;
 }

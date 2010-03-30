@@ -126,7 +126,8 @@ alpm_list_t *agg_search_results(alpm_list_t *agg, json_t *search) {
     new_search = alpm_list_add_sorted(new_search, aur_pkg, (alpm_list_fn_cmp)_aur_pkg_cmp);
   }
 
-  agg = alpm_list_mmerge_dedupe(agg, new_search, (alpm_list_fn_cmp)_aur_pkg_cmp);
+  agg = alpm_list_mmerge_dedupe(agg, new_search, (alpm_list_fn_cmp)_aur_pkg_cmp,
+    (alpm_list_fn_free)aur_pkg_free);
 
   return agg;
 
