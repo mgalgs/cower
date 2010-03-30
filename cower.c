@@ -25,7 +25,6 @@
 #include "download.h"
 #include "package.h"
 #include "search.h"
-#include "update.h"
 #include "util.h"
 
 static alpm_list_t *targets; /* Package argument list */
