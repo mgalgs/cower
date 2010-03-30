@@ -39,6 +39,14 @@ int aur_find_updates(alpm_list_t *targets) {
   for (i = targets; i; i = alpm_list_next(i)) {
     pmpkg_t *pmpkg = alpm_list_getdata(i);
 
+    if (config->verbose > 0) {
+      if (config->color) {
+        cprintf("Checking %<%s%> for updates...\n", WHITE, alpm_pkg_get_name(pmpkg));
+      } else {
+        printf("Checking %s for updates...\n", alpm_pkg_get_name(pmpkg));
+      }
+    }
+
     /* Do I exist in the AUR? */
     json_t *infojson = aur_rpc_query(AUR_QUERY_TYPE_INFO,
       alpm_pkg_get_name(pmpkg));
