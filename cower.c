@@ -122,7 +122,7 @@ Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
                             fetch each available update.\n\n", VERSION);
 printf(" General options:\n\
   -c, --color             use colored output\n\
-  -f, --force             overwrite existing files when dowloading\n\
+  -f, --force             overwrite existing files when downloading\n\
   -q, --quiet             output less to stdout\n\
   -t DIR, --target=DIR    specify an alternate download directory\n\n");
 }
