@@ -18,6 +18,8 @@
 #ifndef _PACKAGE_H
 #define _PACKAGE_H
 
+#include <jansson.h>
+
 typedef struct __aur_pkg_t {
   const char* id;
   const char* name;

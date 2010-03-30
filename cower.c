@@ -15,17 +15,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* standard */
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* non-standard */
-#include <alpm.h>
-#include <jansson.h>
-
-/* local */
 #include "alpmutil.h"
 #include "conf.h"
 #include "download.h"

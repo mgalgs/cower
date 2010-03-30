@@ -22,10 +22,6 @@
 #include <string.h>
 #include <sys/stat.h>
 
-/* non-standard */
-#include <alpm.h>
-#include <jansson.h>
-
 /* local */
 #include "conf.h"
 #include "alpmutil.h"

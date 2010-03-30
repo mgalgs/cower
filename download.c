@@ -22,9 +22,6 @@
 #include <string.h>
 #include <sys/wait.h>
 
-#include <alpm.h>
-#include <jansson.h>
-
 #include "conf.h"
 #include "download.h"
 #include "util.h"

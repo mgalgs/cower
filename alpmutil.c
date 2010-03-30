@@ -15,18 +15,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* standard */
 #include <stdio.h>
 #include <string.h>
 
-/* non-standard */
-#include <alpm.h>
-#include <jansson.h>
-
-/* local */
 #include "alpmutil.h"
 #include "conf.h"
-#include "package.h"
 #include "util.h"
 
 static pmdb_t *db_local;

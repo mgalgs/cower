@@ -18,6 +18,8 @@
 #ifndef _UPDATE_H
 #define _UPDATE_H
 
+#include <alpm.h>
+
 int aur_find_updates(alpm_list_t*);
 
 #endif /* _UPDATE_H */

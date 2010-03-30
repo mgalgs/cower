@@ -15,15 +15,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* standard */
 #include <stdlib.h>
 #include <string.h>
 
-/* non-standard */
-#include <alpm.h>
-#include <jansson.h>
-
-/* local */
 #include "package.h"
 #include "util.h"
 

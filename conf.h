@@ -41,11 +41,11 @@ enum {
   OP_UPDATE = 8
 };
 
-/* global config variable */
-extern config_t *config;
-
 int config_free(config_t *oldconfig);
 config_t *config_new(void);
+
+/* global config variable */
+extern config_t *config;
 
 #endif /* _CONF_H */
 

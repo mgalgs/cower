@@ -18,16 +18,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* standard */
 #include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 
-/* non-standard */
-#include <alpm.h>
-#include <jansson.h>
-
-/* local */
 #include "conf.h"
 #include "util.h"
 

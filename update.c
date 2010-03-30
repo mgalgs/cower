@@ -18,12 +18,8 @@
 
 #include <stdio.h>
 
-#include <alpm.h>
-#include <jansson.h>
-
 #include "conf.h"
 #include "download.h"
-#include "package.h"
 #include "search.h"
 #include "util.h"
 

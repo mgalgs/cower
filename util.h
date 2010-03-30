@@ -17,6 +17,9 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
+#include <alpm.h>
+#include <jansson.h>
+
 /* constants for cfprintf */
 #define C_ON    "\033[1;3"
 #define C_OFF     "\033[1;m"
