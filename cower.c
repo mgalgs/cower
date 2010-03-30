@@ -39,7 +39,7 @@ static int parseargs(int argc, char **argv) {
     /* Operations */
     {"search",    no_argument,        0, 's'},
     {"update",    no_argument,        0, 'u'},
-    {"info",    no_argument,          0, 'i'},
+    {"info",      no_argument,        0, 'i'},
     {"download",  no_argument,        0, 'd'},
 
     /* Options */
@@ -48,6 +48,7 @@ static int parseargs(int argc, char **argv) {
     {"force",     no_argument,        0, 'f'},
     {"quiet",     no_argument,        0, 'q'},
     {"target",    required_argument,  0, 't'},
+    {"verbose",   no_argument,        0, 'v'},
     {0, 0, 0, 0}
   };
 
@@ -118,7 +119,8 @@ printf(" General options:\n\
   -c, --color             use colored output\n\
   -f, --force             overwrite existing files when downloading\n\
   -q, --quiet             output less to stdout\n\
-  -t DIR, --target=DIR    specify an alternate download directory\n\n");
+  -t DIR, --target=DIR    specify an alternate download directory\n\
+  -v, --verbose           be more verbose\n\n");
 }
 
 int main(int argc, char **argv) {
