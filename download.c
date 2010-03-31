@@ -92,6 +92,10 @@ int aur_get_tarball(json_t *root) {
   pkginfo = json_object_get(root, "results");
   pkgname = json_string_value(json_object_get(pkginfo, "Name"));
 
+  if (config->verbose >= 2) {
+    fprintf(stderr, "::DEBUG Downloading Package: %s\n", pkgname);
+  }
+
   /* Build URL. Need this to get the taurball, durp */
   snprintf(url, AUR_URL_SIZE, AUR_PKG_URL,
     json_string_value(json_object_get(pkginfo, "URLPath")));
@@ -152,7 +156,7 @@ int aur_get_tarball(json_t *root) {
   }
 
   /* Increment config->getdeps to avoid recursion */
-  if (config->getdeps++ == 1) { // || config->getrecdeps) {
+  if (config->getdeps++ == 1 || config->getrecdeps) {
     char *pbpath = calloc(1, PATH_MAX + 1);
     pbpath = strncat(pbpath, dir, strlen(dir));
     pbpath = strcat(pbpath, "/");

@@ -46,6 +46,9 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *startdep) {
         break;
       }
     }
+    if (config->verbose >= 2) {
+      fprintf(stderr, "::DEBUG Adding Depend: %s\n", token);
+    }
     deplist = alpm_list_add(deplist, strdup(token));
   }
 
@@ -66,11 +69,10 @@ alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
   /* This catches depends as well as makedepends.
    * It's valid for multi package files as well,
    * even though the AUR doesn't support them. */
-  int debug = 0;
   while ((deps = strstr(bptr, "depends=(")) != NULL) {
     tmp = strndup(deps + 9, strchr(deps, ')') - deps - 9);
+    bptr = deps + 10;
     deplist = parse_bash_array(deplist, tmp);
-    bptr = tmp + strlen(tmp) - 1;
     free(tmp);
   }
 

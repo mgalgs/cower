@@ -114,6 +114,7 @@ Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
  Operations:\n\
   -d, --download          download PACKAGE(s)\n\
                             pass -dd to download AUR dependencies\n\
+                            pass -ddd to download recusrively\n\
   -i, --info              show info for PACKAGE(s)\n\
   -s, --search            search for PACKAGE(s)\n\
   -u, --update            check for updates against AUR. If the \n\
