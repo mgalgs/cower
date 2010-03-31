@@ -59,8 +59,10 @@ static int parseargs(int argc, char **argv) {
       case 'd':
         if (! (config->op & OP_DL)) {
           config->op |= OP_DL;
-        } else {
+        } else if (! config->getdeps) {
           config->getdeps = 1;
+        } else {
+          config->getrecdeps = 1;
         }
         break;
       case 'i':
@@ -111,8 +113,8 @@ Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
 \n\
  Operations:\n\
   -d, --download          download PACKAGE(s)\n\
-                            pass twice to download dependencies\n\
-                            from the AUR\n\
+                            pass -dd to download AUR dependencies
+                            pass -ddd to download recursively
   -i, --info              show info for PACKAGE(s)\n\
   -s, --search            search for PACKAGE(s)\n\
   -u, --update            check for updates against AUR. If the \n\

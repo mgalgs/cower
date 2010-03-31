@@ -29,6 +29,7 @@ typedef struct __config_t {
   /* options */
   unsigned short color;
   unsigned short getdeps;
+  unsigned short getrecdeps;
   unsigned short force;
   unsigned short verbose;
   unsigned short quiet;
