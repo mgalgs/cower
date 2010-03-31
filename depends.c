@@ -40,12 +40,12 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *startdep) {
 
 }
 
-alpm_list_t *parsedeps(alpm_list_t *deplist) {
+alpm_list_t *parsedeps(const char *pkgbuild, alpm_list_t *deplist) {
   FILE* fd;
   char *deps, *tmplist;
   char buffer[BUFSIZ];
 
-  fd = fopen("PKGBUILD", "r");
+  fd = fopen(pkgbuild, "r");
   fread(buffer, sizeof(char), BUFSIZ, fd); 
 
   /* depends */
@@ -79,7 +79,7 @@ int get_pkg_dependencies(const char *pkgbuild_path) {
   }
 
   alpm_list_t *deplist = NULL;
-  deplist = parsedeps(deplist);
+  deplist = parsedeps(pkgbuild_path, deplist);
 
   if (! config->quiet) {
     if (config->color) {
@@ -92,19 +92,19 @@ int get_pkg_dependencies(const char *pkgbuild_path) {
   alpm_list_t *i;
   for (i = deplist; i; i = alpm_list_next(i)) {
     const char* depend = i->data;
+
     if (alpm_db_get_pkg(db_local, depend)) { /* installed */
       continue;
     }
-
     if (is_in_pacman(depend)) { /* available in pacman */
       continue;
     }
-
     /* if we're here, we need to check the AUR */
     json_t *infojson = aur_rpc_query(AUR_QUERY_TYPE_INFO, depend);
     if (infojson) {
       aur_get_tarball(infojson);
     }
+    json_decref(infojson);
 
   }
 
