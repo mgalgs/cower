@@ -9,12 +9,11 @@ Dependencies:
 Features:
 	> Search package(s)
 	> Info for package(s)
-	> Download and extraction of package(s)
+	> Download and extract of package(s) (with or without dependencies!)
 	> Check for updates (with download)
 	> Specify alternate download directory
 
 TODO pile:
-	> Download dependencies
 	> verbosity levels
 	> upload taurballs
 
