@@ -29,5 +29,8 @@ pmdb_t *alpm_sync_search(alpm_list_t*);
 void alpm_quick_init(void);
 int is_in_pacman(const char*);
 
+pmdb_t *db_local;
+
+extern pmdb_t *db_local;
 
 #endif /* _ALPMUTIL_H */

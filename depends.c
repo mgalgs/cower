@@ -1,3 +1,20 @@
+/*
+ *  depends.h
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -9,10 +26,6 @@
 #include "download.h"
 #include "search.h"
 #include "util.h"
-
-void alpm_free_str(void *data) {
-  FREE(data);
-}
 
 alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *startdep) {
 
@@ -65,11 +78,8 @@ alpm_list_t *parsedeps(const char *pkgbuild, alpm_list_t *deplist) {
 }
 
 int get_pkg_dependencies(const char *pkg, const char *pkgbuild_path) {
-  extern pmdb_t *db_local;
 
-  struct stat st;
-  if (stat(pkgbuild_path, &st)) {
-    fprintf(stderr, "Error: unable to find PKGBUILD.\n");
+  if (! file_exists(pkgbuild_path)) {
     return -1;
   }
 
@@ -105,7 +115,7 @@ int get_pkg_dependencies(const char *pkg, const char *pkgbuild_path) {
   }
 
   /* Cleanup */
-  alpm_list_free_inner(deplist, (alpm_list_fn_free)alpm_free_str);
+  alpm_list_free_inner(deplist, (alpm_list_fn_free)free);
   alpm_list_free(deplist);
 
   return 0;

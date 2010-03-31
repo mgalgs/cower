@@ -23,8 +23,6 @@
 #include "conf.h"
 #include "util.h"
 
-pmdb_t *db_local;
-
 /** 
 * @brief determine is a package is in pacman's sync DBs
 * 
