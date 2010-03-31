@@ -69,7 +69,7 @@ alpm_list_t *parsedeps(const char *pkgbuild, alpm_list_t *deplist) {
   return deplist;
 }
 
-int get_pkg_dependencies(const char *pkgbuild_path) {
+int get_pkg_dependencies(const char *pkg, const char *pkgbuild_path) {
   extern pmdb_t *db_local;
 
   struct stat st;
@@ -83,9 +83,10 @@ int get_pkg_dependencies(const char *pkgbuild_path) {
 
   if (! config->quiet) {
     if (config->color) {
-      cprintf("Attempting to fetch uninstalled %<dependencies%>...\n", YELLOW);
+      cprintf("\nAttempting to fetch uninstalled %<dependencies%> for $<%s%>...\n",
+        YELLOW, WHITE, pkg);
     } else {
-      printf("Attempting to fetch uninstalled dependencies...\n");
+      printf("\nAttempting to fetch uninstalled dependencies for %s...\n", pkg);
     }
   }
 

@@ -158,7 +158,7 @@ int aur_get_tarball(json_t *root) {
     pbpath = strcat(pbpath, "/");
     pbpath = strncat(pbpath, pkgname, strlen(pkgname));
     pbpath = strcat(pbpath, "/PKGBUILD\0");
-    get_pkg_dependencies(pbpath);
+    get_pkg_dependencies(pkgname, pbpath);
     free(pbpath);
   }
 
