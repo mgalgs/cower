@@ -151,7 +151,8 @@ int aur_get_tarball(json_t *root) {
     }
   }
 
-  if (config->getdeps++ == 1 || config->getrecdeps) {
+  /* Increment config->getdeps to avoid recursion */
+  if (config->getdeps++ == 1) { // || config->getrecdeps) {
     char *pbpath = calloc(1, PATH_MAX + 1);
     pbpath = strncat(pbpath, dir, strlen(dir));
     pbpath = strcat(pbpath, "/");

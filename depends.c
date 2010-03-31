@@ -1,5 +1,5 @@
 /*
- *  depends.h
+ *  depends.c
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *startdep) {
 alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
   FILE* fd;
   char buffer[BUFSIZ + 1];
-  char *deps, *tmplist, *bptr;
+  char *deps, *tmp, *bptr;
 
   fd = fopen(pkgbuild, "r");
   fread(buffer, sizeof(char), BUFSIZ, fd); 
@@ -66,11 +66,14 @@ alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
   /* This catches depends as well as makedepends.
    * It's valid for multi package files as well,
    * even though the AUR doesn't support them. */
+  int debug = 0;
   while ((deps = strstr(bptr, "depends=(")) != NULL) {
-    tmplist = strndup(deps + 9, strchr(deps, ')') - deps);
-    deplist = parse_bash_array(deplist, tmplist);
-    free(tmplist);
-    bptr = tmplist + strlen(tmplist) - 1;
+    cfprintf(stderr, "%<%d%> :: ", BLUE, ++debug);
+    tmp = strndup(deps + 9, strchr(deps, ')') - deps - 9);
+    cfprintf(stderr, "%<%s%>\n", YELLOW, tmp);
+    deplist = parse_bash_array(deplist, tmp);
+    bptr = tmp + strlen(tmp) - 1;
+    free(tmp);
   }
 
   fclose(fd);
@@ -89,26 +92,23 @@ int get_pkg_dependencies(const char *pkg, const char *pkgbuild_path) {
 
   if (! config->quiet) {
     if (config->color) {
-      cprintf("\n%<::%> Attempting to fetch uninstalled dependencies for %<%s%>...\n",
+      cprintf("\n%<::%> Fetching uninstalled dependencies for %<%s%>...\n",
         BLUE, WHITE, pkg);
     } else {
-      printf("\n:: Attempting to fetch uninstalled dependencies for %s...\n", pkg);
+      printf("\n:: Fetching uninstalled dependencies for %s...\n", pkg);
     }
   }
 
   alpm_list_t *i = deplist;
-  while (i) {
-  //for (i = deplist; i; i = alpm_list_next(i)) {
+  for (i = deplist; i; i = alpm_list_next(i)) {
     const char* depend = i->data;
 
     if (alpm_db_get_pkg(db_local, depend)) { /* installed */
       i = alpm_list_next(i);
-      //i = alpm_list_remove_item(deplist, i, free);
       continue;
     }
     if (is_in_pacman(depend)) { /* available in pacman */
       i = alpm_list_next(i);
-      //i = alpm_list_remove_item(deplist, i, free);
       continue;
     }
     /* if we're here, we need to check the AUR */
@@ -117,8 +117,6 @@ int get_pkg_dependencies(const char *pkg, const char *pkgbuild_path) {
       aur_get_tarball(infojson);
     }
       json_decref(infojson);
-
-    i = alpm_list_next(i);
 
   }
 
