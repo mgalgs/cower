@@ -151,8 +151,7 @@ int aur_get_tarball(json_t *root) {
     }
   }
 
-  /* Check for -dd. If found, pass path to dep parsing */
-  if (config->getdeps) {
+  if (config->getdeps++ < 2 || config->getrecdeps) {
     char *pbpath = calloc(1, PATH_MAX + 1);
     pbpath = strncat(pbpath, dir, strlen(dir));
     pbpath = strcat(pbpath, "/");
