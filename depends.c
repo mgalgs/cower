@@ -42,13 +42,15 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *startdep) {
 
 alpm_list_t *parsedeps(const char *pkgbuild, alpm_list_t *deplist) {
   FILE* fd;
-  char *deps, *tmplist;
-  char buffer[BUFSIZ];
+  char *deps, *tmplist, *origbuffer, *buffer;
+
+  origbuffer = calloc(1, BUFSIZ + 1);
 
   fd = fopen(pkgbuild, "r");
-  fread(buffer, sizeof(char), BUFSIZ, fd); 
+  fread(origbuffer, sizeof(char), BUFSIZ, fd); 
 
-  /* depends */
+  buffer = strdup(origbuffer);
+
   deps = strstr(buffer, "depends=(");
   if (deps) {
     tmplist = strndup(deps + 9, strchr(deps, ')') - deps);
@@ -56,7 +58,9 @@ alpm_list_t *parsedeps(const char *pkgbuild, alpm_list_t *deplist) {
     free(tmplist);
   }
 
-  /* makedepends */
+  free(buffer);
+  buffer = strdup(origbuffer);
+
   deps = strstr(buffer, "makedepends=(");
   if (deps) {
     tmplist = strndup(deps + 13, strchr(deps, ')') - deps);
@@ -65,6 +69,8 @@ alpm_list_t *parsedeps(const char *pkgbuild, alpm_list_t *deplist) {
   }
 
   fclose(fd);
+  free(buffer);
+  free(origbuffer);
 
   return deplist;
 }
@@ -83,8 +89,7 @@ int get_pkg_dependencies(const char *pkg, const char *pkgbuild_path) {
 
   if (! config->quiet) {
     if (config->color) {
-      cprintf("\nAttempting to fetch uninstalled %<dependencies%> for $<%s%>...\n",
-        YELLOW, WHITE, pkg);
+      cprintf("\nAttempting to fetch uninstalled %<dependencies%> for %<%s%>...\n", YELLOW, WHITE, pkg);
     } else {
       printf("\nAttempting to fetch uninstalled dependencies for %s...\n", pkg);
     }
