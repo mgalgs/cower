@@ -21,8 +21,8 @@
 #include <jansson.h>
 
 /* constants for cfprintf */
-#define C_ON    "\033[1;3"
-#define C_OFF     "\033[1;m"
+#define C_ON    "\033[0;3"
+#define C_OFF     "\033[0;m"
 
 #define FREE(p) do { free((void*)p); p = NULL; } while (0)
 #define TRUE  1
@@ -30,15 +30,15 @@
 
 /* colors */
 enum {
-  BLACK   = 0,  BOLDBLACK   = 9,
-  RED     = 1,  BOLDRED     = 10,
-  GREEN   = 2,  BOLDGREEN   = 11,
-  YELLOW  = 3,  BOLDYELLOW  = 12,
-  BLUE    = 4,  BOLDBLUE    = 13,
-  MAGENTA = 5,  BOLDMAGENTA = 14,
-  CYAN    = 6,  BOLDCYAN    = 15,
-  WHITE   = 7,  BOLDWHITE   = 16,
-  FG      = 8,  BOLDFG      = 17
+  BLACK   = 0,
+  RED     = 1,
+  GREEN   = 2,
+  YELLOW  = 3,
+  BLUE    = 4,
+  MAGENTA = 5,
+  CYAN    = 6,
+  WHITE   = 7,
+  FG      = 8
 };
 
 alpm_list_t *agg_search_results(alpm_list_t*, json_t*);
