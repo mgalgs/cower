@@ -42,35 +42,24 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *startdep) {
 
 alpm_list_t *parsedeps(const char *pkgbuild, alpm_list_t *deplist) {
   FILE* fd;
-  char *deps, *tmplist, *origbuffer, *buffer;
+  char *deps, *tmplist, *buffer, *bptr;
 
-  origbuffer = calloc(1, BUFSIZ + 1);
+  buffer = calloc(1, BUFSIZ + 1);
 
   fd = fopen(pkgbuild, "r");
-  fread(origbuffer, sizeof(char), BUFSIZ, fd); 
+  fread(buffer, sizeof(char), BUFSIZ, fd); 
 
-  buffer = strdup(origbuffer);
+  bptr = buffer;
 
-  deps = strstr(buffer, "depends=(");
-  if (deps) {
+  while ((deps = strstr(bptr, "depends=(")) != NULL) {
     tmplist = strndup(deps + 9, strchr(deps, ')') - deps);
     deplist = parse_bash_array(deplist, tmplist);
     free(tmplist);
-  }
-
-  free(buffer);
-  buffer = strdup(origbuffer);
-
-  deps = strstr(buffer, "makedepends=(");
-  if (deps) {
-    tmplist = strndup(deps + 13, strchr(deps, ')') - deps);
-    deplist = parse_bash_array(deplist, tmplist);
-    free(tmplist);
+    bptr = tmplist + strlen(tmplist) + 1;
   }
 
   fclose(fd);
   free(buffer);
-  free(origbuffer);
 
   return deplist;
 }
