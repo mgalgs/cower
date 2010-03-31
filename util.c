@@ -181,7 +181,7 @@ int file_exists(const char* filename) {
 
   struct stat st;
 
-  return ! stat(filename, &st) ? TRUE : FALSE;
+  return ! stat(filename, &st);
 }
 
 /** 

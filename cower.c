@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
    */
   if (config->op & OP_UPDATE) { /* 8 */
     alpm_quick_init();
-    alpm_list_t *foreign = alpm_query_search(NULL);
+    alpm_list_t *foreign = alpm_query_foreign();
 
     if (foreign) {
       get_pkg_availability(foreign);

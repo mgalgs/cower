@@ -21,8 +21,8 @@
 #include <jansson.h>
 
 /* constants for cfprintf */
-#define C_ON    "\033[0;3"
-#define C_OFF     "\033[0;m"
+#define C_ON      "\033[1;3"
+#define C_OFF     "\033[m"
 
 #define FREE(p) do { free((void*)p); p = NULL; } while (0)
 #define TRUE  1
@@ -42,10 +42,10 @@ enum {
 };
 
 alpm_list_t *agg_search_results(alpm_list_t*, json_t*);
-char *itoa(unsigned int, int);
 int cfprintf(FILE*, const char*, ...);
 int cprintf(const char*, ...);
 int file_exists(const char*);
+char *itoa(unsigned int, int);
 void print_pkg_info(json_t*);
 void print_pkg_search(alpm_list_t*);
 void print_pkg_update(const char*, const char*, const char*);

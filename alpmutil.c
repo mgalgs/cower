@@ -166,42 +166,20 @@ alpm_list_t *alpm_list_remove_item(alpm_list_t *listhead, alpm_list_t *target, a
 }
 
 /** 
-* @brief search alpm's local db for package
-* 
-* @param target alpm_list_t carrying packages to search for
+* @brief search alpm's local db for foreign packages
 * 
 * @return a list of packages fufilling the criteria
 */
-alpm_list_t *alpm_query_search(alpm_list_t *target) {
+alpm_list_t *alpm_query_foreign() {
 
-  alpm_list_t *i, *searchlist, *ret = NULL;
-  int freelist;
+  alpm_list_t *i, *ret = NULL;
 
-  if (target) { /* If we have a target, search for it */
-    searchlist = alpm_db_search(db_local, target);
-    freelist = 1;
-  } else { /* Otherwise return a pointer to the local cache */
-    searchlist = alpm_db_get_pkgcache(db_local);
-    freelist = 0;
-  }
+  for(i = alpm_db_get_pkgcache(db_local); i; i = alpm_list_next(i)) {
+    pmpkg_t *pkg = alpm_list_getdata(i);
 
-  if(searchlist == NULL) {
-    return NULL;
-  }
-
-  if (!target) {
-    for(i = searchlist; i; i = alpm_list_next(i)) {
-      pmpkg_t *pkg = alpm_list_getdata(i);
-
-      /* TODO: Reuse alpm_sync_search for this? */
-      if (is_foreign(pkg)) {
-        ret = alpm_list_add(ret, pkg);
-      }
+    if (is_foreign(pkg)) {
+      ret = alpm_list_add(ret, pkg);
     }
-  }
-
-  if (freelist) {
-    alpm_list_free(searchlist);
   }
 
   return ret; /* This needs to be freed in the calling function */

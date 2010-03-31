@@ -24,7 +24,7 @@
 
 alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t*, alpm_list_t*, alpm_list_fn_cmp, alpm_list_fn_free);
 alpm_list_t *alpm_list_remove_item(alpm_list_t*, alpm_list_t*, alpm_list_fn_free);
-alpm_list_t *alpm_query_search(alpm_list_t*);
+alpm_list_t *alpm_query_foreign(void);
 pmdb_t *alpm_sync_search(alpm_list_t*);
 void alpm_quick_init(void);
 int is_in_pacman(const char*);

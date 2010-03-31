@@ -53,26 +53,27 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *startdep) {
 
 }
 
-alpm_list_t *parsedeps(const char *pkgbuild, alpm_list_t *deplist) {
+alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
   FILE* fd;
-  char *deps, *tmplist, *buffer, *bptr;
-
-  buffer = calloc(1, BUFSIZ + 1);
+  char buffer[BUFSIZ + 1];
+  char *deps, *tmplist, *bptr;
 
   fd = fopen(pkgbuild, "r");
   fread(buffer, sizeof(char), BUFSIZ, fd); 
 
   bptr = buffer;
 
+  /* This catches depends as well as makedepends.
+   * It's valid for multi package files as well,
+   * even though the AUR doesn't support them. */
   while ((deps = strstr(bptr, "depends=(")) != NULL) {
     tmplist = strndup(deps + 9, strchr(deps, ')') - deps);
     deplist = parse_bash_array(deplist, tmplist);
     free(tmplist);
-    bptr = tmplist + strlen(tmplist) + 1;
+    bptr = tmplist + strlen(tmplist) - 1;
   }
 
   fclose(fd);
-  free(buffer);
 
   return deplist;
 }
@@ -84,7 +85,7 @@ int get_pkg_dependencies(const char *pkg, const char *pkgbuild_path) {
   }
 
   alpm_list_t *deplist = NULL;
-  deplist = parsedeps(pkgbuild_path, deplist);
+  deplist = pkgbuild_get_deps(pkgbuild_path, deplist);
 
   if (! config->quiet) {
     if (config->color) {
@@ -95,14 +96,19 @@ int get_pkg_dependencies(const char *pkg, const char *pkgbuild_path) {
     }
   }
 
-  alpm_list_t *i;
-  for (i = deplist; i; i = alpm_list_next(i)) {
+  alpm_list_t *i = deplist;
+  while (i) {
+  //for (i = deplist; i; i = alpm_list_next(i)) {
     const char* depend = i->data;
 
     if (alpm_db_get_pkg(db_local, depend)) { /* installed */
+      i = alpm_list_next(i);
+      //i = alpm_list_remove_item(deplist, i, free);
       continue;
     }
     if (is_in_pacman(depend)) { /* available in pacman */
+      i = alpm_list_next(i);
+      //i = alpm_list_remove_item(deplist, i, free);
       continue;
     }
     /* if we're here, we need to check the AUR */
@@ -110,12 +116,14 @@ int get_pkg_dependencies(const char *pkg, const char *pkgbuild_path) {
     if (infojson) {
       aur_get_tarball(infojson);
     }
-    json_decref(infojson);
+      json_decref(infojson);
+
+    i = alpm_list_next(i);
 
   }
 
   /* Cleanup */
-  alpm_list_free_inner(deplist, (alpm_list_fn_free)free);
+  alpm_list_free_inner(deplist, free);
   alpm_list_free(deplist);
 
   return 0;

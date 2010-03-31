@@ -15,12 +15,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* standard */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* local */
 #include "alpmutil.h"
 #include "download.h"
 #include "conf.h"
@@ -100,8 +98,7 @@ int get_pkg_availability(alpm_list_t *targets) {
     }
 
     /* Do I exist in the AUR? */
-    json_t *infojson = aur_rpc_query(AUR_QUERY_TYPE_INFO,
-      alpm_pkg_get_name(pmpkg));
+    json_t *infojson = aur_rpc_query(AUR_QUERY_TYPE_INFO, alpm_pkg_get_name(pmpkg));
 
     if (infojson == NULL) { /* Not found, next candidate */
       json_decref(infojson);
