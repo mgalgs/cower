@@ -78,9 +78,10 @@ int get_pkg_dependencies(const char *pkg, const char *pkgbuild_path) {
 
   if (! config->quiet) {
     if (config->color) {
-      cprintf("\nAttempting to fetch uninstalled %<dependencies%> for %<%s%>...\n", YELLOW, WHITE, pkg);
+      cprintf("\n%<::%> Attempting to fetch uninstalled dependencies for %<%s%>...\n",
+        BLUE, WHITE, pkg);
     } else {
-      printf("\nAttempting to fetch uninstalled dependencies for %s...\n", pkg);
+      printf("\n:: Attempting to fetch uninstalled dependencies for %s...\n", pkg);
     }
   }
 
