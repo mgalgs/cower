@@ -68,9 +68,7 @@ alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
    * even though the AUR doesn't support them. */
   int debug = 0;
   while ((deps = strstr(bptr, "depends=(")) != NULL) {
-    cfprintf(stderr, "%<%d%> :: ", BLUE, ++debug);
     tmp = strndup(deps + 9, strchr(deps, ')') - deps - 9);
-    cfprintf(stderr, "%<%s%>\n", YELLOW, tmp);
     deplist = parse_bash_array(deplist, tmp);
     bptr = tmp + strlen(tmp) - 1;
     free(tmp);
