@@ -45,7 +45,6 @@ static int parseargs(int argc, char **argv) {
     {"force",     no_argument,        0, 'f'},
     {"quiet",     no_argument,        0, 'q'},
     {"target",    required_argument,  0, 't'},
-    {"verbose",   no_argument,        0, 'v'},
     {0, 0, 0, 0}
   };
 
@@ -90,6 +89,7 @@ static int parseargs(int argc, char **argv) {
           FREE(config->download_dir);
         }
         config->download_dir = strndup(optarg, PATH_MAX);
+        break;
       case 'v':
         config->verbose++;
         break;
