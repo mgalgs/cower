@@ -4,7 +4,7 @@ h2. Usage
 
 pre. Usage: cower [options] <operation> PACKAGE [PACKAGE2..]
 
- Operations:
+pre. Operations:
   -d, --download          download PACKAGE(s)
                             pass -dd to download AUR dependencies
                             pass -ddd to download recusrively
