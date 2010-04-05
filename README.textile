@@ -2,8 +2,7 @@ Make your taurballs cower in fear.
 
 h2. Usage
 
-@
-Usage: cower [options] <operation> PACKAGE [PACKAGE2..]
+pre. Usage: cower [options] <operation> PACKAGE [PACKAGE2..]
 
  Operations:
   -d, --download          download PACKAGE(s)
@@ -15,13 +14,13 @@ Usage: cower [options] <operation> PACKAGE [PACKAGE2..]
                             --download flag is passed as well,
                             fetch each available update.
 
- General options:
+pre. General options:
   -c, --color             use colored output
   -f, --force             overwrite existing files when downloading
   -q, --quiet             output less to stdout
   -t DIR, --target=DIR    specify an alternate download directory
   -v, --verbose           be more verbose
-@
+
 
 h2. Dependencies:
 
