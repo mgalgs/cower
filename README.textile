@@ -1,0 +1,26 @@
+Make your taurballs cower in fear.
+
+h2. Dependencies:
+
+	* jansson (JSON handling)
+	* curl (fetching)
+	* libarchive (taurball extraction)
+	* pacman (pacman functions and data structures)
+
+h2. Features:
+
+	* Search package(s)
+	* Info for package(s)
+	* Download and extract of package(s) (with or without dependencies!)
+	* Check for updates (with download)
+	* Specify alternate download directory
+
+h2. TODO pile:
+
+	* verbosity levels
+	* upload taurballs
+
+h2. Thanks to:
+
+	* the Pacman dev team
+	* Archers: DigitalKiwi, Cactus, rson
