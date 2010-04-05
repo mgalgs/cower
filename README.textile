@@ -1,5 +1,28 @@
 Make your taurballs cower in fear.
 
+h2. Usage
+
+{% highlight bash %}
+Usage: cower [options] <operation> PACKAGE [PACKAGE2..]
+
+ Operations:
+  -d, --download          download PACKAGE(s)
+                            pass -dd to download AUR dependencies
+                            pass -ddd to download recusrively
+  -i, --info              show info for PACKAGE(s)
+  -s, --search            search for PACKAGE(s)
+  -u, --update            check for updates against AUR. If the 
+                            --download flag is passed as well,
+                            fetch each available update.
+
+ General options:
+  -c, --color             use colored output
+  -f, --force             overwrite existing files when downloading
+  -q, --quiet             output less to stdout
+  -t DIR, --target=DIR    specify an alternate download directory
+  -v, --verbose           be more verbose
+{% endhighlight %}
+
 h2. Dependencies:
 
 * jansson (JSON handling)
@@ -7,20 +30,13 @@ h2. Dependencies:
 * libarchive (taurball extraction)
 * pacman (pacman functions and data structures)
 
-h2. Features:
-
-* Search package(s)
-* Info for package(s)
-* Download and extract of package(s) (with or without dependencies!)
-* Check for updates (with download)
-* Specify alternate download directory
-
 h2. TODO pile:
 
-* verbosity levels
+* add more verbosity for -v(v)
 * upload taurballs
 
 h2. Thanks to:
 
 * the Pacman dev team
 * Archers: DigitalKiwi, Cactus, rson
+
