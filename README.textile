@@ -2,7 +2,8 @@ Make your taurballs cower in fear.
 
 h2. Usage
 
-@Usage: cower [options] <operation> PACKAGE [PACKAGE2..]
+@
+Usage: cower [options] <operation> PACKAGE [PACKAGE2..]
 
  Operations:
   -d, --download          download PACKAGE(s)
@@ -19,7 +20,8 @@ h2. Usage
   -f, --force             overwrite existing files when downloading
   -q, --quiet             output less to stdout
   -t DIR, --target=DIR    specify an alternate download directory
-  -v, --verbose           be more verbose@
+  -v, --verbose           be more verbose
+@
 
 h2. Dependencies:
 
