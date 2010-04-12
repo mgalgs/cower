@@ -110,21 +110,25 @@ int get_pkg_dependencies(const char *pkg) {
   alpm_list_t *i = deplist;
   for (i = deplist; i; i = alpm_list_next(i)) {
     const char* depend = i->data;
+    if (config->verbose >= 2)
+      printf("::DEBUG Attempting to find %s\n", depend);
 
     if (alpm_db_get_pkg(db_local, depend)) { /* installed */
-      i = alpm_list_next(i);
+      if (config->verbose >= 2)
+        printf("::DEBUG %s is installed\n", depend);
       continue;
     }
     if (is_in_pacman(depend)) { /* available in pacman */
-      i = alpm_list_next(i);
       continue;
     }
     /* if we're here, we need to check the AUR */
     json_t *infojson = aur_rpc_query(AUR_QUERY_TYPE_INFO, depend);
     if (infojson) {
+      if (config->verbose >= 2)
+        printf("::DEBUG %s is in the AUR\n", depend);
       aur_get_tarball(infojson);
     }
-      json_decref(infojson);
+    json_decref(infojson);
 
   }
 
