@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "alpmutil.h"
 #include "conf.h"
@@ -81,11 +82,18 @@ alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
   return deplist;
 }
 
-int get_pkg_dependencies(const char *pkg, const char *pkgbuild_path) {
+int get_pkg_dependencies(const char *pkg) {
 
-  if (! file_exists(pkgbuild_path)) {
-    return -1;
-  }
+  const char *dir;
+  char *pkgbuild_path;
+
+  if (config->download_dir == NULL)
+    dir = getcwd(NULL, 0);
+  else
+    dir = realpath(config->download_dir, NULL);
+
+  pkgbuild_path = calloc(1, PATH_MAX + 1);
+  snprintf(pkgbuild_path, strlen(dir) + strlen(pkg) + 11, "%s/%s/PKGBUILD", dir, pkg);
 
   alpm_list_t *deplist = NULL;
   deplist = pkgbuild_get_deps(pkgbuild_path, deplist);
@@ -123,6 +131,8 @@ int get_pkg_dependencies(const char *pkg, const char *pkgbuild_path) {
   /* Cleanup */
   alpm_list_free_inner(deplist, free);
   alpm_list_free(deplist);
+  FREE(dir);
+  FREE(pkgbuild_path);
 
   return 0;
 }

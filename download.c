@@ -155,14 +155,6 @@ int aur_get_tarball(json_t *root) {
     }
   }
 
-  /* Increment config->getdeps to avoid recursion */
-  if (config->getdeps++ == 1 || config->getrecdeps) {
-    char *pbpath = calloc(1, PATH_MAX + 1);
-    snprintf(pbpath, strlen(dir) + strlen(pkgname) + 11, "%s/%s/PKGBUILD", dir, pkgname);
-    get_pkg_dependencies(pkgname, pbpath);
-    free(pbpath);
-  }
-
   FREE(dir);
 
   return result;

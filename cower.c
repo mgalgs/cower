@@ -22,6 +22,7 @@
 
 #include "alpmutil.h"
 #include "conf.h"
+#include "depends.h"
 #include "download.h"
 #include "package.h"
 #include "search.h"
@@ -114,7 +115,6 @@ Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
  Operations:\n\
   -d, --download          download PACKAGE(s)\n\
                             pass -dd to download AUR dependencies\n\
-                            pass -ddd to download recusrively\n\
   -i, --info              show info for PACKAGE(s)\n\
   -s, --search            search for PACKAGE(s)\n\
   -u, --update            check for updates against AUR. If the \n\
@@ -172,6 +172,8 @@ int main(int argc, char **argv) {
         if (infojson) { /* Found it in the AUR */
           aur_get_tarball(infojson);
           json_decref(infojson);
+          if (config->getdeps)
+            get_pkg_dependencies((const char*)i->data);
         } else { /* Not found anywhere */
           if (config->color) {
             cfprintf(stderr, "%<%s%>", RED, "error:");

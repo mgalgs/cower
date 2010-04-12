@@ -17,6 +17,6 @@
 
 #include <alpm.h>
 
-int get_pkg_dependencies(const char*, const char*);
+int get_pkg_dependencies(const char*);
 alpm_list_t *parse_bash_array(alpm_list_t*, char*);
 alpm_list_t *pkgbuild_get_deps(const char*, alpm_list_t*);
