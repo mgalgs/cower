@@ -28,11 +28,6 @@ h2. Dependencies:
 * libarchive (taurball extraction)
 * pacman (pacman functions and data structures)
 
-h2. TODO pile:
-
-* add more verbosity for -v(v)
-* upload taurballs
-
 h2. Thanks to:
 
 * the Pacman dev team
