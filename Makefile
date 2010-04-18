@@ -1,4 +1,4 @@
-CC=gcc -std=c99 -Wall -pedantic# -g
+CC=gcc -std=c99 -Wall -pedantic -g
 VERSION=-DVERSION=\"$(shell git describe)\"
 CFLAGS=-pipe -O2 -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 LDFLAGS=-ljansson -lcurl -lalpm

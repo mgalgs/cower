@@ -63,7 +63,6 @@ config_t *config_new(void) {
   newconfig->download_dir = NULL;
   newconfig->color = 0;
   newconfig->getdeps = 0;
-  newconfig->getrecdeps = 0;
   newconfig->force = 0;
   newconfig->quiet = 0;
   newconfig->verbose = 0;

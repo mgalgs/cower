@@ -57,13 +57,10 @@ static int parseargs(int argc, char **argv) {
     switch (opt) {
       /* Operations */
       case 'd':
-        if (! (config->op & OP_DL)) {
+        if (! (config->op & OP_DL))
           config->op |= OP_DL;
-        } else if (! config->getdeps) {
+        else
           config->getdeps = 1;
-        } else {
-          config->getrecdeps = 1;
-        }
         break;
       case 'i':
         config->op |= OP_INFO;
@@ -86,9 +83,8 @@ static int parseargs(int argc, char **argv) {
         config->quiet = 1;
         break;
       case 't':
-        if (config->download_dir) {
+        if (config->download_dir)
           FREE(config->download_dir);
-        }
         config->download_dir = strndup(optarg, PATH_MAX);
         break;
       case 'v':

@@ -7,7 +7,6 @@ pre. Usage: cower [options] <operation> PACKAGE [PACKAGE2..]
 pre. Operations:
   -d, --download          download PACKAGE(s)
                             pass -dd to download AUR dependencies
-                            pass -ddd to download recusrively
   -i, --info              show info for PACKAGE(s)
   -s, --search            search for PACKAGE(s)
   -u, --update            check for updates against AUR. If the 
