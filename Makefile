@@ -6,11 +6,17 @@ OBJ=alpmutil.o conf.o depends.o download.o package.o search.o util.o
 
 all: cower
 
-cower: cower.c $(OBJ)
-	$(CC) $(CFLAGS) $(VERSION) $(LDFLAGS) $< $(OBJ) -o $@
+cower: cower.c ${OBJ}
+	${CC} ${CFLAGS} ${VERSION} ${LDFLAGS} $< ${OBJ} -o $@
 
 %.o: %.c %.h
-	$(CC) $(CFLAGS) $< -c
+	${CC} ${CFLAGS} $< -c
+
+install: all
+	@echo installing executable to ${DESTDIR}/usr/bin
+	mkdir -p ${DESTDIR}/usr/bin
+	cp -f cower ${DESTDIR}/usr/bin
+	chmod 755 ${DESTDIR}/usr/bin/cower
 
 clean:
 	@rm *.o cower
