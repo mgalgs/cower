@@ -70,7 +70,7 @@ int aur_get_tarball(json_t *root) {
 
   FILE *fd;
   const char *dir, *filename, *pkgname;
-  char fullpath[PATH_MAX], url[AUR_URL_SIZE];
+  char fullpath[PATH_MAX + 1], url[AUR_URL_SIZE + 1];
   int result = 0;
   json_t *pkginfo;
 
