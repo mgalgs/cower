@@ -92,21 +92,25 @@ int aur_get_tarball(json_t *root) {
   pkginfo = json_object_get(root, "results");
   pkgname = json_string_value(json_object_get(pkginfo, "Name"));
 
-  if (config->verbose >= 2) {
+  if (config->verbose >= 2)
     fprintf(stderr, "::DEBUG Downloading Package: %s\n", pkgname);
-  }
 
   /* Build URL. Need this to get the taurball, durp */
-  snprintf(url, AUR_URL_SIZE, AUR_PKG_URL,
-    json_string_value(json_object_get(pkginfo, "URLPath")));
+  snprintf(url, AUR_URL_SIZE, AUR_PKG_URL, pkgname, pkgname);
+
+  if (config->verbose >= 2)
+    fprintf(stderr, "::DEBUG Using URL %s\n", url);
 
   /* Pointer to the 'basename' of the URL Path */
   filename = strrchr(url, '/') + 1;
 
   snprintf(fullpath, PATH_MAX, "%s/%s", dir, filename);
 
-  /* Mask .tar.gz extension to check for the exploded dir existing */
-  fullpath[strlen(fullpath) - 7] = '\0';
+  /* Mask extension to check for the exploded dir existing */
+  if (strcmp(strrchr(fullpath, '.'), ".gz") == 0) 
+    fullpath[strlen(fullpath) - 7] = '\0';
+  else if (strcmp(strrchr(fullpath, '.'), ".tgz") == 0)
+    fullpath[strlen(fullpath) - 4] = '\0';
 
   if (file_exists(fullpath) && ! config->force) {
     if (config->color)
@@ -140,6 +144,8 @@ int aur_get_tarball(json_t *root) {
       /* Fork off bsdtar to extract the taurball */
       pid_t pid; pid = fork();
       if (pid == 0) { /* Child process */
+        if (config->verbose >= 2)
+          fprintf(stderr, "::DEBUG bsdtar -C %s -xf %s\n", dir, fullpath);
         result = execlp("bsdtar", "bsdtar", "-C", dir, "-xf", fullpath, NULL);
       } else /* Back in the parent, waiting for child to finish */
         while (! waitpid(pid, NULL, WNOHANG));

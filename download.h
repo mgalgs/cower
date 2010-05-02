@@ -21,7 +21,7 @@
 #include <curl/curl.h>
 #include <jansson.h>
 
-#define AUR_PKG_URL         "http://aur.archlinux.org%s"
+#define AUR_PKG_URL         "http://aur.archlinux.org/packages/%s/%s.tar.gz"
 #define AUR_RPC_URL         "http://aur.archlinux.org/rpc.php?type=%s&arg=%s"
 #define AUR_PKG_URL_FORMAT  "http://aur.archlinux.org/packages.php?ID="
 
