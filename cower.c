@@ -99,7 +99,7 @@ static int parseargs(int argc, char **argv) {
 
   /* Feed the remaining args into a linked list */
   while (optind < argc)
-    targets = alpm_list_add(targets, argv[optind++]);
+    targets = alpm_list_add(targets, strdup(argv[optind++]));
 
   return 0;
 }
@@ -242,6 +242,7 @@ int main(int argc, char **argv) {
 
   /* Compulsory cleanup */
   curl_global_cleanup();
+  alpm_list_free_inner(targets, free);
   alpm_list_free(targets);
   alpm_release();
   config_free(config);
