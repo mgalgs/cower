@@ -14,7 +14,7 @@ cower: cower.c ${OBJ}
 	${CC} ${CFLAGS} $< -c
 
 doc:
-	pod2man --section=1 --center=" " --release=" " --name="COWER" --date="burp-VERSION" cower.pod > cower.1
+	pod2man --section=1 --center=" " --release=" " --name="COWER" --date="cower-VERSION" cower.pod > cower.1
 
 install: all
 	@echo installing executable to ${DESTDIR}/usr/bin
