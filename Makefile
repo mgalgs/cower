@@ -14,8 +14,8 @@ cower: ${OBJ}
 .c.o:
 	${CC} ${CFLAGS} -c $<
 
-cower.1: cower.pod
-	pod2man --section=1 --center=" " --release=" " --name="COWER" --date="cower-VERSION" cower.pod > cower.1
+cower.1: README.pod
+	pod2man --section=1 --center=" " --release=" " --name="COWER" --date="cower-VERSION" README.pod > cower.1
 
 install: all
 	@echo installing executable to ${DESTDIR}/usr/bin
