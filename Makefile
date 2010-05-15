@@ -30,7 +30,7 @@ install: all
 dist: clean
 	@echo creating dist tarball
 	@mkdir -p cower-${VERSION}
-	@cp -R ${SRC} Makefile cower.pod cower-${VERSION}
+	@cp -R ${SRC} *.h Makefile cower.pod cower-${VERSION}
 	@tar -cf cower-${VERSION}.tar cower-${VERSION}
 	@gzip cower-${VERSION}.tar
 	@rm -rf cower-${VERSION}
