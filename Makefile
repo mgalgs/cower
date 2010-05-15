@@ -1,18 +1,18 @@
-CC=gcc -std=c99 -Wall -pedantic -g
-VERSION=$(shell git describe)
-CFLAGS=-pipe -O2 -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -DVERSION=\"${VERSION}\"
-LDFLAGS=-ljansson -lcurl -lalpm
-SRC = alpmutil.c conf.c depends.c download.c package.c search.c util.c
-OBJ = ${SRC:.c=.o}
+CC      = gcc -std=c99 -Wall -pedantic -g
+VERSION = $(shell git describe)
+CFLAGS  = -pipe -O2 -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -DVERSION=\"${VERSION}\"
+LDFLAGS = -ljansson -lcurl -lalpm
+SRC     = alpmutil.c conf.c cower.c depends.c download.c package.c search.c util.c
+OBJ     = ${SRC:.c=.o}
 
 all: cower doc
 doc: cower.1
 
-cower: cower.c ${OBJ}
-	${CC} ${CFLAGS} ${LDFLAGS} $< ${OBJ} -o $@
+cower: ${OBJ}
+	${CC} ${CFLAGS} ${LDFLAGS} ${OBJ} -o $@
 
-%.o: %.c %.h
-	${CC} ${CFLAGS} $< -c
+.c.o:
+	${CC} ${CFLAGS} -c $<
 
 cower.1: cower.pod
 	pod2man --section=1 --center=" " --release=" " --name="COWER" --date="cower-VERSION" cower.pod > cower.1
