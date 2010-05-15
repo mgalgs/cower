@@ -2,10 +2,11 @@ CC=gcc -std=c99 -Wall -pedantic -g
 VERSION=$(shell git describe)
 CFLAGS=-pipe -O2 -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -DVERSION=\"${VERSION}\"
 LDFLAGS=-ljansson -lcurl -lalpm
-OBJ=alpmutil.o conf.o depends.o download.o package.o search.o util.o
+SRC = alpmutil.c conf.c depends.c download.c package.c search.c util.c
+OBJ = ${SRC:.c=.o}
 
-default: cower
 all: cower doc
+doc: cower.1
 
 cower: cower.c ${OBJ}
 	${CC} ${CFLAGS} ${LDFLAGS} $< ${OBJ} -o $@
@@ -13,7 +14,7 @@ cower: cower.c ${OBJ}
 %.o: %.c %.h
 	${CC} ${CFLAGS} $< -c
 
-doc:
+cower.1: cower.pod
 	pod2man --section=1 --center=" " --release=" " --name="COWER" --date="cower-VERSION" cower.pod > cower.1
 
 install: all
@@ -26,7 +27,21 @@ install: all
 	@sed "s/VERSION/${VERSION}/g" < cower.1 > ${DESTDIR}${MANPREFIX}/man1/cower.1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/cower.1
 
-clean:
-	@rm *.o cower cower.1
+dist: clean
+	@echo creating dist tarball
+	@mkdir -p cower-${VERSION}
+	@cp -R ${SRC} Makefile cower.pod cower-${VERSION}
+	@tar -cf cower-${VERSION}.tar cower-${VERSION}
+	@gzip cower-${VERSION}.tar
+	@rm -rf cower-${VERSION}
 
-.PHONY: all cower doc install clean
+uninstall:
+	@echo removing executable file from ${DESTDIR}/usr/bin
+	@rm -f ${DESTDIR}/usr/bin/cower
+	@echo removing man page from ${DESTDIR}${MANPREFIX}/man1/cower.1
+	@rm -f ${DESTDIR}${MANPREFIX}/man1/cower.1
+
+clean:
+	@rm -f *.o cower cower.1
+
+.PHONY: all clean install uninstall doc
