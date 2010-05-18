@@ -204,7 +204,7 @@ char *curl_get_json(const char *url) {
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
   if(code != 200) {
     if (config->color) {
-      cfprintf(stderr, "%<curl error:%> server responded with code %l", RED, code);
+      cfprintf(stderr, "%<curl error:%> server responded with code %l\n", RED, code);
     } else {
       fprintf(stderr, "curl error: server responded with code %ld\n", code);
     }
