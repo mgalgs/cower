@@ -21,4 +21,6 @@
 #include <yajl/yajl_parse.h>
 #include <yajl/yajl_gen.h>
 
+alpm_list_t *aur_fetch_json(const char*);
+
 #endif /* _COWER_YAJL_H */
