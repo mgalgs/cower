@@ -18,14 +18,14 @@
 /* standard */
 #include <ctype.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
 /* local */
+#include "aur.h"
 #include "conf.h"
-#include "alpmutil.h"
+#include "pacman.h"
 #include "download.h"
 #include "package.h"
 #include "util.h"
@@ -108,26 +108,12 @@ static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
 *
 * @return head of the alpm_list_t
 */
-alpm_list_t *agg_search_results(alpm_list_t *agg, json_t *search) {
+alpm_list_t *agg_search_results(alpm_list_t *haystack, alpm_list_t *addthis) {
 
-  alpm_list_t *new_search;
-  aur_pkg_t *aur_pkg;
-  int n;
-  json_t *j_pkg;
-
-  new_search = NULL;
-
-  for (n = 0; n < json_array_size(search); n++) {
-    j_pkg = json_array_get(search, n);
-    aur_pkg = json_to_aur_pkg(j_pkg);
-    new_search = alpm_list_add_sorted(new_search, aur_pkg, (alpm_list_fn_cmp)_aur_pkg_cmp);
-  }
-
-  agg = alpm_list_mmerge_dedupe(agg, new_search, (alpm_list_fn_cmp)_aur_pkg_cmp,
+  haystack = alpm_list_mmerge_dedupe(haystack, addthis, (alpm_list_fn_cmp)aur_pkg_cmp,
     (alpm_list_fn_free)aur_pkg_free);
 
-  return agg;
-
+  return haystack;
 }
 
 
@@ -178,10 +164,9 @@ int cprintf(const char* fmt, ...) {
 * @return 1 if exists, else 0
 */
 int file_exists(const char* filename) {
-
   struct stat st;
 
-  return ! stat(filename, &st);
+  return stat(filename, &st) == 0;
 }
 
 /** 
@@ -216,51 +201,33 @@ char *itoa(unsigned int num, int base){
 * 
 * @param pkg      JSON describing the package
 */
-void print_pkg_info(json_t *pkg) {
-
-  json_t *pkginfo;
-  const char *id, *name, *ver, *url, *cat, *license, *votes, *desc;
-  int ood;
-
-  pkginfo = json_object_get(pkg, "results");
-
-  /* Declare  to json data to make my life easier */
-  id      = json_string_value(json_object_get(pkginfo, "ID"));
-  name    = json_string_value(json_object_get(pkginfo, "Name"));
-  ver     = json_string_value(json_object_get(pkginfo, "Version"));
-  url     = json_string_value(json_object_get(pkginfo, "URL"));
-  cat     = json_string_value(json_object_get(pkginfo, "CategoryID"));
-  license = json_string_value(json_object_get(pkginfo, "License"));
-  votes   = json_string_value(json_object_get(pkginfo, "NumVotes"));
-  desc    = json_string_value(json_object_get(pkginfo, "Description"));
-  ood     = atoi(json_string_value(json_object_get(pkginfo, "OutOfDate")));
+void print_pkg_info(struct aur_pkg_t *pkg) {
 
   if (config->color) {
     cprintf("Repository      : %<aur%>\n", MAGENTA);
-    cprintf("Name            : %<%s%>\n", WHITE, name);
-    cprintf("Version         : %<%s%>\n", ood ? RED : GREEN, ver);
-    cprintf("URL             : %<%s%>\n", CYAN, url);
-    cprintf("AUR Page        : %<%s%s%>\n", CYAN, AUR_PKG_URL_FORMAT, id);
+    cprintf("Name            : %<%s%>\n", WHITE, pkg->name);
+    cprintf("Version         : %<%s%>\n", pkg->ood ? RED : GREEN, pkg->ver);
+    cprintf("URL             : %<%s%>\n", CYAN, pkg->url);
+    cprintf("AUR Page        : %<%s%s%>\n", CYAN, AUR_PKG_URL_FORMAT, pkg->id);
   } else {
     printf("Repository      : aur\n");
-    printf("Name:           : %s\n", name);
-    printf("Version         : %s\n", ver);
-    printf("URL             : %s\n", url);
-    printf("AUR Page        : %s%s\n", AUR_PKG_URL_FORMAT, id);
+    printf("Name:           : %s\n", pkg->name);
+    printf("Version         : %s\n", pkg->ver);
+    printf("URL             : %s\n", pkg->url);
+    printf("AUR Page        : %s%s\n", AUR_PKG_URL_FORMAT, pkg->id);
   }
 
-  printf("Category        : %s\n", aur_cat[atoi(cat)]);
-  printf("License         : %s\n", license);
-  printf("Number of Votes : %s\n", votes);
+  printf("Category        : %s\n", aur_cat[atoi(pkg->cat)]);
+  printf("License         : %s\n", pkg->lic);
+  printf("Number of Votes : %s\n", pkg->votes);
 
   if (config->color) {
-    cprintf("Out of Date     : %<%s%>\n", ood ? RED : GREEN, ood ? "Yes" : "No");
+    cprintf("Out of Date     : %<%s%>\n", pkg->ood ? RED : GREEN, pkg->ood ? "Yes" : "No");
   } else {
-    printf("Out of Date     : %s\n", ood ? "Yes" : "No");
+    printf("Out of Date     : %s\n", pkg->ood ? "Yes" : "No");
   }
 
-  printf("Description     : %s\n\n", desc);
-
+  printf("Description     : %s\n\n", pkg->desc);
 }
 
 /** 
@@ -269,30 +236,25 @@ void print_pkg_info(json_t *pkg) {
 * @param search     alpm_list_t packed with aur_pkg_t structs.
 */
 void print_pkg_search(alpm_list_t *search) {
-
   alpm_list_t *i;
-  aur_pkg_t *pkg;
+  struct aur_pkg_t *pkg;
 
   for (i = search; i; i = alpm_list_next(i)) {
-
-    pkg = (aur_pkg_t*)alpm_list_getdata(i);
+    pkg = (struct aur_pkg_t*)alpm_list_getdata(i);
 
     if (config->quiet) {
-      if (config->color) {
+      if (config->color)
         cprintf("%<%s%>\n", WHITE, pkg->name);
-      } else {
+      else
         printf("%s\n", pkg->name);
-      }
     } else {
-      if (config->color) {
+      if (config->color)
         cprintf("%<aur/%>%<%s%> %<%s%>\n",
           MAGENTA, WHITE, pkg->name, pkg->ood ? RED : GREEN, pkg->ver);
-      } else {
+      else
         printf("aur/%s %s\n", pkg->name, pkg->ver);
-      }
       printf("    %s\n", pkg->desc);
     }
-
   }
 }
 
@@ -304,7 +266,6 @@ void print_pkg_search(alpm_list_t *search) {
 * @param remote_ver   remotely available version
 */
 void print_pkg_update(const char *pkg, const char *local_ver, const char *remote_ver) {
-
   if (config->color) {
     cprintf("%<%s%>", WHITE, pkg);
     if (! config->quiet)
