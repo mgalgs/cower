@@ -18,7 +18,7 @@
 #ifndef _COWER_PACKAGE_H
 #define _COWER_PACKAGE_H
 
-typedef struct aur_pkg_t {
+struct aur_pkg_t {
   const char* id;
   const char* name;
   const char* ver;
@@ -31,7 +31,7 @@ typedef struct aur_pkg_t {
   int ood;
 };
 
-int aur_pkg_cmp(void*, void*);
+int aur_pkg_cmp(const void*, const void*);
 void aur_pkg_free(void*);
 struct aur_pkg_t *aur_pkg_new(void);
 

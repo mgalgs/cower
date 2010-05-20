@@ -29,7 +29,7 @@
 * 
 * @return     results of strcmp on names of each aur_pkg_t
 */
-int aur_pkg_cmp(void *p1, void *p2) {
+int aur_pkg_cmp(const void *p1, const void *p2) {
   struct aur_pkg_t *pkg1 = (struct aur_pkg_t*)p1;
   struct aur_pkg_t *pkg2 = (struct aur_pkg_t*)p2;
 
