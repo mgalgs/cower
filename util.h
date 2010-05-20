@@ -17,9 +17,10 @@
 #ifndef _COWER_UTIL_H
 #define _COWER_UTIL_H
 
+#include <stdio.h>
+
 #include "pacman.h"
 #include "package.h"
-#include "stdio.h"
 
 /* constants for cfprintf */
 #define C_ON      "\033[1;3"
