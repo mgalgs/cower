@@ -171,7 +171,6 @@ alpm_list_t *alpm_list_remove_item(alpm_list_t *listhead, alpm_list_t *target, a
 * @return a list of packages fufilling the criteria
 */
 alpm_list_t *alpm_query_foreign() {
-
   alpm_list_t *i, *ret = NULL;
 
   for(i = alpm_db_get_pkgcache(db_local); i; i = alpm_list_next(i)) {
@@ -189,6 +188,9 @@ alpm_list_t *alpm_query_foreign() {
 * @brief initialize alpm and register default DBs
 */
 void alpm_quick_init() {
+
+  if (config->verbose > 1)
+    printf("::DEBUG:: Initializing alpm\n");
 
   FILE *pacfd;
   char *ptr, *section = NULL;
