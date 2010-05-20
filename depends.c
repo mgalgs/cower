@@ -84,9 +84,9 @@ alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
 }
 
 int get_pkg_dependencies(const char *pkg) {
-
   const char *dir;
   char *pkgbuild_path;
+  int ret = 0;
 
   if (config->download_dir == NULL)
     dir = getcwd(NULL, 0);
@@ -99,7 +99,7 @@ int get_pkg_dependencies(const char *pkg) {
   alpm_list_t *deplist = NULL;
   deplist = pkgbuild_get_deps(pkgbuild_path, deplist);
 
-  if (! config->quiet) {
+  if (!config->quiet && config->verbose >= 1) {
     if (config->color) {
       cprintf("\n%<::%> Fetching uninstalled dependencies for %<%s%>...\n",
         BLUE, WHITE, pkg);
@@ -128,6 +128,7 @@ int get_pkg_dependencies(const char *pkg) {
       if (config->verbose >= 2)
         printf("::DEBUG %s is in the AUR\n", depend);
       aur_get_tarball(results->data);
+      ret++;
       continue;
     }
   }
@@ -137,6 +138,6 @@ int get_pkg_dependencies(const char *pkg) {
   FREE(dir);
   FREE(pkgbuild_path);
 
-  return 0;
+  return ret;
 }
 
