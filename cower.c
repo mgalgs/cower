@@ -166,12 +166,13 @@ int main(int argc, char **argv) {
     alpm_list_t *i;
     for (i = targets; i; i = alpm_list_next(i)) {
       if (! is_in_pacman((const char*)i->data)) { /* Not found in pacman */
-        alpm_list_t *results = aur_rpc_query(AUR_QUERY_TYPE_INFO, (const char*)i->data);
+        alpm_list_t *results = aur_rpc_query(AUR_QUERY_TYPE_INFO, i->data);
         if (results) { /* Found it in the AUR */
-          aur_get_tarball(alpm_list_getdata(results));
-          //json_decref(infojson);
+          aur_get_tarball(results->data);
           if (config->getdeps)
             get_pkg_dependencies((const char*)i->data);
+          aur_pkg_free(results->data);
+          alpm_list_free(results);
         } else { /* Not found anywhere */
           if (config->color) {
             cfprintf(stderr, "%<%s%>", RED, "error:");
@@ -189,6 +190,8 @@ int main(int argc, char **argv) {
 
       if (search) {
         print_pkg_info(alpm_list_getdata(search));
+        aur_pkg_free(search->data);
+        alpm_list_free(search);
       } else {
         if (config->color) {
           cfprintf(stderr, "%<%s%>", RED, "error:");
@@ -197,8 +200,6 @@ int main(int argc, char **argv) {
         }
         fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
       }
-      //json_decref(search);
-
     }
   } else if (config->op & OP_SEARCH) { /* 1 */
     alpm_list_t *i;
@@ -228,8 +229,6 @@ int main(int argc, char **argv) {
 
       /* Aggregate searches into a single list and remove dupes */
       agg = agg_search_results(agg, search);
-
-      //json_decref(search);
     }
 
     /* print the search results */
