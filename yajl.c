@@ -21,31 +21,33 @@ static struct yajl_parse_struct {
 } parse_struct;
 
 static int json_string(void *ctx, const unsigned char *data, unsigned int size) {
-  char val[256];
+  const char *val = (const char*)data;
 
-  strncpy(val, (const char*)data, size);
-  val[size] = '\0';
+  if(STREQ(parse_struct.curkey, AUR_QUERY_TYPE) && 
+     strncmp(val, AUR_QUERY_ERROR, strlen(AUR_QUERY_ERROR)) == 0) {
+    return 0;
+  }
 
   if (STREQ(parse_struct.curkey, AUR_ID))
-    parse_struct.aurpkg->id = strdup(val);
+    parse_struct.aurpkg->id = strndup(val, size);
   else if (STREQ(parse_struct.curkey, AUR_NAME))
-    parse_struct.aurpkg->name = strdup(val);
+    parse_struct.aurpkg->name = strndup(val, size);
   else if (STREQ(parse_struct.curkey, AUR_VER))
-    parse_struct.aurpkg->ver = strdup(val);
+    parse_struct.aurpkg->ver = strndup(val, size);
   else if (STREQ(parse_struct.curkey, AUR_CAT))
-    parse_struct.aurpkg->cat = strdup(val);
+    parse_struct.aurpkg->cat = strndup(val, size);
   else if (STREQ(parse_struct.curkey, AUR_DESC))
-    parse_struct.aurpkg->desc = strdup(val);
+    parse_struct.aurpkg->desc = strndup(val, size);
   else if (STREQ(parse_struct.curkey, AUR_URL))
-    parse_struct.aurpkg->url = strdup(val);
+    parse_struct.aurpkg->url = strndup(val, size);
   else if (STREQ(parse_struct.curkey, AUR_URLPATH))
-    parse_struct.aurpkg->urlpath = strdup(val);
+    parse_struct.aurpkg->urlpath = strndup(val, size);
   else if (STREQ(parse_struct.curkey, AUR_LICENSE))
-    parse_struct.aurpkg->lic = strdup(val);
+    parse_struct.aurpkg->lic = strndup(val, size);
   else if (STREQ(parse_struct.curkey, AUR_VOTES))
-    parse_struct.aurpkg->votes = strdup(val);
+    parse_struct.aurpkg->votes = strndup(val, size);
   else if (STREQ(parse_struct.curkey, AUR_OOD))
-    parse_struct.aurpkg->ood = STREQ(val, "1") ? 1 : 0;
+    parse_struct.aurpkg->ood = strncmp(val, "1", 1) == 0 ? 1 : 0;
 
   return 1;
 }
@@ -126,6 +128,7 @@ alpm_list_t *aur_fetch_json(const char *url) {
     fprintf(stderr, "curl error: server responded with code %ld\n", httpcode);
     goto cleanup;
   };
+
 
   aur_pkg_free(parse_struct.aurpkg);
 
