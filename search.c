@@ -106,6 +106,30 @@ int get_pkg_availability(alpm_list_t *targets) {
   return ret;
 }
 
+alpm_list_t *cower_do_info(alpm_list_t *targets) {
+  alpm_list_t *i, *resultset;
+
+  resultset = NULL;
+
+  for (i = targets; i; i = alpm_list_next(i)) {
+    alpm_list_t *search = aur_rpc_query(AUR_QUERY_TYPE_INFO, i->data);
+
+    if (! search) {
+      if (config->color)
+        cfprintf(stderr, "%<%s%>", RED, "error:");
+      else
+        fprintf(stderr, "error:");
+      fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
+
+      continue;
+    }
+
+    resultset = alpm_list_add_sorted(resultset, search->data, aur_pkg_cmp);
+  }
+
+  return resultset;
+}
+
 alpm_list_t *cower_do_search(alpm_list_t *targets) {
   alpm_list_t *i;
   alpm_list_t *resultset = NULL;
@@ -138,3 +162,4 @@ alpm_list_t *cower_do_search(alpm_list_t *targets) {
 
   return resultset;
 }
+

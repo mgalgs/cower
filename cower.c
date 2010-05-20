@@ -158,28 +158,17 @@ int main(int argc, char **argv) {
     }
     alpm_list_free(foreign);
   } else if (config->op & OP_DL) { /* 4 */
-    /* Query alpm for the existance of this package. If it's not in the 
-     * sync, do an info query on the package in the AUR. Does it exist?
-     * If yes, pass it to aur_get_tarball.
-     */
     ret = cower_do_download(targets);
   } else if (config->op & OP_INFO) { /* 2 */
-    alpm_list_t *i;
-    for (i = targets; i; i = alpm_list_next(i)) {
-      alpm_list_t *search = aur_rpc_query(AUR_QUERY_TYPE_INFO, i->data);
+    alpm_list_t *results = cower_do_info(targets);
 
-      if (search) {
-        print_pkg_info(alpm_list_getdata(search));
-        aur_pkg_free(search->data);
-        alpm_list_free(search);
-      } else {
-        if (config->color) {
-          cfprintf(stderr, "%<%s%>", RED, "error:");
-        } else {
-          fprintf(stderr, "error:");
-        }
-        fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
+    if (results) {
+      alpm_list_t *i;
+      for (i = results; i; i = i->next) {
+        print_pkg_info(i->data);
       }
+      alpm_list_free_inner(results, aur_pkg_free);
+      alpm_list_free(results);
     }
   } else if (config->op & OP_SEARCH) { /* 1 */
     alpm_list_t *results = cower_do_search(targets);
