@@ -182,40 +182,12 @@ int main(int argc, char **argv) {
       }
     }
   } else if (config->op & OP_SEARCH) { /* 1 */
-    alpm_list_t *i;
-    alpm_list_t *agg = NULL;
-    for (i = targets; i; i = alpm_list_next(i)) {
-      if (strlen(i->data) < 2) { /* Enforce minimum search length */
-        if (config->color) {
-          cfprintf(stderr, "%<error:%> search string '%s' too short.\n",
-            RED, (const char*)i->data);
-        } else {
-          fprintf(stderr, "error: search string '%s' too short.\n",
-            (const char*)i->data);
-        }
-        continue;
-      }
-
-      alpm_list_t *search = aur_rpc_query(AUR_QUERY_TYPE_SEARCH, i->data);
-
-      if (! search) {
-        if (config->color) {
-          cfprintf(stderr, "%<%s%>", RED, "error:");
-        } else {
-          fprintf(stderr, "error:");
-        }
-        fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
-      }
-
-      /* Aggregate searches into a single list and remove dupes */
-      agg = agg_search_results(agg, search);
+    alpm_list_t *results = cower_do_search(targets);
+    if (results) {
+      print_pkg_search(results);
+      alpm_list_free_inner(results, aur_pkg_free);
+      alpm_list_free(results);
     }
-
-    /* print the search results */
-    print_pkg_search(agg);
-
-    alpm_list_free_inner(agg, aur_pkg_free);
-    alpm_list_free(agg);
   } else {
     usage();
     ret = 1;

@@ -54,7 +54,6 @@ alpm_list_t *aur_rpc_query(const char *query_type, const char* arg) {
 * @return number of packages available in AUR
 */
 int get_pkg_availability(alpm_list_t *targets) {
-
   alpm_list_t *i;
   int ret = 0;
 
@@ -73,7 +72,10 @@ int get_pkg_availability(alpm_list_t *targets) {
     /* Do I exist in the AUR? */
     alpm_list_t *results = aur_rpc_query(AUR_QUERY_TYPE_INFO, alpm_pkg_get_name(pmpkg));
 
-    if (results == NULL) { /* Not found, next candidate */
+    //printf("%s: in aur? %s\n", alpm_pkg_get_name(pmpkg), results ? "yes" : "no");
+
+    if (!results) { /* Not found, next candidate */
+      printf(":: NULL RESULT, NEXT ::\n");
       continue;
     }
 
@@ -94,11 +96,45 @@ int get_pkg_availability(alpm_list_t *targets) {
     if (config->op & OP_DL) /* -d found with -u */
       aur_get_tarball(aurpkg);
     else {
-      /* TODO: Could I just use pkg->name here? */
-      print_pkg_update(alpm_pkg_get_name(pmpkg), local_ver, remote_ver);
+      print_pkg_update(aurpkg->name, local_ver, remote_ver);
     }
+
+    aur_pkg_free(results->data);
+    alpm_list_free(results);
   }
 
   return ret;
 }
 
+alpm_list_t *cower_do_search(alpm_list_t *targets) {
+  alpm_list_t *i;
+  alpm_list_t *resultset = NULL;
+  for (i = targets; i; i = alpm_list_next(i)) {
+    if (strlen(i->data) < 2) { /* Enforce minimum search length */
+      if (config->color) {
+        cfprintf(stderr, "%<error:%> search string '%s' too short.\n",
+          RED, (const char*)i->data);
+      } else {
+        fprintf(stderr, "error: search string '%s' too short.\n",
+          (const char*)i->data);
+      }
+      continue;
+    }
+
+    alpm_list_t *search = aur_rpc_query(AUR_QUERY_TYPE_SEARCH, i->data);
+
+    if (! search) {
+      if (config->color) {
+        cfprintf(stderr, "%<%s%>", RED, "error:");
+      } else {
+        fprintf(stderr, "error:");
+      }
+      fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
+    }
+
+    /* Aggregate searches into a single list and remove dupes */
+    resultset = agg_search_results(resultset, search);
+  }
+
+  return resultset;
+}

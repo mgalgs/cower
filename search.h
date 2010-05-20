@@ -19,9 +19,9 @@
 #define _COWER_SEARCH_H
 
 #include <alpm.h>
-#include <jansson.h>
 
 alpm_list_t *aur_rpc_query(const char*, const char*);
+alpm_list_t *cower_do_search(alpm_list_t*);
 int get_pkg_availability(alpm_list_t*);
 
 #endif /* _COWER_SEARCH_H */
