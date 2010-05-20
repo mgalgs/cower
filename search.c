@@ -19,11 +19,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "alpmutil.h"
+#include "aur.h"
+#include "pacman.h"
 #include "download.h"
 #include "conf.h"
 #include "search.h"
 #include "util.h"
+#include "yajl.h"
 
 /** 
 * @brief send a query to the AUR's rpc interface
@@ -33,43 +35,14 @@
 * 
 * @return       a JSON loaded with the results of the query
 */
-json_t *aur_rpc_query(const char *query_type, const char* arg) {
+alpm_list_t *aur_rpc_query(const char *query_type, const char* arg) {
 
-  char *text;
   char url[AUR_URL_SIZE];
-  json_t *root, *return_type;
-  json_error_t error;
 
   /* Format URL to pass to curl */
   snprintf(url, AUR_URL_SIZE, AUR_RPC_URL, query_type, arg);
 
-  text = curl_get_json(url);
-  if(!text)
-    return NULL;
-
-  /* Fetch JSON */
-  root = json_loads(text, &error);
-  free(text);
-
-  /* Check for error */
-  if(!root) {
-    if (config->color) {
-      cfprintf(stderr, "%<error:%> could not create JSON. Please report this error.\n",
-        RED);
-    } else {
-      fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
-    }
-    return NULL;
-  }
-
-  /* Check return type in JSON */
-  return_type = json_object_get(root, "type");
-  if (! strcmp(json_string_value(return_type), "error")) {
-    json_decref(root);
-    return NULL;
-  }
-
-  return root; /* This needs to be freed in the calling function */
+  return aur_fetch_json(url); /* This needs to be freed in the calling function */
 }
 
 
@@ -98,30 +71,30 @@ int get_pkg_availability(alpm_list_t *targets) {
     }
 
     /* Do I exist in the AUR? */
-    json_t *infojson = aur_rpc_query(AUR_QUERY_TYPE_INFO, alpm_pkg_get_name(pmpkg));
+    alpm_list_t *results = aur_rpc_query(AUR_QUERY_TYPE_INFO, alpm_pkg_get_name(pmpkg));
 
-    if (infojson == NULL) { /* Not found, next candidate */
-      json_decref(infojson);
+    if (results == NULL) { /* Not found, next candidate */
       continue;
     }
 
-    json_t *pkg;
     const char *remote_ver, *local_ver;
+    struct aur_pkg_t *aurpkg;
 
-    pkg = json_object_get(infojson, "results");
-    remote_ver = json_string_value(json_object_get(pkg, "Version"));
+    aurpkg = (struct aur_pkg_t*)alpm_list_getdata(results);
+    remote_ver = aurpkg->ver;
     local_ver = alpm_pkg_get_version(pmpkg);
 
     /* Version check */
     if (alpm_pkg_vercmp(remote_ver, local_ver) <= 0) {
-      json_decref(infojson);
+      aur_pkg_free(aurpkg);
       continue;
     }
 
     ret++; /* Found an update, increment */
     if (config->op & OP_DL) /* -d found with -u */
-      aur_get_tarball(infojson);
+      aur_get_tarball(aurpkg);
     else {
+      /* TODO: Could I just use pkg->name here? */
       print_pkg_update(alpm_pkg_get_name(pmpkg), local_ver, remote_ver);
     }
   }
