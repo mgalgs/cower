@@ -18,6 +18,12 @@
 #ifndef _COWER_AUR_H
 #define _COWER_AUR_H
 
+#define AUR_PKG_URL         "http://aur.archlinux.org/packages/%s/%s.tar.gz"
+#define AUR_RPC_URL         "http://aur.archlinux.org/rpc.php?type=%s&arg=%s"
+#define AUR_PKG_URL_FORMAT  "http://aur.archlinux.org/packages.php?ID="
+
+#define AUR_URL_SIZE    256
+
 #define AUR_ID        "ID"
 #define AUR_NAME      "Name"
 #define AUR_VER       "Version"
@@ -30,7 +36,4 @@
 #define AUR_VOTES     "NumVotes"
 #define AUR_OOD       "OutOfDate"
 
-#define
-
 #endif /* _COWER_AUR_H */
-
