@@ -2,14 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <alpm_list.h>
-
-#include <curl/curl.h>
-#include <curl/easy.h>
-
 #include "aur.h"
 #include "curl.h"
 #include "package.h"
+#include "pacman.h"
 #include "util.h"
 #include "yajl.h"
 
@@ -18,14 +14,14 @@ static yajl_handle hand;
 static char curkey[32];
 static int json_depth = 0;
 
-static struct pkg_t *aurpkg = NULL;
+static struct aur_pkg_t *aurpkg = NULL;
 static alpm_list_t *pkg_list = NULL;
 
 static int json_string(void *ctx, const unsigned char *data, unsigned int size) {
   char val[256];
 
   strncpy(val, (const char*)data, size);
-  val[stringLen] = '\0';
+  val[size] = '\0';
 
   if (STREQ(curkey, AUR_ID))
     aurpkg->id = strdup(val);
@@ -37,8 +33,6 @@ static int json_string(void *ctx, const unsigned char *data, unsigned int size) 
     aurpkg->cat = strdup(val);
   else if (STREQ(curkey, AUR_DESC))
     aurpkg->desc = strdup(val);
-  else if (STREQ(curkey, AUR_LOC))
-    aurpkg->loc = strdup(val);
   else if (STREQ(curkey, AUR_URL))
     aurpkg->url = strdup(val);
   else if (STREQ(curkey, AUR_URLPATH))
@@ -55,14 +49,14 @@ static int json_string(void *ctx, const unsigned char *data, unsigned int size) 
 
 static int json_map_key(void *ctx, const unsigned char *data, unsigned int size) {
   strncpy(curkey, (const char*)data, size);
-  curkey[stringLen] = '\0';
+  curkey[size] = '\0';
 
   return 1;
 }
 
 static int json_start_map(void *ctx) {
   if (json_depth++ >= 1)
-    aurpkg = aur_pkg_new(NULL);
+    aurpkg = aur_pkg_new();
 
   return 1;
 }
@@ -74,7 +68,7 @@ static int json_end_map(void *ctx) {
     return 0;
   }
 
-  pkg_list = alpm_list_add(pkg_list, aurpkg);
+  pkg_list = alpm_list_add_sorted(pkg_list, aurpkg, aur_pkg_cmp);
   aurpkg = NULL;
 
   return 1;
@@ -100,13 +94,12 @@ static size_t curl_write_yajl(void *ptr, size_t size, size_t nmemb, void *stream
   return realsize;
 }
 
-/*
-int main(int argc, char ** argv) {
+alpm_list_t *aur_fetch_json(const char *url) {
   yajl_gen g;
-  yajl_status stat;
+  //yajl_status stat;
   CURLcode status;
 
-  curl_easy_setopt(curl, CURLOPT_URL, AUR_SEARCH);
+  curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_yajl);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, NULL);
 
@@ -116,26 +109,10 @@ int main(int argc, char ** argv) {
 
   status = curl_easy_perform(curl);
 
-  stat = yajl_parse_complete(hand);
-  if (stat != yajl_status_ok && stat != yajl_status_insufficient_data) {
-    fprintf(stderr, "An error occurred while parsing the reply from the AUR.\n");
-  }
+  yajl_parse_complete(hand);
 
   yajl_gen_free(g);
   yajl_free(hand);
 
-  curl_easy_cleanup(curl);
-  curl_global_cleanup();
-
-  alpm_list_t *i;
-  for (i = pkg_list; i; i = i->next) {
-    print_pkg_info((struct pkg_t*)i->data);
-    putchar('\n');
-  }
-
-  alpm_list_free_inner(pkg_list, aur_pkg_free);
-  alpm_list_free(pkg_list);
-
-  return 0;
+  return pkg_list;
 }
-*/
