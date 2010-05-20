@@ -28,7 +28,7 @@ int curl_local_init() {
   if (! curl)
     return 1;
 
-  if (config->verbose > 1) {
+  if (config->verbose > 3) {
     printf("::DEBUG:: Initializing curl\n");
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
   }
