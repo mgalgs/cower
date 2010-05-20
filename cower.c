@@ -27,9 +27,18 @@
 #include "package.h"
 #include "pacman.h"
 #include "search.h"
+#include "update.h"
 #include "util.h"
 
 static alpm_list_t *targets; /* Package argument list */
+
+static void cleanup(int ret) {
+  FREELIST(targets);
+  alpm_release();
+  config_free(config);
+
+  exit(ret);
+}
 
 static int parseargs(int argc, char **argv) {
   int opt;
@@ -128,11 +137,14 @@ printf(" General options:\n\
 int main(int argc, char **argv) {
 
   config = config_new();
+  int ret;
+
+  ret = parseargs(argc, argv);
+  if (ret > 0)
+    cleanup(ret);
+
   curl_global_init(CURL_GLOBAL_NOTHING);
   curl_local_init();
-
-  int ret;
-  ret = parseargs(argc, argv);
 
   if (config->verbose >= 2) {
     printf("DEBUG => Options selected:\n");
@@ -150,13 +162,7 @@ int main(int argc, char **argv) {
    * being passed along with it.
    */
   if (config->op & OP_UPDATE) { /* 8 */
-    alpm_quick_init();
-    alpm_list_t *foreign = alpm_query_foreign();
-
-    if (foreign) {
-      get_pkg_availability(foreign);
-    }
-    alpm_list_free(foreign);
+    ret = cower_do_update();
   } else if (config->op & OP_DL) { /* 4 */
     ret = cower_do_download(targets);
   } else if (config->op & OP_INFO) { /* 2 */
@@ -185,10 +191,9 @@ int main(int argc, char **argv) {
   /* Compulsory cleanup */
   curl_easy_cleanup(curl);
   curl_global_cleanup();
-  FREELIST(targets);
-  alpm_release();
-  config_free(config);
 
-  return ret;
+  cleanup(ret);
+  /* Never reached */
+  return 0;
 }
 

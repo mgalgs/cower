@@ -1,5 +1,5 @@
 /*
- *  search.h
+ *  update.h
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,13 +15,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _COWER_SEARCH_H
-#define _COWER_SEARCH_H
+#ifndef _COWER_UPDATE_H
+#define _COWER_UPDATE_H
 
-#include "pacman.h"
+int cower_do_update(void);
 
-alpm_list_t *aur_rpc_query(const char*, const char*);
-alpm_list_t *cower_do_info(alpm_list_t*);
-alpm_list_t *cower_do_search(alpm_list_t*);
-
-#endif /* _COWER_SEARCH_H */
+#endif /* _COWER_UPDATE_H */
