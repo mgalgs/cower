@@ -185,8 +185,7 @@ int main(int argc, char **argv) {
   /* Compulsory cleanup */
   curl_easy_cleanup(curl);
   curl_global_cleanup();
-  alpm_list_free_inner(targets, free);
-  alpm_list_free(targets);
+  FREELIST(targets);
   alpm_release();
   config_free(config);
 
