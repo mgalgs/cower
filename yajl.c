@@ -11,11 +11,13 @@
 
 static yajl_handle hand;
 
-static char curkey[32];
-static int json_depth = 0;
-
-static struct aur_pkg_t *aurpkg;
 static alpm_list_t *pkg_list;
+
+static struct yajl_parse_struct {
+  struct aur_pkg_t *aurpkg;
+  char curkey[32];
+  int json_depth;
+} parse_struct;
 
 static int json_string(void *ctx, const unsigned char *data, unsigned int size) {
   char val[256];
@@ -23,53 +25,53 @@ static int json_string(void *ctx, const unsigned char *data, unsigned int size) 
   strncpy(val, (const char*)data, size);
   val[size] = '\0';
 
-  if (STREQ(curkey, AUR_ID))
-    aurpkg->id = strdup(val);
-  else if (STREQ(curkey, AUR_NAME))
-    aurpkg->name = strdup(val);
-  else if (STREQ(curkey, AUR_VER))
-    aurpkg->ver = strdup(val);
-  else if (STREQ(curkey, AUR_CAT))
-    aurpkg->cat = strdup(val);
-  else if (STREQ(curkey, AUR_DESC))
-    aurpkg->desc = strdup(val);
-  else if (STREQ(curkey, AUR_URL))
-    aurpkg->url = strdup(val);
-  else if (STREQ(curkey, AUR_URLPATH))
-    aurpkg->urlpath = strdup(val);
-  else if (STREQ(curkey, AUR_LICENSE))
-    aurpkg->lic = strdup(val);
-  else if (STREQ(curkey, AUR_VOTES))
-    aurpkg->votes = strdup(val);
-  else if (STREQ(curkey, AUR_OOD))
-    aurpkg->ood = STREQ(val, "1") ? 1 : 0;
+  if (STREQ(parse_struct.curkey, AUR_ID))
+    parse_struct.aurpkg->id = strdup(val);
+  else if (STREQ(parse_struct.curkey, AUR_NAME))
+    parse_struct.aurpkg->name = strdup(val);
+  else if (STREQ(parse_struct.curkey, AUR_VER))
+    parse_struct.aurpkg->ver = strdup(val);
+  else if (STREQ(parse_struct.curkey, AUR_CAT))
+    parse_struct.aurpkg->cat = strdup(val);
+  else if (STREQ(parse_struct.curkey, AUR_DESC))
+    parse_struct.aurpkg->desc = strdup(val);
+  else if (STREQ(parse_struct.curkey, AUR_URL))
+    parse_struct.aurpkg->url = strdup(val);
+  else if (STREQ(parse_struct.curkey, AUR_URLPATH))
+    parse_struct.aurpkg->urlpath = strdup(val);
+  else if (STREQ(parse_struct.curkey, AUR_LICENSE))
+    parse_struct.aurpkg->lic = strdup(val);
+  else if (STREQ(parse_struct.curkey, AUR_VOTES))
+    parse_struct.aurpkg->votes = strdup(val);
+  else if (STREQ(parse_struct.curkey, AUR_OOD))
+    parse_struct.aurpkg->ood = STREQ(val, "1") ? 1 : 0;
 
   return 1;
 }
 
 static int json_map_key(void *ctx, const unsigned char *data, unsigned int size) {
-  strncpy(curkey, (const char*)data, size);
-  curkey[size] = '\0';
+  strncpy(parse_struct.curkey, (const char*)data, size);
+  parse_struct.curkey[size] = '\0';
 
   return 1;
 }
 
 static int json_start_map(void *ctx) {
-  if (json_depth++ >= 1)
-    aurpkg = aur_pkg_new();
+  if (parse_struct.json_depth++ >= 1)
+    parse_struct.aurpkg = aur_pkg_new();
 
   return 1;
 }
 
 
 static int json_end_map(void *ctx) {
-  if (! --json_depth) {
-    aur_pkg_free(aurpkg);
+  if (! --(parse_struct.json_depth)) {
+    aur_pkg_free(parse_struct.aurpkg);
     return 0;
   }
 
-  pkg_list = alpm_list_add_sorted(pkg_list, aurpkg, aur_pkg_cmp);
-  aurpkg = NULL;
+  pkg_list = alpm_list_add_sorted(pkg_list, parse_struct.aurpkg, aur_pkg_cmp);
+  parse_struct.aurpkg = NULL;
 
   return 1;
 }
@@ -100,7 +102,8 @@ alpm_list_t *aur_fetch_json(const char *url) {
   CURLcode curlstat;
   long httpcode;
 
-  aurpkg = NULL;
+  parse_struct.aurpkg = NULL;
+  parse_struct.json_depth = 0;
   pkg_list = NULL;
 
   curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -118,12 +121,12 @@ alpm_list_t *aur_fetch_json(const char *url) {
   }
 
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
-  if (code != 200) {
-    fprintf(stderr, "curl error: server responded with code %ld\n", code);
+  if (httpcode != 200) {
+    fprintf(stderr, "curl error: server responded with code %ld\n", httpcode);
     goto cleanup;
   };
 
-cleanup;
+cleanup:
   yajl_parse_complete(hand);
 
   yajl_gen_free(g);
