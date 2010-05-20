@@ -25,8 +25,10 @@
 
 #define AUR_URL_SIZE          256
 
+#define AUR_QUERY_TYPE        "type"
 #define AUR_QUERY_TYPE_INFO   "info"
 #define AUR_QUERY_TYPE_SEARCH "search"
+#define AUR_QUERY_ERROR       "error"
 
 /* JSON key names */
 #define AUR_ID                "ID"
