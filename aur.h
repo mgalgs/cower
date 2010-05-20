@@ -18,22 +18,27 @@
 #ifndef _COWER_AUR_H
 #define _COWER_AUR_H
 
-#define AUR_PKG_URL         "http://aur.archlinux.org/packages/%s/%s.tar.gz"
-#define AUR_RPC_URL         "http://aur.archlinux.org/rpc.php?type=%s&arg=%s"
-#define AUR_PKG_URL_FORMAT  "http://aur.archlinux.org/packages.php?ID="
+/* Various URLs used to interact with the AUR */
+#define AUR_PKG_URL           "http://aur.archlinux.org/packages/%s/%s.tar.gz"
+#define AUR_RPC_URL           "http://aur.archlinux.org/rpc.php?type=%s&arg=%s"
+#define AUR_PKG_URL_FORMAT    "http://aur.archlinux.org/packages.php?ID="
 
-#define AUR_URL_SIZE    256
+#define AUR_URL_SIZE          256
 
-#define AUR_ID        "ID"
-#define AUR_NAME      "Name"
-#define AUR_VER       "Version"
-#define AUR_CAT       "CategoryID"
-#define AUR_DESC      "Description"
-#define AUR_LOC       "LocationID"
-#define AUR_URL       "URL"
-#define AUR_URLPATH   "URLPath"
-#define AUR_LICENSE   "License"
-#define AUR_VOTES     "NumVotes"
-#define AUR_OOD       "OutOfDate"
+#define AUR_QUERY_TYPE_INFO   "info"
+#define AUR_QUERY_TYPE_SEARCH "search"
+
+/* JSON key names */
+#define AUR_ID                "ID"
+#define AUR_NAME              "Name"
+#define AUR_VER               "Version"
+#define AUR_CAT               "CategoryID"
+#define AUR_DESC              "Description"
+#define AUR_LOC               "LocationID"
+#define AUR_URL               "URL"
+#define AUR_URLPATH           "URLPath"
+#define AUR_LICENSE           "License"
+#define AUR_VOTES             "NumVotes"
+#define AUR_OOD               "OutOfDate"
 
 #endif /* _COWER_AUR_H */
