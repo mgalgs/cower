@@ -18,26 +18,12 @@
 #ifndef _DOWNLOAD_H
 #define _DOWNLOAD_H
 
-#include <curl/curl.h>
-#include <jansson.h>
-
-#define AUR_PKG_URL         "http://aur.archlinux.org/packages/%s/%s.tar.gz"
-#define AUR_RPC_URL         "http://aur.archlinux.org/rpc.php?type=%s&arg=%s"
-#define AUR_PKG_URL_FORMAT  "http://aur.archlinux.org/packages.php?ID="
-
-#define AUR_URL_SIZE    256
+#include "curl.h"
+#include "package.h"
 
 #define AUR_QUERY_TYPE_INFO   "info"
 #define AUR_QUERY_TYPE_SEARCH "search"
 
-struct write_result {
-  char *memory;
-  size_t size;
-};
-
-CURL *curl; /* Global CURL object */
-
-int aur_get_tarball(json_t*);
-char *curl_get_json(const char*);
+int aur_get_tarball(struct aur_pkg_t*);
 
 #endif /* _DOWNLOAD_H */

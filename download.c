@@ -22,42 +22,11 @@
 #include <string.h>
 #include <sys/wait.h>
 
+#include "aur.h"
 #include "conf.h"
 #include "depends.h"
 #include "download.h"
 #include "util.h"
-
-static void *myrealloc(void *ptr, size_t size) {
-
-  if (ptr)
-    return realloc(ptr, size);
-  else
-    return calloc(1, size);
-}
-
-/** 
-* @brief write CURL response to a struct
-* 
-* @param ptr      pointer to the data retrieved by CURL
-* @param size     size of each element
-* @param nmemb    number of elements in the stream
-* @param stream   data structure to append to
-* 
-* @return number of bytes written
-*/
-static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
-
-  struct write_result *mem = (struct write_result*)stream;
-  size_t realsize = nmemb * size;
-
-  mem->memory = myrealloc(mem->memory, mem->size + realsize + 1);
-  if (mem->memory) {
-    memcpy(&(mem->memory[mem->size]), ptr, realsize);
-    mem->size += realsize;
-    mem->memory[mem->size] = 0;
-  }
-  return realsize;
-}
 
 /** 
 * @brief download a taurball described by a JSON
@@ -66,13 +35,12 @@ static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream)
 * 
 * @return       0 on success, 1 on failure
 */
-int aur_get_tarball(json_t *root) {
+int aur_get_tarball(struct aur_pkg_t *aurpkg) {
 
   FILE *fd;
   const char *dir, *filename, *pkgname;
   char fullpath[PATH_MAX + 1], url[AUR_URL_SIZE + 1];
   int result = 0;
-  json_t *pkginfo;
 
   if (config->download_dir == NULL) /* Use pwd */
     dir = getcwd(NULL, 0);
@@ -88,9 +56,7 @@ int aur_get_tarball(json_t *root) {
     return 1;
   }
 
-  /* Point to the juicy bits of the JSON */
-  pkginfo = json_object_get(root, "results");
-  pkgname = json_string_value(json_object_get(pkginfo, "Name"));
+  pkgname = aurpkg->name;
 
   if (config->verbose >= 2)
     fprintf(stderr, "::DEBUG Downloading Package: %s\n", pkgname);
@@ -129,7 +95,6 @@ int aur_get_tarball(json_t *root) {
       curl = curl_easy_init();
       curl_easy_setopt(curl, CURLOPT_URL, url);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, fd);
-      curl_easy_setopt(curl, CURLOPT_ENCODING, "deflate, gzip");
       result = curl_easy_perform(curl);
 
       curl_easy_cleanup(curl);
@@ -164,55 +129,5 @@ int aur_get_tarball(json_t *root) {
   FREE(dir);
 
   return result;
-}
-
-
-/** 
-* @brief fetch a JSON from the AUR via it's RPC interface
-* 
-* @param url      URL to fetch
-* 
-* @return string representation of the JSON
-*/
-char *curl_get_json(const char *url) {
-
-  CURLcode status;
-  long code;
-
-  curl = curl_easy_init();
-
-  struct write_result response;
-  response.memory = NULL;
-  response.size = 0;
-
-  curl_easy_setopt(curl, CURLOPT_URL, url);
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_response);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-  curl_easy_setopt(curl, CURLOPT_ENCODING, "deflate, gzip");
-
-  status = curl_easy_perform(curl);
-  if(status != 0) {
-    if (config->color) {
-      cfprintf(stderr, "%<curl error:%> unable to request data from %s\n", RED, url);
-    } else {
-      fprintf(stderr, "curl error: unable to request data from %s\n", url);
-    }
-    fprintf(stderr, "%s\n", curl_easy_strerror(status));
-    return NULL;
-  }
-
-  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-  if(code != 200) {
-    if (config->color) {
-      cfprintf(stderr, "%<curl error:%> server responded with code %l\n", RED, code);
-    } else {
-      fprintf(stderr, "curl error: server responded with code %ld\n", code);
-    }
-    return NULL;
-  }
-
-  curl_easy_cleanup(curl);
-
-  return response.memory;
 }
 
