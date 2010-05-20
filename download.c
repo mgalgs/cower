@@ -23,6 +23,7 @@
 #include <sys/wait.h>
 
 #include "aur.h"
+#include "curl.h"
 #include "conf.h"
 #include "depends.h"
 #include "download.h"
