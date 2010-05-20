@@ -25,9 +25,7 @@
 /* local */
 #include "aur.h"
 #include "conf.h"
-#include "pacman.h"
 #include "download.h"
-#include "package.h"
 #include "util.h"
 
 static char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
