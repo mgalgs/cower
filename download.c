@@ -95,6 +95,7 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
     if (fd != NULL) {
       curl_easy_setopt(curl, CURLOPT_URL, url);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, fd);
+      curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
       result = curl_easy_perform(curl);
 
       if (config->color)
