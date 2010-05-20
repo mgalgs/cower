@@ -162,27 +162,7 @@ int main(int argc, char **argv) {
      * sync, do an info query on the package in the AUR. Does it exist?
      * If yes, pass it to aur_get_tarball.
      */
-    alpm_quick_init();
-    alpm_list_t *i;
-    for (i = targets; i; i = alpm_list_next(i)) {
-      if (! is_in_pacman((const char*)i->data)) { /* Not found in pacman */
-        alpm_list_t *results = aur_rpc_query(AUR_QUERY_TYPE_INFO, i->data);
-        if (results) { /* Found it in the AUR */
-          aur_get_tarball(results->data);
-          if (config->getdeps)
-            get_pkg_dependencies((const char*)i->data);
-          aur_pkg_free(results->data);
-          alpm_list_free(results);
-        } else { /* Not found anywhere */
-          if (config->color) {
-            cfprintf(stderr, "%<%s%>", RED, "error:");
-          } else {
-            fprintf(stderr, "error:");
-          }
-          fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
-        }
-      }
-    }
+    ret = cower_do_download(targets);
   } else if (config->op & OP_INFO) { /* 2 */
     alpm_list_t *i;
     for (i = targets; i; i = alpm_list_next(i)) {

@@ -24,9 +24,9 @@
 
 #include "aur.h"
 #include "conf.h"
-#include "curl.h"
 #include "depends.h"
 #include "download.h"
+#include "search.h"
 #include "util.h"
 
 /** 
@@ -130,3 +130,33 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
   return result;
 }
 
+
+int cower_do_download(alpm_list_t *targets) {
+  alpm_quick_init();
+  alpm_list_t *i;
+
+  for (i = targets; i; i = alpm_list_next(i)) {
+
+    if (is_in_pacman((const char*)i->data)) { /* Skip it */
+      continue;
+    }
+
+    alpm_list_t *results = aur_rpc_query(AUR_QUERY_TYPE_INFO, i->data);
+    if (results) { /* Found it in the AUR */
+      aur_get_tarball(results->data);
+      if (config->getdeps)
+        get_pkg_dependencies((const char*)i->data);
+      aur_pkg_free(results->data);
+      alpm_list_free(results);
+    } else { /* Not found anywhere */
+      if (config->color) {
+        cfprintf(stderr, "%<%s%>", RED, "error:");
+      } else {
+        fprintf(stderr, "error:");
+      }
+      fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
+    }
+  }
+
+  return 0;
+}

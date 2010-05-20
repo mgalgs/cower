@@ -20,10 +20,12 @@
 
 #include "curl.h"
 #include "package.h"
+#include "pacman.h"
 
 #define AUR_QUERY_TYPE_INFO   "info"
 #define AUR_QUERY_TYPE_SEARCH "search"
 
 int aur_get_tarball(struct aur_pkg_t*);
+int cower_do_download(alpm_list_t*);
 
 #endif /* _DOWNLOAD_H */
