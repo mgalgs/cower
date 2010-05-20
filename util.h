@@ -14,17 +14,18 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _UTIL_H
-#define _UTIL_H
+#ifndef _COWER_UTIL_H
+#define _COWER_UTIL_H
 
-#include <alpm.h>
-#include <jansson.h>
+#include "alpm.h"
 
 /* constants for cfprintf */
 #define C_ON      "\033[1;3"
 #define C_OFF     "\033[m"
 
+#define STREQ(x,y)  (strcmp(x,y) == 0)
 #define FREE(p) do { free((void*)p); p = NULL; } while (0)
+
 #define TRUE  1
 #define FALSE 0
 
@@ -41,14 +42,14 @@ enum {
   FG      = 8
 };
 
-alpm_list_t *agg_search_results(alpm_list_t*, json_t*);
+alpm_list_t *agg_search_results(alpm_list_t*, alpm_list_t*);
 int cfprintf(FILE*, const char*, ...);
 int cprintf(const char*, ...);
 int file_exists(const char*);
 char *itoa(unsigned int, int);
-void print_pkg_info(json_t*);
+void print_pkg_info(struct aur_pkg_t*);
 void print_pkg_search(alpm_list_t*);
 void print_pkg_update(const char*, const char*, const char*);
 char *strtrim(char*);
 
-#endif /* _UTIL_H */
+#endif /* _COWER_UTIL_H */
