@@ -10,9 +10,11 @@ MANPREFIX = ${PREFIX}/share/man
 CURLINC = /usr/include/curl
 CURLLIB = /usr/lib/
 
+YAJLINC = /usr/include/yajl
+
 # includes and libs
 INCS = -I. -I/usr/include -I${CURLINC}
-LIBS = -L/usr/lib -lc -lcurl -lalpm -ljansson
+LIBS = -L/usr/lib -lc -lcurl -lalpm -lyajl
 
 # flags
 CPPFLAGS = -D_GNU_SOURCE -DVERSION=\"${VERSION}\"
