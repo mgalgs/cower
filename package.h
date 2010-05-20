@@ -33,5 +33,6 @@ typedef struct aur_pkg_t {
 
 int aur_pkg_cmp(void*, void*);
 void aur_pkg_free(void*);
+struct aur_pkg_t *aur_pkg_new(void);
 
 #endif /* _COWER_PACKAGE_H */

@@ -57,3 +57,16 @@ void aur_pkg_free(void *pkg) {
   FREE(it);
 }
 
+struct pkg_t *aur_pkg_new() {
+  struct pkg_t *pkg;
+
+  pkg = calloc(1, sizeof *pkg);
+
+  pkg->id = pkg->name = pkg->ver = pkg->cat = pkg->desc =
+            pkg->loc = pkg->url = pkg->urlpath = pkg->lic =
+            pkg->votes = NULL;
+  pkg->ood = 0;
+
+  return pkg;
+}
+
