@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "alpm.h"
+#include "pacman.h"
 #include "conf.h"
 #include "util.h"
 

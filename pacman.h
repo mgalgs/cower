@@ -1,5 +1,5 @@
 /*
- *  alpmhelper.h
+ *  alpm.h
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _ALPMUTIL_H
-#define _ALPMUTIL_H
+#ifndef _COWER_ALPM_H
+#define _COWER_ALPM_H
 
 #include <alpm.h>
 
@@ -33,4 +33,4 @@ pmdb_t *db_local;
 
 extern pmdb_t *db_local;
 
-#endif /* _ALPMUTIL_H */
+#endif /* _COWER_ALPM_H */
