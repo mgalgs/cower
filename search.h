@@ -18,7 +18,7 @@
 #ifndef _COWER_SEARCH_H
 #define _COWER_SEARCH_H
 
-#include <alpm.h>
+#include "pacman.h"
 
 alpm_list_t *aur_rpc_query(const char*, const char*);
 alpm_list_t *cower_do_info(alpm_list_t*);

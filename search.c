@@ -20,7 +20,6 @@
 #include <string.h>
 
 #include "aur.h"
-#include "pacman.h"
 #include "download.h"
 #include "conf.h"
 #include "search.h"
