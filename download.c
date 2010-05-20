@@ -24,6 +24,7 @@
 
 #include "aur.h"
 #include "conf.h"
+#include "curl.h"
 #include "depends.h"
 #include "download.h"
 #include "util.h"
@@ -92,12 +93,9 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
     fullpath[strlen(fullpath)] = '.'; /* Unmask extension */
     fd = fopen(fullpath, "w");
     if (fd != NULL) {
-      curl = curl_easy_init();
       curl_easy_setopt(curl, CURLOPT_URL, url);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, fd);
       result = curl_easy_perform(curl);
-
-      curl_easy_cleanup(curl);
 
       if (config->color)
         cprintf("%<%s%> downloaded to %<%s%>\n", WHITE, pkgname, GREEN, dir);
