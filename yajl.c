@@ -14,8 +14,8 @@ static yajl_handle hand;
 static char curkey[32];
 static int json_depth = 0;
 
-static struct aur_pkg_t *aurpkg = NULL;
-static alpm_list_t *pkg_list = NULL;
+static struct aur_pkg_t *aurpkg;
+static alpm_list_t *pkg_list;
 
 static int json_string(void *ctx, const unsigned char *data, unsigned int size) {
   char val[256];
@@ -98,6 +98,9 @@ alpm_list_t *aur_fetch_json(const char *url) {
   yajl_gen g;
   //yajl_status stat;
   CURLcode status;
+
+  aurpkg = NULL;
+  pkg_list = NULL;
 
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_yajl);
