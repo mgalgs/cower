@@ -30,8 +30,10 @@
 * @return     results of strcmp on names of each aur_pkg_t
 */
 int _aur_pkg_cmp(void *p1, void *p2) {
-  return strcmp((const char*)((aur_pkg_t*)p1)->name,
-                (const char*)((aur_pkg_t*)p2)->name);
+  struct aur_pkg_t *pkg1 = (struct aur_pkg_t*)p1;
+  struct aur_pkg_t *pkg2 = (struct aur_pkg_t*)p2;
+
+  return strcmp((const char*)pkg1->name, (const char*)pkg2->name);
 }
 
 /** 
@@ -40,43 +42,18 @@ int _aur_pkg_cmp(void *p1, void *p2) {
 * @param pkg  aur_pkg_t struct inside linked list
 */
 void aur_pkg_free(void *pkg) {
+  struct aur_pkg_t *it = (struct aur_pkg_t*)pkg;
 
-  FREE(((aur_pkg_t*)pkg)->id);
-  FREE(((aur_pkg_t*)pkg)->name);
-  FREE(((aur_pkg_t*)pkg)->ver);
-  FREE(((aur_pkg_t*)pkg)->cat);
-  FREE(((aur_pkg_t*)pkg)->desc);
-  FREE(((aur_pkg_t*)pkg)->url);
-  FREE(((aur_pkg_t*)pkg)->urlpath);
-  FREE(((aur_pkg_t*)pkg)->lic);
-  FREE(((aur_pkg_t*)pkg)->votes);
-  
-  FREE(pkg);
+  FREE(it->id);
+  FREE(it->name);
+  FREE(it->ver);
+  FREE(it->cat);
+  FREE(it->desc);
+  FREE(it->url);
+  FREE(it->urlpath);
+  FREE(it->lic);
+  FREE(it->votes);
+
+  FREE(it);
 }
 
-/** 
-* @brief convert a JSON to an aur_pkg_t
-* 
-* @param j    JSON to convert
-* 
-* @return     aur_pkg_t representation of JSON
-*/
-aur_pkg_t *json_to_aur_pkg(json_t* j) {
-
-  aur_pkg_t *newpkg;
-
-  newpkg = malloc(sizeof(aur_pkg_t));
-
-  newpkg->id = strdup(json_string_value(json_object_get(j, "ID")));
-  newpkg->name = strdup(json_string_value(json_object_get(j, "Name")));
-  newpkg->ver = strdup(json_string_value(json_object_get(j, "Version")));
-  newpkg->cat = strdup(json_string_value(json_object_get(j, "CategoryID")));
-  newpkg->desc = strdup(json_string_value(json_object_get(j, "Description")));
-  newpkg->url = strdup(json_string_value(json_object_get(j, "URL")));
-  newpkg->urlpath = strdup(json_string_value(json_object_get(j, "URLPath")));
-  newpkg->lic = strdup(json_string_value(json_object_get(j, "License")));
-  newpkg->votes = strdup(json_string_value(json_object_get(j, "NumVotes")));
-  newpkg->ood = atoi(json_string_value(json_object_get(j, "OutOfDate")));
-
-  return newpkg;
-}

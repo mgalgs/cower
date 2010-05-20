@@ -15,12 +15,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _PACKAGE_H
-#define _PACKAGE_H
+#ifndef _COWER_PACKAGE_H
+#define _COWER_PACKAGE_H
 
-#include <jansson.h>
-
-typedef struct __aur_pkg_t {
+typedef struct aur_pkg_t {
   const char* id;
   const char* name;
   const char* ver;
@@ -31,10 +29,9 @@ typedef struct __aur_pkg_t {
   const char* lic;
   const char* votes;
   int ood;
-} aur_pkg_t;
+};
 
-int _aur_pkg_cmp(void*, void*);
+int aur_pkg_cmp(void*, void*);
 void aur_pkg_free(void*);
-aur_pkg_t *json_to_aur_pkg(json_t*);
 
-#endif /* _PACKAGE_H */
+#endif /* _COWER_PACKAGE_H */
