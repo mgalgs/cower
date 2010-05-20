@@ -2,7 +2,7 @@
 
 include config.mk
 
-SRC = alpmutil.c conf.c cower.c depends.c download.c package.c search.c util.c
+SRC = conf.c cower.c curl.c depends.c download.c package.c pacman.c search.c util.c yajl.c
 OBJ = ${SRC:.c=.o}
 
 all: options cower doc
@@ -27,7 +27,7 @@ cower: ${OBJ}
 
 doc: cower.1
 cower.1: README.pod
-	@printf "   %-8s %s\n" DOC burp.1
+	@printf "   %-8s %s\n" DOC cower.1
 	@pod2man --section=1 --center=" " --release=" " --name="COWER" --date="cower-VERSION" README.pod > cower.1
 
 install: cower cower.1
@@ -45,7 +45,7 @@ dist: clean
 	@cp -R ${SRC} *.h Makefile cower.pod cower-${VERSION}
 	@printf "   %-8s %s\n" TAR
 	@tar -cf cower-${VERSION}.tar cower-${VERSION}
-	@printf "   %-8s %s\n" GZIP burp-${VERSION}.tar
+	@printf "   %-8s %s\n" GZIP cower-${VERSION}.tar
 	@gzip cower-${VERSION}.tar
 	@rm -rf cower-${VERSION}
 
@@ -60,3 +60,4 @@ clean:
 	@rm -f *.o cower cower.1
 
 .PHONY: all clean dist doc install options uninstall
+
