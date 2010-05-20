@@ -21,7 +21,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "alpmutil.h"
+#include "pacman.h"
 #include "conf.h"
 #include "depends.h"
 #include "download.h"
@@ -122,13 +122,13 @@ int get_pkg_dependencies(const char *pkg) {
       continue;
     }
     /* if we're here, we need to check the AUR */
-    json_t *infojson = aur_rpc_query(AUR_QUERY_TYPE_INFO, depend);
-    if (infojson) {
+    alpm_list_t *results = aur_rpc_query(AUR_QUERY_TYPE_INFO, depend);
+    if (results) {
       if (config->verbose >= 2)
         printf("::DEBUG %s is in the AUR\n", depend);
-      aur_get_tarball(infojson);
+      aur_get_tarball(alpm_list_getdata(results));
     }
-    json_decref(infojson);
+    //json_decref(infojson);
 
   }
 
