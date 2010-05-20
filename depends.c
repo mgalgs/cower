@@ -30,20 +30,16 @@
 #include "util.h"
 
 alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *startdep) {
-
   char *token;
 
+  /* TODO: This whole loop sucks. */
   while ((token = strsep(&startdep, " ")) != NULL) {
-    if (strlen(token) <= 1) continue; /* Kludgy */
+    if (strlen(token) <= 1) continue;
     if (*token == '\'' || *token == '\"')
       token++;
     char *i;
     for (i = token; *i != '\0'; i++) {
-      switch (*i) {
-      case '=':
-      case '<':
-      case '>':
-      case '\'':
+      if (strchr("=<>\\\'\"", *i)) {
         *i = '\0';
         break;
       }
@@ -55,7 +51,6 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *startdep) {
   }
 
   return deplist;
-
 }
 
 alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
@@ -71,6 +66,7 @@ alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
   /* This catches depends as well as makedepends.
    * It's valid for multi package files as well,
    * even though the AUR doesn't support them. */
+  /* XXX: It catches optdepends as well. qq */
   while ((deps = strstr(bptr, "depends=(")) != NULL) {
     tmp = strndup(deps + 9, strchr(deps, ')') - deps - 9);
     bptr = deps + 10;
@@ -119,23 +115,22 @@ int get_pkg_dependencies(const char *pkg) {
         printf("::DEBUG %s is installed\n", depend);
       continue;
     }
-    if (is_in_pacman(depend)) { /* available in pacman */
+
+    if (is_in_pacman(depend)) /* available in pacman */
       continue;
-    }
+
     /* if we're here, we need to check the AUR */
     alpm_list_t *results = aur_rpc_query(AUR_QUERY_TYPE_INFO, depend);
     if (results) {
       if (config->verbose >= 2)
         printf("::DEBUG %s is in the AUR\n", depend);
-      aur_get_tarball(alpm_list_getdata(results));
+      aur_get_tarball(results->data);
+      continue;
     }
-    //json_decref(infojson);
-
   }
 
   /* Cleanup */
-  alpm_list_free_inner(deplist, free);
-  alpm_list_free(deplist);
+  FREELIST(deplist);
   FREE(dir);
   FREE(pkgbuild_path);
 
