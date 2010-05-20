@@ -30,23 +30,24 @@
 #include "util.h"
 
 alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *startdep) {
-  char *token;
+  char *token, *i;
 
   /* TODO: This whole loop sucks. */
   while ((token = strsep(&startdep, " ")) != NULL) {
     if (strlen(token) <= 1) continue;
+
     if (*token == '\'' || *token == '\"')
       token++;
-    char *i;
-    for (i = token; *i != '\0'; i++) {
+
+    for (i = token; *i != '\0'; i++)
       if (strchr("=<>\\\'\"", *i)) {
         *i = '\0';
         break;
       }
-    }
-    if (config->verbose >= 2) {
+
+    if (config->verbose >= 2)
       fprintf(stderr, "::DEBUG Adding Depend: %s\n", token);
-    }
+
     deplist = alpm_list_add(deplist, strdup(token));
   }
 
@@ -66,12 +67,15 @@ alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
   /* This catches depends as well as makedepends.
    * It's valid for multi package files as well,
    * even though the AUR doesn't support them. */
-  /* XXX: It catches optdepends as well. qq */
-  while ((deps = strstr(bptr, "depends=(")) != NULL) {
-    tmp = strndup(deps + 9, strchr(deps, ')') - deps - 9);
+  /* XXX: This is likely to fail hard on large split PKGBUILDs */
+  while ((deps = strstr(bptr, PKGBUILD_DEPENDS)) != NULL) {
+    if (strncmp(deps - 3, PKGBUILD_OPTDEPENDS, strlen(PKGBUILD_OPTDEPENDS)) != 0) {
+      tmp = strndup(deps + 9, strchr(deps, ')') - deps - 9);
+      deplist = parse_bash_array(deplist, tmp);
+      free(tmp);
+    }
+
     bptr = deps + 10;
-    deplist = parse_bash_array(deplist, tmp);
-    free(tmp);
   }
 
   fclose(fd);
@@ -99,9 +103,8 @@ int get_pkg_dependencies(const char *pkg) {
     if (config->color) {
       cprintf("\n%<::%> Fetching uninstalled dependencies for %<%s%>...\n",
         BLUE, WHITE, pkg);
-    } else {
+    } else
       printf("\n:: Fetching uninstalled dependencies for %s...\n", pkg);
-    }
   }
 
   alpm_list_t *i = deplist;
