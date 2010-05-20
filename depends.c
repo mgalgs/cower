@@ -21,7 +21,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "pacman.h"
 #include "conf.h"
 #include "depends.h"
 #include "download.h"

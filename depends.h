@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <alpm.h>
+#include "pacman.h"
 
 int get_pkg_dependencies(const char*);
 alpm_list_t *parse_bash_array(alpm_list_t*, char*);
