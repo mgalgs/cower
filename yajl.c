@@ -13,27 +13,13 @@
 #include "util.h"
 #include "yajl.h"
 
-#define AUR_SEARCH  "http://aur.archlinux.org/rpc.php?type=search&arg=svn"
-#define AUR_INFO    "http://aur.archlinux.org/rpc.php?type=info&arg=burp"
-
 static yajl_handle hand;
-static struct pkg_t *aurpkg = NULL;
+
 static char curkey[32];
-static alpm_list_t *pkg_list = NULL;
 static int json_depth = 0;
 
-static struct pkg_t *aur_pkg_new() {
-  struct pkg_t *pkg;
-
-  pkg = calloc(1, sizeof *pkg);
-
-  pkg->id = pkg->name = pkg->ver = pkg->cat = pkg->desc =
-            pkg->loc = pkg->url = pkg->urlpath = pkg->lic =
-            pkg->votes = NULL;
-  pkg->ood = 0;
-
-  return pkg;
-}
+static struct pkg_t *aurpkg = NULL;
+static alpm_list_t *pkg_list = NULL;
 
 static int json_string(void *ctx, const unsigned char *data, unsigned int size) {
   char val[256];
