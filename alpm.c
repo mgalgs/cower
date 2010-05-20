@@ -1,5 +1,5 @@
 /*
- *  alpmutil.c
+ *  alpm.c
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "alpmutil.h"
+#include "alpm.h"
 #include "conf.h"
 #include "util.h"
 
