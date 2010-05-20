@@ -96,8 +96,9 @@ static size_t curl_write_yajl(void *ptr, size_t size, size_t nmemb, void *stream
 
 alpm_list_t *aur_fetch_json(const char *url) {
   yajl_gen g;
-  //yajl_status stat;
-  CURLcode status;
+  /* yajl_status yajlstat; */
+  CURLcode curlstat;
+  long httpcode;
 
   aurpkg = NULL;
   pkg_list = NULL;
@@ -110,8 +111,19 @@ alpm_list_t *aur_fetch_json(const char *url) {
 
   hand = yajl_alloc(&callbacks, NULL, NULL, (void *) g);
 
-  status = curl_easy_perform(curl);
+  curlstat = curl_easy_perform(curl);
+  if (curlstat != 0) {
+    fprintf(stderr, "curl error: unable to read data from %s\n", url);
+    goto cleanup;
+  }
 
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
+  if (code != 200) {
+    fprintf(stderr, "curl error: server responded with code %ld\n", code);
+    goto cleanup;
+  };
+
+cleanup;
   yajl_parse_complete(hand);
 
   yajl_gen_free(g);
