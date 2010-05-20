@@ -18,8 +18,7 @@
 #ifndef _COWER_YAJL_H
 #define _COWER_YAJL_H
 
-#include <yajl/yajl_parse.h>
-#include <yajl/yajl_gen.h>
+#include "pacman.h"
 
 alpm_list_t *aur_fetch_json(const char*);
 

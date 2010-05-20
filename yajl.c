@@ -2,15 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <yajl/yajl_parse.h>
+#include <yajl/yajl_gen.h>
+
 #include "aur.h"
 #include "curl.h"
 #include "package.h"
-#include "pacman.h"
 #include "util.h"
 #include "yajl.h"
 
 static yajl_handle hand;
-
 static alpm_list_t *pkg_list;
 
 static struct yajl_parse_struct {
@@ -125,6 +126,8 @@ alpm_list_t *aur_fetch_json(const char *url) {
     fprintf(stderr, "curl error: server responded with code %ld\n", httpcode);
     goto cleanup;
   };
+
+  aur_pkg_free(parse_struct.aurpkg);
 
 cleanup:
   yajl_parse_complete(hand);
