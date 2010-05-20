@@ -17,6 +17,10 @@
 
 #include "pacman.h"
 
+#define PKGBUILD_DEPENDS      "depends=("
+#define PKGBUILD_MAKEDEPENDS  "makedepends=("
+#define PKGBUILD_OPTDEPENDS   "optdepends=("
+
 int get_pkg_dependencies(const char*);
 alpm_list_t *parse_bash_array(alpm_list_t*, char*);
 alpm_list_t *pkgbuild_get_deps(const char*, alpm_list_t*);
