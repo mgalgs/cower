@@ -18,12 +18,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "conf.h"
 #include "util.h"
 
-config_t *config = NULL; /* global config variable */
+struct config_t *config = NULL; /* global config variable */
 
 /** 
 * @brief free a config struct
@@ -32,7 +33,7 @@ config_t *config = NULL; /* global config variable */
 * 
 * @return 0 on success, non-zero on failure
 */
-int config_free(config_t *oldconfig) {
+int config_free(struct config_t *oldconfig) {
 
   if (oldconfig == NULL) {
     return -1;
@@ -51,10 +52,10 @@ int config_free(config_t *oldconfig) {
 * 
 * @return the new config, or NULL on failure
 */
-config_t *config_new(void) {
-  config_t *newconfig = calloc(1, sizeof(config_t));
+struct config_t *config_new(void) {
+  struct config_t *newconfig = calloc(1, sizeof *newconfig);
   if(!newconfig) {
-    fprintf(stderr, "error allocating %zd bytes\n", sizeof(config_t));
+    fprintf(stderr, "error allocating %zd bytes\n", sizeof *newconfig);
       return(NULL);
   }
 

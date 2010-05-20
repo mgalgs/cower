@@ -18,11 +18,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _CONF_H
-#define _CONF_H
+#ifndef _COWER_CONF_H
+#define _COWER_CONF_H
 
-typedef struct __config_t {
-
+struct config_t {
   /* operations */
   int op;
 
@@ -33,7 +32,7 @@ typedef struct __config_t {
   unsigned short verbose;
   unsigned short quiet;
   const char *download_dir;
-} config_t;
+};
 
 enum {
   OP_SEARCH = 1,
@@ -42,11 +41,10 @@ enum {
   OP_UPDATE = 8
 };
 
-int config_free(config_t *oldconfig);
-config_t *config_new(void);
+int config_free(struct config_t *oldconfig);
+struct config_t *config_new(void);
 
 /* global config variable */
-extern config_t *config;
+extern struct config_t *config;
 
-#endif /* _CONF_H */
-
+#endif /* _COWER_CONF_H */
