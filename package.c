@@ -29,7 +29,7 @@
 * 
 * @return     results of strcmp on names of each aur_pkg_t
 */
-int _aur_pkg_cmp(void *p1, void *p2) {
+int aur_pkg_cmp(void *p1, void *p2) {
   struct aur_pkg_t *pkg1 = (struct aur_pkg_t*)p1;
   struct aur_pkg_t *pkg2 = (struct aur_pkg_t*)p2;
 
@@ -42,6 +42,9 @@ int _aur_pkg_cmp(void *p1, void *p2) {
 * @param pkg  aur_pkg_t struct inside linked list
 */
 void aur_pkg_free(void *pkg) {
+  if (!pkg)
+    return;
+
   struct aur_pkg_t *it = (struct aur_pkg_t*)pkg;
 
   FREE(it->id);
@@ -57,14 +60,13 @@ void aur_pkg_free(void *pkg) {
   FREE(it);
 }
 
-struct pkg_t *aur_pkg_new() {
-  struct pkg_t *pkg;
+struct aur_pkg_t *aur_pkg_new() {
+  struct aur_pkg_t *pkg;
 
   pkg = calloc(1, sizeof *pkg);
 
-  pkg->id = pkg->name = pkg->ver = pkg->cat = pkg->desc =
-            pkg->loc = pkg->url = pkg->urlpath = pkg->lic =
-            pkg->votes = NULL;
+  pkg->id = pkg->name = pkg->ver = pkg->cat = pkg->desc = pkg->url = 
+            pkg->urlpath = pkg->lic = pkg->votes = NULL;
   pkg->ood = 0;
 
   return pkg;
