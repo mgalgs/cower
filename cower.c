@@ -117,7 +117,7 @@ static int parseargs(int argc, char **argv) {
 }
 
 static void usage() {
-printf("cower v%s\n\
+printf("cower %s\n\
 Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
 \n\
  Operations:\n\
@@ -137,13 +137,23 @@ printf(" General options:\n\
 }
 
 int main(int argc, char **argv) {
+  if (argc == 1) {
+    usage();
+    cleanup(1);
+  }
+
+  int ret;
 
   config = config_new();
-  int ret;
 
   ret = parseargs(argc, argv);
   if (ret > 0)
     cleanup(ret);
+
+  if (!config->op) {
+    usage();
+    cleanup(1);
+  }
 
   curl_global_init(CURL_GLOBAL_NOTHING);
   curl_local_init();
@@ -163,31 +173,27 @@ int main(int argc, char **argv) {
    * to ensure that we catch the possibility of a download flag
    * being passed along with it.
    */
-  if (config->op & OP_UPDATE) { /* 8 */
+  if (config->op & OP_UPDATE) {
     ret = cower_do_update();
-  } else if (config->op & OP_DL) { /* 4 */
+  } else if (config->op & OP_DL) {
     ret = cower_do_download(targets);
-  } else if (config->op & OP_INFO) { /* 2 */
+  } else if (config->op & OP_INFO) {
     alpm_list_t *results = cower_do_query(targets, AUR_QUERY_TYPE_INFO);
-
     if (results) {
       alpm_list_t *i;
-      for (i = results; i; i = i->next) {
+      for (i = results; i; i = i->next)
         print_pkg_info(i->data);
-      }
+
       alpm_list_free_inner(results, aur_pkg_free);
       alpm_list_free(results);
     }
-  } else if (config->op & OP_SEARCH) { /* 1 */
+  } else if (config->op & OP_SEARCH) {
     alpm_list_t *results = cower_do_query(targets, AUR_QUERY_TYPE_SEARCH);
     if (results) {
       print_pkg_search(results);
       alpm_list_free_inner(results, aur_pkg_free);
       alpm_list_free(results);
     }
-  } else {
-    usage();
-    ret = 1;
   }
 
   cleanup(ret);
