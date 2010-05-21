@@ -129,6 +129,8 @@ int get_pkg_dependencies(const char *pkg) {
         printf("::DEBUG %s is in the AUR\n", depend);
       aur_get_tarball(results->data);
       ret++;
+      aur_pkg_free(results->data);
+      alpm_list_free(results);
       continue;
     }
   }
