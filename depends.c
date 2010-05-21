@@ -59,6 +59,8 @@ alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
   char buffer[BUFSIZ + 1];
   char *deps, *tmp, *bptr;
 
+  memset(buffer, 0, BUFSIZ);
+
   fd = fopen(pkgbuild, "r");
   fread(buffer, sizeof(char), BUFSIZ, fd); 
 
