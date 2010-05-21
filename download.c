@@ -42,6 +42,8 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
   FILE *fd;
   const char *dir, *filename, *pkgname;
   char fullpath[PATH_MAX + 1], url[AUR_URL_SIZE + 1];
+  CURLcode curlstat;
+  long httpcode;
   int result = 0;
 
   if (config->download_dir == NULL) /* Use pwd */
@@ -97,7 +99,19 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
       curl_easy_setopt(curl, CURLOPT_URL, url);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, fd);
       curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
-      result = curl_easy_perform(curl);
+
+      curlstat = curl_easy_perform(curl);
+      if (curlstat != CURLE_OK) {
+        fprintf(stderr, "curl: %s\n", curl_easy_strerror(curlstat));
+        result = curlstat;
+        goto cleanup;
+      }
+
+      curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
+      if (httpcode != 200) {
+        fprintf(stderr, "curl: error: server responded with code %ld\n", httpcode);
+        goto cleanup;
+      }
 
       if (config->color)
         cprintf("%<%s%> downloaded to %<%s%>\n", WHITE, pkgname, GREEN, dir);
@@ -126,8 +140,8 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
     }
   }
 
+cleanup:
   FREE(dir);
-
   return result;
 }
 
