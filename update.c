@@ -67,16 +67,14 @@ int cower_do_update() {
     local_ver = alpm_pkg_get_version(pmpkg);
 
     /* Version check */
-    if (alpm_pkg_vercmp(remote_ver, local_ver) <= 0) {
-      aur_pkg_free(aurpkg);
-      continue;
-    }
+    if (alpm_pkg_vercmp(remote_ver, local_ver) > 0) {
+      ret++; /* Found an update, increment */
 
-    ret++; /* Found an update, increment */
-    if (config->op & OP_DL) /* -d found with -u */
-      aur_get_tarball(aurpkg);
-    else {
-      print_pkg_update(aurpkg->name, local_ver, remote_ver);
+      if (config->op & OP_DL) /* -d found with -u */
+        aur_get_tarball(aurpkg);
+      else {
+        print_pkg_update(aurpkg->name, local_ver, remote_ver);
+      }
     }
 
     aur_pkg_free(aurpkg);
