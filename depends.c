@@ -29,26 +29,22 @@
 #include "search.h"
 #include "util.h"
 
-alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *startdep) {
-  char *token, *i;
+alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray) {
+  char *token;
 
-  /* TODO: This whole loop sucks. */
-  while ((token = strsep(&startdep, " ")) != NULL) {
-    if (strlen(token) <= 1) continue;
-
+  token = strtok(deparray, " \n");
+  while (token) {
     if (*token == '\'' || *token == '\"')
       token++;
 
-    for (i = token; *i != '\0'; i++)
-      if (strchr("=<>\\\'\"", *i)) {
-        *i = '\0';
-        break;
-      }
+    *(token + strcspn(token, "=<>\'\"")) = '\0';
 
     if (config->verbose >= 2)
       fprintf(stderr, "::DEBUG Adding Depend: %s\n", token);
 
     deplist = alpm_list_add(deplist, strdup(token));
+
+    token = strtok(NULL, " \n");
   }
 
   return deplist;
