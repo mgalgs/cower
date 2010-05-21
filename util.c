@@ -124,7 +124,7 @@ alpm_list_t *agg_search_results(alpm_list_t *haystack, alpm_list_t *addthis) {
 * 
 * @return number of characters written
 */
-int cfprintf(FILE *fd, const char* fmt, ...) {
+int cfprintf(FILE *fd, const char *fmt, ...) {
   va_list args;
   int result;
 
@@ -143,7 +143,7 @@ int cfprintf(FILE *fd, const char* fmt, ...) {
 * 
 * @return number of characters written
 */
-int cprintf(const char* fmt, ...) {
+int cprintf(const char *fmt, ...) {
   va_list args;
   int result;
 
@@ -161,10 +161,18 @@ int cprintf(const char* fmt, ...) {
 * 
 * @return 1 if exists, else 0
 */
-int file_exists(const char* filename) {
+int file_exists(const char *filename) {
   struct stat st;
 
   return stat(filename, &st) == 0;
+}
+
+off_t filesize(const char *filename) {
+  struct stat st;
+
+  stat(filename, &st);
+
+  return st.st_size;
 }
 
 /** 
