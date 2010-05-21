@@ -52,10 +52,9 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray) {
 
 alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
   FILE* fd;
-  char buffer[BUFSIZ + 1];
-  char *deps, *tmp, *bptr;
+  char *buffer, *deps, *tmp, *bptr;
 
-  memset(buffer, 0, BUFSIZ);
+  buffer = calloc(1, filesize(pkgbuild) + 1);
 
   fd = fopen(pkgbuild, "r");
   fread(buffer, sizeof(char), BUFSIZ, fd); 
@@ -65,7 +64,6 @@ alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
   /* This catches depends as well as makedepends.
    * It's valid for multi package files as well,
    * even though the AUR doesn't support them. */
-  /* XXX: This is likely to fail hard on large split PKGBUILDs */
   while ((deps = strstr(bptr, PKGBUILD_DEPENDS)) != NULL) {
     if (strncmp(deps - 3, PKGBUILD_OPTDEPENDS, strlen(PKGBUILD_OPTDEPENDS)) != 0) {
       tmp = strndup(deps + 9, strchr(deps, ')') - deps - 9);
@@ -77,6 +75,8 @@ alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
   }
 
   fclose(fd);
+
+  free(buffer);
 
   return deplist;
 }
