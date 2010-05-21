@@ -16,7 +16,7 @@ options:
 	@echo "LDFLAGS   = ${LDFLAGS}"
 
 .c.o:
-	@printf "   %-8s %s\n" CC $<
+	@printf "   %-8s %s\n" CC $@
 	@${CC} -c ${CFLAGS} $<
 
 ${OBJ}: config.mk
@@ -43,9 +43,9 @@ install: cower cower.1
 dist: clean
 	@mkdir -p cower-${VERSION}
 	@cp -R ${SRC} *.h Makefile cower.pod cower-${VERSION}
-	@printf "   %-8s %s\n" TAR
+	@printf "   %-8s %s\n" TAR cower-${VERSION}.tar
 	@tar -cf cower-${VERSION}.tar cower-${VERSION}
-	@printf "   %-8s %s\n" GZIP cower-${VERSION}.tar
+	@printf "   %-8s %s\n" GZIP cower-${VERSION}.tar.gz
 	@gzip cower-${VERSION}.tar
 	@rm -rf cower-${VERSION}
 
