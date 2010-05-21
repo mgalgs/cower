@@ -52,28 +52,27 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray) {
 
 alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
   FILE* fd;
-  char *buffer, *deps, *tmp, *bptr;
+  char *buffer, *bptr, *arraystart, *arrayend;
 
   buffer = calloc(1, filesize(pkgbuild) + 1);
 
   fd = fopen(pkgbuild, "r");
   fread(buffer, sizeof(char), BUFSIZ, fd); 
-
   bptr = buffer;
 
   /* This catches depends as well as makedepends.
    * It's valid for multi package files as well,
    * even though the AUR doesn't support them. */
-  while ((deps = strstr(bptr, PKGBUILD_DEPENDS)) != NULL) {
-    if (strncmp(deps - 3, PKGBUILD_OPTDEPENDS, strlen(PKGBUILD_OPTDEPENDS)) != 0) {
-      tmp = strndup(deps + 9, strchr(deps, ')') - deps - 9);
-      deplist = parse_bash_array(deplist, tmp);
-      free(tmp);
-    }
+  while ((arraystart = strstr(bptr, PKGBUILD_DEPENDS)) != NULL) {
+    arrayend = strchr(arraystart, ')');
+    *arrayend = '\0';
 
-    bptr = deps + 10;
+    /* This is a bit magical; however, if it fails, the PKGBUILD isn't valid Bash */
+    if (strncmp(arraystart - 3, PKGBUILD_OPTDEPENDS, strlen(PKGBUILD_OPTDEPENDS)) != 0)
+      deplist = parse_bash_array(deplist, arraystart + 9);
+
+    bptr = arrayend + 1;
   }
-
   fclose(fd);
 
   free(buffer);
