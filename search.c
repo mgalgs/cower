@@ -44,36 +44,13 @@ alpm_list_t *aur_rpc_query(const char *query_type, const char* arg) {
   return aur_fetch_json(url); /* This needs to be freed in the calling function */
 }
 
-
-alpm_list_t *cower_do_info(alpm_list_t *targets) {
+alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
   alpm_list_t *i, *resultset;
 
   resultset = NULL;
 
   for (i = targets; i; i = alpm_list_next(i)) {
-    alpm_list_t *search = aur_rpc_query(AUR_QUERY_TYPE_INFO, i->data);
-
-    if (! search) {
-      if (config->color)
-        cfprintf(stderr, "%<%s%>", RED, "error:");
-      else
-        fprintf(stderr, "error:");
-      fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
-
-      continue;
-    }
-
-    resultset = alpm_list_add_sorted(resultset, search->data, aur_pkg_cmp);
-  }
-
-  return resultset;
-}
-
-alpm_list_t *cower_do_search(alpm_list_t *targets) {
-  alpm_list_t *i;
-  alpm_list_t *resultset = NULL;
-  for (i = targets; i; i = alpm_list_next(i)) {
-    if (strlen(i->data) < 2) { /* Enforce minimum search length */
+    if (STREQ(type, AUR_QUERY_TYPE_SEARCH) && strlen(i->data) < 2) {
       if (config->color) {
         cfprintf(stderr, "%<error:%> search string '%s' too short.\n",
           RED, (const char*)i->data);
@@ -84,7 +61,7 @@ alpm_list_t *cower_do_search(alpm_list_t *targets) {
       continue;
     }
 
-    alpm_list_t *search = aur_rpc_query(AUR_QUERY_TYPE_SEARCH, i->data);
+    alpm_list_t *search = aur_rpc_query(type, i->data);
 
     if (! search) {
       if (config->color) {

@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "aur.h"
 #include "conf.h"
 #include "curl.h"
 #include "depends.h"
@@ -33,6 +34,9 @@
 static alpm_list_t *targets; /* Package argument list */
 
 static void cleanup(int ret) {
+  curl_easy_cleanup(curl);
+  curl_global_cleanup();
+
   FREELIST(targets);
   alpm_release();
   config_free(config);
@@ -166,7 +170,7 @@ int main(int argc, char **argv) {
   } else if (config->op & OP_DL) { /* 4 */
     ret = cower_do_download(targets);
   } else if (config->op & OP_INFO) { /* 2 */
-    alpm_list_t *results = cower_do_info(targets);
+    alpm_list_t *results = cower_do_query(targets, AUR_QUERY_TYPE_INFO);
 
     if (results) {
       alpm_list_t *i;
@@ -177,7 +181,7 @@ int main(int argc, char **argv) {
       alpm_list_free(results);
     }
   } else if (config->op & OP_SEARCH) { /* 1 */
-    alpm_list_t *results = cower_do_search(targets);
+    alpm_list_t *results = cower_do_query(targets, AUR_QUERY_TYPE_SEARCH);
     if (results) {
       print_pkg_search(results);
       alpm_list_free_inner(results, aur_pkg_free);
@@ -187,10 +191,6 @@ int main(int argc, char **argv) {
     usage();
     ret = 1;
   }
-
-  /* Compulsory cleanup */
-  curl_easy_cleanup(curl);
-  curl_global_cleanup();
 
   cleanup(ret);
   /* Never reached */
