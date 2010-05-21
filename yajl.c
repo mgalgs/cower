@@ -115,20 +115,19 @@ alpm_list_t *aur_fetch_json(const char *url) {
 
   g = yajl_gen_alloc(NULL, NULL);
 
-  hand = yajl_alloc(&callbacks, NULL, NULL, (void *) g);
+  hand = yajl_alloc(&callbacks, NULL, NULL, (void*)g);
 
   curlstat = curl_easy_perform(curl);
-  if (curlstat != 0) {
-    fprintf(stderr, "curl error: unable to read data from %s\n", url);
+  if (curlstat != CURLE_OK) {
+    fprintf(stderr, "curl: %s\n", curl_easy_strerror(curlstat));
     goto cleanup;
   }
 
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
   if (httpcode != 200) {
-    fprintf(stderr, "curl error: server responded with code %ld\n", httpcode);
+    fprintf(stderr, "curl: error: server responded with code %ld\n", httpcode);
     goto cleanup;
-  };
-
+  }
 
   aur_pkg_free(parse_struct.aurpkg);
 
