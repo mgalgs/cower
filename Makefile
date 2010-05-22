@@ -37,12 +37,13 @@ install: cower cower.1
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/cower
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@printf "   %-8s %s\n" INSTALL cower.1
-	@sed "s/VERSION/${VERSION}/g" < cower.1 > ${DESTDIR}${MANPREFIX}/man1/cower.1
+	@sed "s/\^VERSION/${VERSION}/g" < cower.1 > ${DESTDIR}${MANPREFIX}/man1/cower.1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/cower.1
 
 dist: clean
 	@mkdir -p cower-${VERSION}
 	@cp -R ${SRC} *.h Makefile config.mk README.pod cower-${VERSION}
+	@sed "s/VERSION =.*/VERSION = $(shell git describe)/" < config.mk > cower-${VERSION}/config.mk
 	@printf "   %-8s %s\n" TAR cower-${VERSION}.tar
 	@tar -cf cower-${VERSION}.tar cower-${VERSION}
 	@printf "   %-8s %s\n" GZIP cower-${VERSION}.tar.gz
