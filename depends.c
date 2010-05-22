@@ -97,10 +97,10 @@ int get_pkg_dependencies(const char *pkg) {
   deplist = pkgbuild_get_deps(pkgbuild_path, deplist);
 
   if (!config->quiet && config->verbose >= 1) {
-    if (config->color) {
+    if (config->color)
       cprintf("\n%<::%> Fetching uninstalled dependencies for %<%s%>...\n",
         BLUE, WHITE, pkg);
-    } else
+    else
       printf("\n:: Fetching uninstalled dependencies for %s...\n", pkg);
   }
 
@@ -113,6 +113,7 @@ int get_pkg_dependencies(const char *pkg) {
     if (alpm_db_get_pkg(db_local, depend)) { /* installed */
       if (config->verbose >= 2)
         printf("::DEBUG %s is installed\n", depend);
+
       continue;
     }
 
@@ -122,14 +123,17 @@ int get_pkg_dependencies(const char *pkg) {
     /* if we're here, we need to check the AUR */
     alpm_list_t *results = aur_rpc_query(AUR_QUERY_TYPE_INFO, depend);
     if (results) {
+
       if (config->verbose >= 2)
         printf("::DEBUG %s is in the AUR\n", depend);
-      aur_get_tarball(results->data);
+
       ret++;
+      aur_get_tarball(results->data);
+
       aur_pkg_free(results->data);
       alpm_list_free(results);
-      continue;
     }
+    /* Silently ignore packages that can't be found anywhere */
   }
 
   /* Cleanup */
