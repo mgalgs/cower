@@ -214,11 +214,11 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
             "Version         : %<%s%>\n"
             "URL             : %<%s%>\n"
             "AUR Page        : %<%s%s%>\n",
-            MAGENTA,
-            WHITE, pkg->name,
-            pkg->ood ? RED : GREEN, pkg->ver,
-            CYAN, pkg->url,
-            CYAN, AUR_PKG_URL_FORMAT, pkg->id);
+            config->colors->repo,
+            config->colors->pkg, pkg->name,
+            pkg->ood ? config->colors->outofdate : config->colors->uptodate, pkg->ver,
+            config->colors->url, pkg->url,
+            config->colors->url, AUR_PKG_URL_FORMAT, pkg->id);
   } else {
     printf("Repository      : aur\n"
            "Name:           : %s\n"
@@ -240,7 +240,8 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
          pkg->votes);
 
   if (config->color) {
-    cprintf("Out of Date     : %<%s%>\n", pkg->ood ? RED : GREEN, pkg->ood ? "Yes" : "No");
+    cprintf("Out of Date     : %<%s%>\n", pkg->ood ? 
+      config->colors->outofdate : config->colors->uptodate, pkg->ood ? "Yes" : "No");
   } else {
     printf("Out of Date     : %s\n", pkg->ood ? "Yes" : "No");
   }
@@ -262,13 +263,14 @@ void print_pkg_search(alpm_list_t *search) {
 
     if (config->quiet) {
       if (config->color)
-        cprintf("%<%s%>\n", WHITE, pkg->name);
+        cprintf("%<%s%>\n", config->colors->pkg, pkg->name);
       else
         printf("%s\n", pkg->name);
     } else {
       if (config->color)
         cprintf("%<aur/%>%<%s%> %<%s%>\n",
-          MAGENTA, WHITE, pkg->name, pkg->ood ? RED : GREEN, pkg->ver);
+          config->colors->repo, config->colors->pkg, pkg->name, pkg->ood ?
+            config->colors->outofdate : config->colors->uptodate, pkg->ver);
       else
         printf("aur/%s %s\n", pkg->name, pkg->ver);
       printf("    %s\n", pkg->desc);
@@ -285,9 +287,10 @@ void print_pkg_search(alpm_list_t *search) {
 */
 void print_pkg_update(const char *pkg, const char *local_ver, const char *remote_ver) {
   if (config->color) {
-    cprintf("%<%s%>", WHITE, pkg);
+    cprintf("%<%s%>", config->colors->pkg, pkg);
     if (! config->quiet)
-      cprintf(" %<%s%> -> %<%s%>\n", GREEN, local_ver, GREEN, remote_ver);
+      cprintf(" %<%s%> -> %<%s%>\n", config->colors->outofdate, local_ver,
+        config->colors->uptodate, remote_ver);
   } else {
     if (! config->quiet)
       printf("%s %s -> %s\n", pkg, local_ver, remote_ver);
