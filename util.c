@@ -210,22 +210,35 @@ char *itoa(unsigned int num, int base){
 void print_pkg_info(struct aur_pkg_t *pkg) {
 
   if (config->color) {
-    cprintf("Repository      : %<aur%>\n", MAGENTA);
-    cprintf("Name            : %<%s%>\n", WHITE, pkg->name);
-    cprintf("Version         : %<%s%>\n", pkg->ood ? RED : GREEN, pkg->ver);
-    cprintf("URL             : %<%s%>\n", CYAN, pkg->url);
-    cprintf("AUR Page        : %<%s%s%>\n", CYAN, AUR_PKG_URL_FORMAT, pkg->id);
+    cprintf("Repository      : %<aur%>\n"
+            "Name            : %<%s%>\n"
+            "Version         : %<%s%>\n"
+            "URL             : %<%s%>\n"
+            "AUR Page        : %<%s%s%>\n",
+            MAGENTA,
+            WHITE, pkg->name,
+            pkg->ood ? RED : GREEN, pkg->ver,
+            CYAN, pkg->url,
+            CYAN, AUR_PKG_URL_FORMAT, pkg->id);
   } else {
-    printf("Repository      : aur\n");
-    printf("Name:           : %s\n", pkg->name);
-    printf("Version         : %s\n", pkg->ver);
-    printf("URL             : %s\n", pkg->url);
-    printf("AUR Page        : %s%s\n", AUR_PKG_URL_FORMAT, pkg->id);
+    printf("Repository      : aur\n"
+           "Name:           : %s\n"
+           "Version         : %s\n"
+           "URL             : %s\n"
+           "AUR Page        : %s%s\n",
+           pkg->name,
+           pkg->ver,
+           pkg->url,
+           AUR_PKG_URL_FORMAT, pkg->id);
+
   }
 
-  printf("Category        : %s\n", aur_cat[atoi(pkg->cat)]);
-  printf("License         : %s\n", pkg->lic);
-  printf("Number of Votes : %s\n", pkg->votes);
+  printf("Category        : %s\n"
+         "License         : %s\n"
+         "Number of Votes : %s\n",
+         aur_cat[atoi(pkg->cat)],
+         pkg->lic,
+         pkg->votes);
 
   if (config->color) {
     cprintf("Out of Date     : %<%s%>\n", pkg->ood ? RED : GREEN, pkg->ood ? "Yes" : "No");
