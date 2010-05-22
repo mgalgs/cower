@@ -79,3 +79,4 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
   return resultset;
 }
 
+/* vim: set ts=2 sw=2 et: */

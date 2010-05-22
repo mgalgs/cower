@@ -23,3 +23,5 @@
 alpm_list_t *aur_fetch_json(const char*);
 
 #endif /* _COWER_YAJL_H */
+
+/* vim: set ts=2 sw=2 et: */

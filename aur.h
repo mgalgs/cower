@@ -44,3 +44,5 @@
 #define AUR_OOD               "OutOfDate"
 
 #endif /* _COWER_AUR_H */
+
+/* vim: set ts=2 sw=2 et: */

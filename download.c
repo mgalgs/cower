@@ -177,3 +177,5 @@ int cower_do_download(alpm_list_t *targets) {
 
   return ret;
 }
+
+/* vim: set ts=2 sw=2 et: */

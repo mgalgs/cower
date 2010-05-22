@@ -36,3 +36,5 @@ void aur_pkg_free(void*);
 struct aur_pkg_t *aur_pkg_new(void);
 
 #endif /* _COWER_PACKAGE_H */
+
+/* vim: set ts=2 sw=2 et: */

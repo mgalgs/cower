@@ -311,3 +311,4 @@ int is_in_pacman(const char *target) {
   return FALSE;
 }
 
+/* vim: set ts=2 sw=2 et: */

@@ -57,3 +57,5 @@ void print_pkg_update(const char*, const char*, const char*);
 char *strtrim(char*);
 
 #endif /* _COWER_UTIL_H */
+
+/* vim: set ts=2 sw=2 et: */

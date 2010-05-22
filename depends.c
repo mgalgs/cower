@@ -144,3 +144,4 @@ int get_pkg_dependencies(const char *pkg) {
   return ret;
 }
 
+/* vim: set ts=2 sw=2 et: */

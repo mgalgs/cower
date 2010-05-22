@@ -25,3 +25,5 @@ int aur_get_tarball(struct aur_pkg_t*);
 int cower_do_download(alpm_list_t*);
 
 #endif /* _DOWNLOAD_H */
+
+/* vim: set ts=2 sw=2 et: */

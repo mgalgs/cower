@@ -71,3 +71,4 @@ struct config_t *config_new(void) {
   return newconfig;
 }
 
+/* vim: set ts=2 sw=2 et: */

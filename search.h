@@ -26,3 +26,5 @@ alpm_list_t *cower_do_info(alpm_list_t*);
 alpm_list_t *cower_do_search(alpm_list_t*);
 
 #endif /* _COWER_SEARCH_H */
+
+/* vim: set ts=2 sw=2 et: */

@@ -21,3 +21,5 @@
 int cower_do_update(void);
 
 #endif /* _COWER_UPDATE_H */
+
+/* vim: set ts=2 sw=2 et: */

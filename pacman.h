@@ -34,3 +34,5 @@ pmdb_t *db_local;
 extern pmdb_t *db_local;
 
 #endif /* _COWER_PACMAN_H */
+
+/* vim: set ts=2 sw=2 et: */

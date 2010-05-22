@@ -48,3 +48,5 @@ struct config_t *config_new(void);
 extern struct config_t *config;
 
 #endif /* _COWER_CONF_H */
+
+/* vim: set ts=2 sw=2 et: */

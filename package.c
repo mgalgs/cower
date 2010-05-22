@@ -72,3 +72,4 @@ struct aur_pkg_t *aur_pkg_new() {
   return pkg;
 }
 
+/* vim: set ts=2 sw=2 et: */

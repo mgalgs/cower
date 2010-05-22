@@ -38,3 +38,4 @@ int curl_local_init() {
   return 0;
 }
 
+/* vim: set ts=2 sw=2 et: */

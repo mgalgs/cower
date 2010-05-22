@@ -330,3 +330,4 @@ char *strtrim(char *str) {
   return(str);
 }
 
+/* vim: set ts=2 sw=2 et: */

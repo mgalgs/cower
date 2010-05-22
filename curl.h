@@ -27,3 +27,5 @@ CURL *curl;
 extern CURL *curl;
 
 #endif /* _COWER_CURL_H */
+
+/* vim: set ts=2 sw=2 et: */

@@ -27,3 +27,5 @@
 int get_pkg_dependencies(const char*);
 
 #endif /* _COWER_DEPENDS_H */
+
+/* vim: set ts=2 sw=2 et: */
