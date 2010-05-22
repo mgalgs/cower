@@ -15,6 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <errno.h>
 #include <linux/limits.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -40,18 +41,21 @@
 int aur_get_tarball(struct aur_pkg_t *aurpkg) {
 
   FILE *fd;
-  const char *dir, *filename, *pkgname;
+  const char *filename, *pkgname;
+  char *dir;
   char fullpath[PATH_MAX + 1], url[AUR_URL_SIZE + 1];
   CURLcode curlstat;
   long httpcode;
   int result = 0;
 
-  if (config->download_dir == NULL) /* Use pwd */
-    dir = getcwd(NULL, 0);
-  else
-    dir = realpath(config->download_dir, NULL);
+  dir = calloc(1, PATH_MAX + 1);
 
-  if (! dir || ! file_exists(dir)) {
+  if (config->download_dir == NULL) /* use pwd */
+    dir = getcwd(dir, PATH_MAX);
+  else
+    dir = realpath(config->download_dir, dir);
+
+  if (! dir) {
     if (config->color) {
       cfprintf(stderr, "%<error:%> specified path does not exist.\n", RED);
     } else {
@@ -62,25 +66,18 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
 
   pkgname = aurpkg->name;
 
-  if (config->verbose >= 2)
-    fprintf(stderr, "::DEBUG Downloading Package: %s\n", pkgname);
-
-  /* Build URL. Need this to get the taurball, durp */
   snprintf(url, AUR_URL_SIZE, AUR_PKG_URL, pkgname, pkgname);
 
   if (config->verbose >= 2)
-    fprintf(stderr, "::DEBUG Using URL %s\n", url);
+    fprintf(stderr, "::DEBUG Fetching URL %s\n", url);
 
-  /* Pointer to the 'basename' of the URL Path */
   filename = strrchr(url, '/') + 1;
 
   snprintf(fullpath, PATH_MAX, "%s/%s", dir, filename);
 
   /* Mask extension to check for the exploded dir existing */
-  if (strcmp(strrchr(fullpath, '.'), ".gz") == 0) 
+  if (STREQ(fullpath + strlen(fullpath) - 7, ".tar.gz"))
     fullpath[strlen(fullpath) - 7] = '\0';
-  else if (strcmp(strrchr(fullpath, '.'), ".tgz") == 0)
-    fullpath[strlen(fullpath) - 4] = '\0';
 
   if (file_exists(fullpath) && ! config->force) {
     if (config->color)
@@ -131,12 +128,14 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
         if (! result) /* If we get here, bsdtar finished successfully */
           unlink(fullpath);
     } else {
+      result = errno;
       if (config->color) {
-        cfprintf(stderr, "%<error:%> could not write to path %s\n", RED, dir);
+        cfprintf(stderr, "%<error:%> could not write to %s: ", RED, dir);
       } else {
-        fprintf(stderr, "error: could not write to path: %s\n", dir);
+        fprintf(stderr, "error: could not write to %s: ", dir);
       }
-      result = 1;
+      errno = result;
+      perror("");
     }
   }
 
