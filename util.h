@@ -33,17 +33,24 @@
 #define FALSE 0
 
 /* colors */
-enum {
-  BLACK   = 0,  BOLDBLACK   = 10,
-  RED     = 1,  BOLDRED     = 11,
-  GREEN   = 2,  BOLDGREEN   = 12,
-  YELLOW  = 3,  BOLDYELLOW  = 13,
-  BLUE    = 4,  BOLDBLUE    = 14,
-  MAGENTA = 5,  BOLDMAGENTA = 15,
-  CYAN    = 6,  BOLDCYAN    = 16,
-  WHITE   = 7,  BOLDWHITE   = 17,
-  FG      = 8,  BOLDFG      = 18,
-};
+#define BLACK         0
+#define RED           1
+#define GREEN         2
+#define YELLOW        3
+#define BLUE          4
+#define MAGENTA       5
+#define CYAN          6
+#define WHITE         7
+#define FG            8
+#define BOLDBLACK    10
+#define BOLDRED      11
+#define BOLDGREEN    12
+#define BOLDYELLOW   13
+#define BOLDBLUE     14
+#define BOLDMAGENTA  15
+#define BOLDCYAN     16
+#define BOLDWHITE    17
+#define BOLDFG       18
 
 alpm_list_t *agg_search_results(alpm_list_t*, alpm_list_t*);
 int cfprintf(FILE*, const char*, ...);
