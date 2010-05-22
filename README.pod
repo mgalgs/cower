@@ -76,7 +76,7 @@ B<repo>, B<packages>, B<uptodate>, B<outofdate>, B<url>, B<info>, B<warn>, B<err
 
 =back
 
-Valid colors are:
+Valid color values are:
 
 =over 4
 
