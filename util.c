@@ -44,9 +44,9 @@ static char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
 * @return number of characters printed
 */
 static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
-
   const char *p;
-  int count = 0;
+  int color, count = 0;
+  char cprefix[10] = {0};
 
   int i; long l; char *s;
 
@@ -82,9 +82,9 @@ static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
       count += fputs(itoa(l, 10), fd);
       break;
     case '<': /* color on */
-      count += fputs(C_ON, fd);
-      count += fputs(itoa(va_arg(args, int), 10), fd);
-      fputc('m', fd); count++;
+      color = va_arg(args, int);
+      snprintf(cprefix, 10, C_ON, color / 10, color % 10);
+      count += fputs(cprefix, fd);
       break;
     case '>': /* color off */
       count += fputs(C_OFF, fd);
@@ -107,7 +107,6 @@ static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
 * @return head of the alpm_list_t
 */
 alpm_list_t *agg_search_results(alpm_list_t *haystack, alpm_list_t *addthis) {
-
   haystack = alpm_list_mmerge_dedupe(haystack, addthis, (alpm_list_fn_cmp)aur_pkg_cmp,
     (alpm_list_fn_free)aur_pkg_free);
 
