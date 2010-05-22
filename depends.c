@@ -105,7 +105,7 @@ int get_pkg_dependencies(const char *pkg) {
   }
 
   alpm_list_t *i = deplist;
-  for (i = deplist; i; i = alpm_list_next(i)) {
+  for (i = deplist; i; i = i->next) {
     const char* depend = i->data;
     if (config->verbose >= 2)
       printf("::DEBUG Attempting to find %s\n", depend);

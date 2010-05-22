@@ -49,7 +49,7 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
 
   resultset = NULL;
 
-  for (i = targets; i; i = alpm_list_next(i)) {
+  for (i = targets; i; i = i->next) {
     if (STREQ(type, AUR_QUERY_TYPE_SEARCH) && strlen(i->data) < 2) {
       if (config->color) {
         cfprintf(stderr, "%<error:%> search string '%s' too short.\n",

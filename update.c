@@ -42,7 +42,7 @@ int cower_do_update() {
 
   /* Iterate over targets packages */
   alpm_list_t *i;
-  for (i = foreign_pkgs; i; i = alpm_list_next(i)) {
+  for (i = foreign_pkgs; i; i = i->next) {
     pmpkg_t *pmpkg = i->data;
 
     if (config->verbose > 0) {

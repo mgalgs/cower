@@ -258,8 +258,8 @@ void print_pkg_search(alpm_list_t *search) {
   alpm_list_t *i;
   struct aur_pkg_t *pkg;
 
-  for (i = search; i; i = alpm_list_next(i)) {
-    pkg = (struct aur_pkg_t*)alpm_list_getdata(i);
+  for (i = search; i; i = i->next) {
+    pkg = i->data;
 
     if (config->quiet) {
       if (config->color)

@@ -36,8 +36,8 @@ static int is_foreign(pmpkg_t *pkg) {
   alpm_list_t *j;
   alpm_list_t *sync_dbs = alpm_option_get_syncdbs();
 
-  for(j = sync_dbs; j; j = alpm_list_next(j)) {
-    pmdb_t *db = alpm_list_getdata(j);
+  for(j = sync_dbs; j; j = j->next) {
+    pmdb_t *db = j->data;
     pmpkg_t *findpkg = alpm_db_get_pkg(db, pkgname);
     if(findpkg) {
       return FALSE;
@@ -173,8 +173,8 @@ alpm_list_t *alpm_list_remove_item(alpm_list_t *listhead, alpm_list_t *target, a
 alpm_list_t *alpm_query_foreign() {
   alpm_list_t *i, *ret = NULL;
 
-  for(i = alpm_db_get_pkgcache(db_local); i; i = alpm_list_next(i)) {
-    pmpkg_t *pkg = alpm_list_getdata(i);
+  for(i = alpm_db_get_pkgcache(db_local); i; i = i->next) {
+    pmpkg_t *pkg = i->data;
 
     if (is_foreign(pkg)) {
       ret = alpm_list_add(ret, pkg);
@@ -268,12 +268,12 @@ pmdb_t *alpm_sync_search(alpm_list_t *target) {
   syncs = alpm_option_get_syncdbs();
 
   /* Iterating over each sync */
-  for (i = syncs; i; i = alpm_list_next(i)) {
-    db = alpm_list_getdata(i);
+  for (i = syncs; i; i = i->next) {
+    db = i->data;
 
     /* Iterating over each package in sync */
-    for (j = alpm_db_get_pkgcache(db); j; j = alpm_list_next(j)) {
-      pmpkg_t *pkg = alpm_list_getdata(j);
+    for (j = alpm_db_get_pkgcache(db); j; j = j->next) {
+      pmpkg_t *pkg = j->data;
       if (strcmp(alpm_pkg_get_name(pkg), alpm_list_getdata(target)) == 0) {
         return db;
       }

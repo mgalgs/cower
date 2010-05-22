@@ -151,7 +151,7 @@ int cower_do_download(alpm_list_t *targets) {
 
   alpm_quick_init();
 
-  for (i = targets; i; i = alpm_list_next(i)) {
+  for (i = targets; i; i = i->next) {
 
     if (is_in_pacman((const char*)i->data)) /* Skip it */
       continue;
