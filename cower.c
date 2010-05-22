@@ -154,13 +154,17 @@ static int parseargs(int argc, char **argv) {
 
 static int read_config_file() {
   int ret = 0;
-  char *ptr;
+  char *ptr, *xdg_config_home;
   char config_path[PATH_MAX + 1], line[BUFSIZ + 1];
 
-  /* XXX: What happens if XDG_CONFIG_HOME isn't defined? */
-
-  snprintf(&config_path[0], PATH_MAX, "%s/%s",
-    getenv("XDG_CONFIG_HOME"), "cower/cower.conf");
+  xdg_config_home = getenv("XDG_CONFIG_HOME");
+  if (xdg_config_home) {
+    snprintf(&config_path[0], PATH_MAX, "%s/cower/cower.conf",
+      xdg_config_home);
+  } else { /* try to guess at where .config is */
+    snprintf(&config_path[0], PATH_MAX, "%s/.config/cower/cower.conf",
+      getenv("HOME"));
+  }
 
   if (!file_exists(config_path)) {
     /* Return without error. Nothing bad happened, we
