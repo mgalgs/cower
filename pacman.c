@@ -298,7 +298,7 @@ int is_in_pacman(const char *target) {
   if (found_in) {
     if (config->color) {
       cprintf("%<%s%> is available in %<%s%>\n",
-        WHITE, target, YELLOW, alpm_db_get_name(found_in));
+        config->colors->pkg, target, config->colors->warn, alpm_db_get_name(found_in));
     } else {
       printf("%s is available in %s\n", target, alpm_db_get_name(found_in));
     }

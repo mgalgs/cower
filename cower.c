@@ -155,6 +155,10 @@ int main(int argc, char **argv) {
     cleanup(1);
   }
 
+  if (config->color) {
+    /* TODO: Read config file for custom colors if it exists */
+  }
+
   curl_global_init(CURL_GLOBAL_NOTHING);
   curl_local_init();
 

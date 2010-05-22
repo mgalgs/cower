@@ -99,7 +99,7 @@ int get_pkg_dependencies(const char *pkg) {
   if (!config->quiet && config->verbose >= 1) {
     if (config->color)
       cprintf("\n%<::%> Fetching uninstalled dependencies for %<%s%>...\n",
-        BLUE, WHITE, pkg);
+        config->colors->info, config->colors->pkg, pkg);
     else
       printf("\n:: Fetching uninstalled dependencies for %s...\n", pkg);
   }

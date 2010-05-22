@@ -57,7 +57,7 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
 
   if (! dir) {
     if (config->color) {
-      cfprintf(stderr, "%<error:%> specified path does not exist.\n", RED);
+      cfprintf(stderr, "%<::%> specified path does not exist.\n", config->colors->error);
     } else {
       fprintf(stderr, "error: specified path does not exist.\n");
     }
@@ -81,7 +81,7 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
 
   if (file_exists(fullpath) && ! config->force) {
     if (config->color)
-      cfprintf(stderr, "%<%s%>", RED, "error:");
+      cfprintf(stderr, "%<::%>", config->colors->error);
     else
       fprintf(stderr, "error:");
 
@@ -111,7 +111,9 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
       }
 
       if (config->color)
-        cprintf("%<%s%> downloaded to %<%s%>\n", WHITE, pkgname, GREEN, dir);
+        cprintf("%<%s%> downloaded to %<%s%>\n",
+          config->colors->pkg, pkgname,
+          config->colors->uptodate, dir);
       else
         printf("%s downloaded to %s\n", pkgname, dir);
 
@@ -131,7 +133,7 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
     } else {
       result = errno;
       if (config->color)
-        cfprintf(stderr, "%<error:%> could not write to %s: ", RED, dir);
+        cfprintf(stderr, "%<::%> could not write to %s: ", config->colors->error, dir);
       else
         fprintf(stderr, "error: could not write to %s: ", dir);
       errno = result;
@@ -168,7 +170,7 @@ int cower_do_download(alpm_list_t *targets) {
       alpm_list_free(results);
     } else { /* Not found anywhere */
       if (config->color)
-        cfprintf(stderr, "%<%s%>", RED, "error:");
+        cfprintf(stderr, "%<%s%>", config->colors->error, "::");
       else
         fprintf(stderr, "error:");
       fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);

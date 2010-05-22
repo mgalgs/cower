@@ -57,7 +57,7 @@ struct config_t *config_new(void) {
   struct config_t *newconfig = calloc(1, sizeof *newconfig);
   if(!newconfig) {
     fprintf(stderr, "error allocating %zd bytes\n", sizeof *newconfig);
-      return(NULL);
+    return(NULL);
   }
 
   newconfig->colors = calloc(1, sizeof *(newconfig->colors));
@@ -76,8 +76,8 @@ struct config_t *config_new(void) {
   newconfig->colors->uptodate = BOLDGREEN;
   newconfig->colors->outofdate = BOLDRED;
   newconfig->colors->url = BOLDCYAN;
-  newconfig->colors->info = BLUE;
-  newconfig->colors->warn = YELLOW;
+  newconfig->colors->info = BOLDBLUE;
+  newconfig->colors->warn = BOLDYELLOW;
   newconfig->colors->error = BOLDRED;
 
   return newconfig;
