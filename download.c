@@ -125,15 +125,15 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
         result = execlp("bsdtar", "bsdtar", "-C", dir, "-xf", fullpath, NULL);
       } else /* Back in the parent, waiting for child to finish */
         while (! waitpid(pid, NULL, WNOHANG));
+
         if (! result) /* If we get here, bsdtar finished successfully */
           unlink(fullpath);
     } else {
       result = errno;
-      if (config->color) {
+      if (config->color)
         cfprintf(stderr, "%<error:%> could not write to %s: ", RED, dir);
-      } else {
+      else
         fprintf(stderr, "error: could not write to %s: ", dir);
-      }
       errno = result;
       perror("");
     }
@@ -152,23 +152,23 @@ int cower_do_download(alpm_list_t *targets) {
   alpm_quick_init();
 
   for (i = targets; i; i = i->next) {
-
-    if (is_in_pacman((const char*)i->data)) /* Skip it */
+    if (is_in_pacman(i->data)) /* Skip it */
       continue;
 
     alpm_list_t *results = aur_rpc_query(AUR_QUERY_TYPE_INFO, i->data);
     if (results) { /* Found it in the AUR */
       ret += aur_get_tarball(results->data);
+
       if (config->getdeps)
-        get_pkg_dependencies((const char*)i->data);
+        get_pkg_dependencies(i->data);
+
       aur_pkg_free(results->data);
       alpm_list_free(results);
     } else { /* Not found anywhere */
-      if (config->color) {
+      if (config->color)
         cfprintf(stderr, "%<%s%>", RED, "error:");
-      } else {
+      else
         fprintf(stderr, "error:");
-      }
       fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
     }
   }
