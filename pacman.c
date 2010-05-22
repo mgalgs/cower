@@ -31,17 +31,15 @@
 * @return TRUE if foreign, else FALSE
 */
 static int is_foreign(pmpkg_t *pkg) {
+  const char *pkgname;
+  alpm_list_t *i, *syncs;
 
-  const char *pkgname = alpm_pkg_get_name(pkg);
-  alpm_list_t *j;
-  alpm_list_t *sync_dbs = alpm_option_get_syncdbs();
+  pkgname = alpm_pkg_get_name(pkg);
+  syncs = alpm_option_get_syncdbs();
 
-  for(j = sync_dbs; j; j = j->next) {
-    pmdb_t *db = j->data;
-    pmpkg_t *findpkg = alpm_db_get_pkg(db, pkgname);
-    if(findpkg) {
+  for (i = syncs; i; i = i->next) {
+    if (alpm_db_get_pkg(i->data, pkgname))
       return FALSE;
-    }
   }
 
   return TRUE;
@@ -72,8 +70,7 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
     if (compare > 0) {
       newlist = right;
       right = right->next;
-    }
-    else if (compare < 0) {
+    } else if (compare < 0) {
       newlist = left;
       left = left->next;
     } else {
