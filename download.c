@@ -59,7 +59,7 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
     if (config->color) {
       cfprintf(stderr, "%<::%> specified path does not exist.\n", config->colors->error);
     } else {
-      fprintf(stderr, "error: specified path does not exist.\n");
+      fprintf(stderr, "!! specified path does not exist.\n");
     }
     return 1;
   }
@@ -83,7 +83,7 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
     if (config->color)
       cfprintf(stderr, "%<::%>", config->colors->error);
     else
-      fprintf(stderr, "error:");
+      fprintf(stderr, "!!");
 
     fprintf(stderr, " %s already exists.\nUse -f to force this operation.\n",
       fullpath);
@@ -99,23 +99,24 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
 
       curlstat = curl_easy_perform(curl);
       if (curlstat != CURLE_OK) {
-        fprintf(stderr, "curl: %s\n", curl_easy_strerror(curlstat));
+        fprintf(stderr, "!! curl: %s\n", curl_easy_strerror(curlstat));
         result = curlstat;
         goto cleanup;
       }
 
       curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
       if (httpcode != 200) {
-        fprintf(stderr, "curl: error: server responded with code %ld\n", httpcode);
+        fprintf(stderr, "!! curl: server responded with code %ld\n", httpcode);
         goto cleanup;
       }
 
       if (config->color)
-        cprintf("%<%s%> downloaded to %<%s%>\n",
+        cprintf("%<::%> %<%s%> downloaded to %<%s%>\n",
+          config->colors->info,
           config->colors->pkg, pkgname,
           config->colors->uptodate, dir);
       else
-        printf("%s downloaded to %s\n", pkgname, dir);
+        printf(":: %s downloaded to %s\n", pkgname, dir);
 
       fclose(fd);
 
@@ -135,7 +136,7 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
       if (config->color)
         cfprintf(stderr, "%<::%> could not write to %s: ", config->colors->error, dir);
       else
-        fprintf(stderr, "error: could not write to %s: ", dir);
+        fprintf(stderr, "!! could not write to %s: ", dir);
       errno = result;
       perror("");
     }
@@ -172,7 +173,7 @@ int cower_do_download(alpm_list_t *targets) {
       if (config->color)
         cfprintf(stderr, "%<%s%>", config->colors->error, "::");
       else
-        fprintf(stderr, "error:");
+        fprintf(stderr, "!!");
       fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
     }
   }

@@ -47,9 +47,11 @@ int cower_do_update() {
 
     if (config->verbose > 0) {
       if (config->color) {
-        cprintf("Checking %<%s%> for updates...\n", config->colors->pkg, alpm_pkg_get_name(pmpkg));
+        cprintf("%<::%> Checking %<%s%> for updates...\n", 
+          config->colors->info,
+          config->colors->pkg, alpm_pkg_get_name(pmpkg));
       } else {
-        printf("Checking %s for updates...\n", alpm_pkg_get_name(pmpkg));
+        printf(":: Checking %s for updates...\n", alpm_pkg_get_name(pmpkg));
       }
     }
 

@@ -119,13 +119,13 @@ alpm_list_t *aur_fetch_json(const char *url) {
 
   curlstat = curl_easy_perform(curl);
   if (curlstat != CURLE_OK) {
-    fprintf(stderr, "curl: %s\n", curl_easy_strerror(curlstat));
+    fprintf(stderr, "!! curl: %s\n", curl_easy_strerror(curlstat));
     goto cleanup;
   }
 
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
   if (httpcode != 200) {
-    fprintf(stderr, "curl: error: server responded with code %ld\n", httpcode);
+    fprintf(stderr, "!! curl: server responded with code %ld\n", httpcode);
     goto cleanup;
   }
 

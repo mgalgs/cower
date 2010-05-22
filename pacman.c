@@ -132,9 +132,9 @@ alpm_list_t *alpm_list_remove_item(alpm_list_t *listhead, alpm_list_t *target, a
 
   if (target == listhead) {
     listhead = target->next;
-    if (listhead) {
+    if (listhead)
       listhead->prev = target->prev;
-    }
+
     target->prev = NULL;
   } else if (target == listhead->prev) {
     if (target->prev) {
@@ -143,19 +143,17 @@ alpm_list_t *alpm_list_remove_item(alpm_list_t *listhead, alpm_list_t *target, a
       target->prev = NULL;
     }
   } else {
-    if (target->next) {
+    if (target->next)
       target->next->prev = target->prev;
-    }
-    if (target->prev) {
+
+    if (target->prev)
       target->prev->next = target->next;
-    }
   }
 
   next = target->next;
 
-  if (target->data) {
+  if (target->data)
     fn(target->data);
-  }
 
   free(target);
 
@@ -173,9 +171,8 @@ alpm_list_t *alpm_query_foreign() {
   for(i = alpm_db_get_pkgcache(db_local); i; i = i->next) {
     pmpkg_t *pkg = i->data;
 
-    if (is_foreign(pkg)) {
+    if (is_foreign(pkg))
       ret = alpm_list_add(ret, pkg);
-    }
   }
 
   return ret; /* This needs to be freed in the calling function */
@@ -201,22 +198,24 @@ void alpm_quick_init() {
 
   pacfd = fopen(PACCONF, "r");
   if (! pacfd) {
-    fprintf(stderr, "error: could not locate pacman config\n");
+    if (config->color)
+      cfprintf(stderr, "%<::%> could not locate pacman config.\n",
+        config->colors->error);
+    else
+      fprintf(stderr, "!! could not locate pacman config.\n");
     return;
   }
 
   while (fgets(line, PATH_MAX, pacfd)) {
     strtrim(line); /* Trim whitespace from both ends */
 
-    /* Strip out comments */
-    if (line[0] == '#' || strlen(line) == 0) {
+    if (line[0] == '#' || strlen(line) == 0)
       continue;
-    }
-    if ((ptr = strchr(line, '#'))) {
-      *ptr = '\0';
-    }
 
-    if (line[0] == '[' || line[(strlen(line) - 1)] == ']') { /* New section */
+    if ((ptr = strchr(line, '#')))
+      *ptr = '\0';
+
+    if (line[0] == '[' || line[(strlen(line) - 1)] == ']') {
       ptr = line;
       ptr++;
       if (section) {
@@ -297,10 +296,12 @@ int is_in_pacman(const char *target) {
 
   if (found_in) {
     if (config->color) {
-      cprintf("%<%s%> is available in %<%s%>\n",
-        config->colors->pkg, target, config->colors->warn, alpm_db_get_name(found_in));
+      cprintf("%<::%> %<%s%> is available in %<%s%>\n",
+        config->colors->warn,
+        config->colors->pkg, target,
+        config->colors->warn, alpm_db_get_name(found_in));
     } else {
-      printf("%s is available in %s\n", target, alpm_db_get_name(found_in));
+      printf("^^ %s is available in %s\n", target, alpm_db_get_name(found_in));
     }
 
     alpm_list_free(p);
