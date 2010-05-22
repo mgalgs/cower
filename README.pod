@@ -63,6 +63,34 @@ Be more verbose. Pass this option twice to show debug information.
 
 =back
 
+=head1 CONFIGURATION
+
+cower will look for a config file located at I<$XDG_CONFIG_HOME/cower/cower.conf>
+and read color options from it in key=value format. Valid keys are:
+
+=over 4
+
+=item
+
+B<repo>, B<packages>, B<uptodate>, B<outofdate>, B<url>, B<info>, B<warn>, B<error>
+
+=back
+
+Valid colors are:
+
+=over 4
+
+=item
+
+B<BLACK>, B<BLUE>, B<CYAN>, B<FG>, B<GREEN>, B<MAGENTA>, B<RED>, B<WHITE>, B<YELLOW>
+
+=back
+
+All colors are also available in bold by prefixing BOLD (e.g. BOLDYELLOW).
+
+All keys and values are case sensitive. Comments, if desired, can be specifde with a #. If a
+color is not specified, a default will prevail.
+
 =head1 AUTHOR
 
 Dave Reisner E<lt>d@falconindy.comE<gt>
