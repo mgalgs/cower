@@ -147,7 +147,7 @@ cleanup:
 
 int cower_do_download(alpm_list_t *targets) {
   alpm_list_t *i;
-  int ret;
+  int ret = 0, dl_res;
 
   alpm_quick_init();
 
@@ -157,9 +157,11 @@ int cower_do_download(alpm_list_t *targets) {
 
     alpm_list_t *results = aur_rpc_query(AUR_QUERY_TYPE_INFO, i->data);
     if (results) { /* Found it in the AUR */
-      ret += aur_get_tarball(results->data);
+      dl_res = aur_get_tarball(results->data);
+      ret += dl_res;
 
-      if (config->getdeps)
+      /* If the download didn't go smoothly, it's not ok to get depends */
+      if (dl_res == 0 && config->getdeps)
         get_pkg_dependencies(i->data);
 
       aur_pkg_free(results->data);
@@ -173,5 +175,5 @@ int cower_do_download(alpm_list_t *targets) {
     }
   }
 
-  return 0;
+  return ret;
 }
