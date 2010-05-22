@@ -23,8 +23,8 @@
 #include "package.h"
 
 /* constants for cfprintf */
-#define C_ON      "\033[1;3"
-#define C_OFF     "\033[m"
+#define C_ON      "\033[%d;3%dm"
+#define C_OFF     "\033[1;0m"
 
 #define STREQ(x,y)  (strcmp(x,y) == 0)
 #define FREE(p) do { free((void*)p); p = NULL; } while (0)
@@ -33,17 +33,24 @@
 #define FALSE 0
 
 /* colors */
-enum {
-  BLACK   = 0,
-  RED     = 1,
-  GREEN   = 2,
-  YELLOW  = 3,
-  BLUE    = 4,
-  MAGENTA = 5,
-  CYAN    = 6,
-  WHITE   = 7,
-  FG      = 8
-};
+#define BLACK         0
+#define RED           1
+#define GREEN         2
+#define YELLOW        3
+#define BLUE          4
+#define MAGENTA       5
+#define CYAN          6
+#define WHITE         7
+#define FG            8
+#define BOLDBLACK    10
+#define BOLDRED      11
+#define BOLDGREEN    12
+#define BOLDYELLOW   13
+#define BOLDBLUE     14
+#define BOLDMAGENTA  15
+#define BOLDCYAN     16
+#define BOLDWHITE    17
+#define BOLDFG       18
 
 alpm_list_t *agg_search_results(alpm_list_t*, alpm_list_t*);
 int cfprintf(FILE*, const char*, ...);

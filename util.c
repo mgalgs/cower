@@ -44,9 +44,9 @@ static char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
 * @return number of characters printed
 */
 static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
-
   const char *p;
-  int count = 0;
+  int color, count = 0;
+  char cprefix[10] = {0};
 
   int i; long l; char *s;
 
@@ -82,9 +82,9 @@ static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
       count += fputs(itoa(l, 10), fd);
       break;
     case '<': /* color on */
-      count += fputs(C_ON, fd);
-      count += fputs(itoa(va_arg(args, int), 10), fd);
-      fputc('m', fd); count++;
+      color = va_arg(args, int);
+      snprintf(cprefix, 10, C_ON, color / 10, color % 10);
+      count += fputs(cprefix, fd);
       break;
     case '>': /* color off */
       count += fputs(C_OFF, fd);
@@ -107,7 +107,6 @@ static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
 * @return head of the alpm_list_t
 */
 alpm_list_t *agg_search_results(alpm_list_t *haystack, alpm_list_t *addthis) {
-
   haystack = alpm_list_mmerge_dedupe(haystack, addthis, (alpm_list_fn_cmp)aur_pkg_cmp,
     (alpm_list_fn_free)aur_pkg_free);
 
@@ -215,11 +214,11 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
             "Version         : %<%s%>\n"
             "URL             : %<%s%>\n"
             "AUR Page        : %<%s%s%>\n",
-            MAGENTA,
-            WHITE, pkg->name,
-            pkg->ood ? RED : GREEN, pkg->ver,
-            CYAN, pkg->url,
-            CYAN, AUR_PKG_URL_FORMAT, pkg->id);
+            config->colors->repo,
+            config->colors->pkg, pkg->name,
+            pkg->ood ? config->colors->outofdate : config->colors->uptodate, pkg->ver,
+            config->colors->url, pkg->url,
+            config->colors->url, AUR_PKG_URL_FORMAT, pkg->id);
   } else {
     printf("Repository      : aur\n"
            "Name:           : %s\n"
@@ -241,7 +240,8 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
          pkg->votes);
 
   if (config->color) {
-    cprintf("Out of Date     : %<%s%>\n", pkg->ood ? RED : GREEN, pkg->ood ? "Yes" : "No");
+    cprintf("Out of Date     : %<%s%>\n", pkg->ood ? 
+      config->colors->outofdate : config->colors->uptodate, pkg->ood ? "Yes" : "No");
   } else {
     printf("Out of Date     : %s\n", pkg->ood ? "Yes" : "No");
   }
@@ -263,13 +263,14 @@ void print_pkg_search(alpm_list_t *search) {
 
     if (config->quiet) {
       if (config->color)
-        cprintf("%<%s%>\n", WHITE, pkg->name);
+        cprintf("%<%s%>\n", config->colors->pkg, pkg->name);
       else
         printf("%s\n", pkg->name);
     } else {
       if (config->color)
         cprintf("%<aur/%>%<%s%> %<%s%>\n",
-          MAGENTA, WHITE, pkg->name, pkg->ood ? RED : GREEN, pkg->ver);
+          config->colors->repo, config->colors->pkg, pkg->name, pkg->ood ?
+            config->colors->outofdate : config->colors->uptodate, pkg->ver);
       else
         printf("aur/%s %s\n", pkg->name, pkg->ver);
       printf("    %s\n", pkg->desc);
@@ -286,9 +287,10 @@ void print_pkg_search(alpm_list_t *search) {
 */
 void print_pkg_update(const char *pkg, const char *local_ver, const char *remote_ver) {
   if (config->color) {
-    cprintf("%<%s%>", WHITE, pkg);
+    cprintf("%<%s%>", config->colors->pkg, pkg);
     if (! config->quiet)
-      cprintf(" %<%s%> -> %<%s%>\n", GREEN, local_ver, GREEN, remote_ver);
+      cprintf(" %<%s%> -> %<%s%>\n", config->colors->outofdate, local_ver,
+        config->colors->uptodate, remote_ver);
   } else {
     if (! config->quiet)
       printf("%s %s -> %s\n", pkg, local_ver, remote_ver);

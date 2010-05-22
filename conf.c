@@ -35,9 +35,10 @@ struct config_t *config = NULL; /* global config variable */
 */
 int config_free(struct config_t *oldconfig) {
 
-  if (oldconfig == NULL) {
+  if (oldconfig == NULL)
     return -1;
-  }
+
+  free(oldconfig->colors);
 
   /* free malloc'd strings within config */
   FREE(oldconfig->download_dir);
@@ -56,8 +57,10 @@ struct config_t *config_new(void) {
   struct config_t *newconfig = calloc(1, sizeof *newconfig);
   if(!newconfig) {
     fprintf(stderr, "error allocating %zd bytes\n", sizeof *newconfig);
-      return(NULL);
+    return(NULL);
   }
+
+  newconfig->colors = calloc(1, sizeof *(newconfig->colors));
 
   /* default options */
   newconfig->op = 0;
@@ -67,6 +70,15 @@ struct config_t *config_new(void) {
   newconfig->force = 0;
   newconfig->quiet = 0;
   newconfig->verbose = 0;
+
+  newconfig->colors->repo = BOLDMAGENTA;
+  newconfig->colors->pkg = BOLDWHITE;
+  newconfig->colors->uptodate = BOLDGREEN;
+  newconfig->colors->outofdate = BOLDRED;
+  newconfig->colors->url = BOLDCYAN;
+  newconfig->colors->info = BOLDBLUE;
+  newconfig->colors->warn = BOLDYELLOW;
+  newconfig->colors->error = BOLDRED;
 
   return newconfig;
 }

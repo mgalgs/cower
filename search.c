@@ -52,8 +52,8 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
   for (i = targets; i; i = i->next) {
     if (STREQ(type, AUR_QUERY_TYPE_SEARCH) && strlen(i->data) < 2) {
       if (config->color) {
-        cfprintf(stderr, "%<error:%> search string '%s' too short.\n",
-          RED, (const char*)i->data);
+        cfprintf(stderr, "%<::%> search string '%s' too short.\n",
+          config->colors->error, (const char*)i->data);
       } else {
         fprintf(stderr, "error: search string '%s' too short.\n",
           (const char*)i->data);
@@ -65,7 +65,7 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
 
     if (! search) {
       if (config->color) {
-        cfprintf(stderr, "%<%s%>", RED, "error:");
+        cfprintf(stderr, "%<::%>", config->colors->error);
       } else {
         fprintf(stderr, "error:");
       }
