@@ -32,6 +32,17 @@ struct config_t {
   unsigned short verbose;
   unsigned short quiet;
   const char *download_dir;
+
+  struct color_cfg_t {
+    unsigned short repo;
+    unsigned short pkg;
+    unsigned short uptodate;
+    unsigned short outofdate;
+    unsigned short url;
+    unsigned short info;
+    unsigned short warn;
+    unsigned short error;
+  } *colors;
 };
 
 enum {

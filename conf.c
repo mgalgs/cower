@@ -35,9 +35,10 @@ struct config_t *config = NULL; /* global config variable */
 */
 int config_free(struct config_t *oldconfig) {
 
-  if (oldconfig == NULL) {
+  if (oldconfig == NULL)
     return -1;
-  }
+
+  free(oldconfig->colors);
 
   /* free malloc'd strings within config */
   FREE(oldconfig->download_dir);
@@ -59,6 +60,8 @@ struct config_t *config_new(void) {
       return(NULL);
   }
 
+  newconfig->colors = calloc(1, sizeof *(newconfig->colors));
+
   /* default options */
   newconfig->op = 0;
   newconfig->download_dir = NULL;
@@ -68,6 +71,14 @@ struct config_t *config_new(void) {
   newconfig->quiet = 0;
   newconfig->verbose = 0;
 
+  newconfig->colors->repo = BOLDMAGENTA;
+  newconfig->colors->pkg = BOLDWHITE;
+  newconfig->colors->uptodate = BOLDGREEN;
+  newconfig->colors->outofdate = BOLDRED;
+  newconfig->colors->url = BOLDCYAN;
+  newconfig->colors->info = BLUE;
+  newconfig->colors->warn = YELLOW;
+  newconfig->colors->error = BOLDRED;
+
   return newconfig;
 }
-
