@@ -1,19 +1,16 @@
-# dmenu version
+# cower version
 VERSION = $(shell git describe)
-
-# Customize below to fit your system
 
 # paths
 PREFIX = /usr/local
 MANPREFIX = ${PREFIX}/share/man
 
+# includes and libs
+ALPMINC = /usr/include
 CURLINC = /usr/include/curl
-CURLLIB = /usr/lib/
-
 YAJLINC = /usr/include/yajl
 
-# includes and libs
-INCS = -I. -I/usr/include -I${CURLINC}
+INCS = -I. -I/usr/include -I${CURLINC} -I${YAJLINC}
 LIBS = -L/usr/lib -lc -lcurl -lalpm -lyajl
 
 # flags
