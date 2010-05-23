@@ -246,7 +246,38 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
     printf("Out of Date     : %s\n", pkg->ood ? "Yes" : "No");
   }
 
-  printf("Description     : %s\n\n", pkg->desc);
+  printf("Description     : ");
+
+  size_t desc_len = strlen(pkg->desc);
+  if (desc_len < 65) {
+    printf("%s\n\n", pkg->desc);
+    return;
+  }
+
+  /* A little bit of chicanery to neaten up long descriptions. */
+  size_t count = 0, actual;
+  const char *ptr;
+  do {
+    ptr = pkg->desc + count;
+
+    /* If this isn't the first iteration, back up to the first white space */
+    while (!isspace(*ptr) && ptr != pkg->desc)
+      ptr--;
+
+    /* Shorten the string until we find a null terminator or a space */
+    actual = 65; /* Our assumed column width */
+    while (!isspace(*(ptr + actual)) && *(ptr + actual) != '\0')
+      actual--;
+
+    /* On the last loop, we'll overwrite. Don't. */
+    if (count + actual > desc_len)
+      actual = desc_len - count;
+
+    count += fwrite(ptr, 1, actual, stdout);
+    printf("\n                 ");
+  } while (count < strlen(pkg->desc));
+  putchar('\n');
+
 }
 
 /** 
