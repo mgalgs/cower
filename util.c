@@ -318,7 +318,7 @@ void print_pkg_search(alpm_list_t *search) {
 */
 void print_pkg_update(const char *pkg, const char *local_ver, const char *remote_ver) {
   if (config->color) {
-    cprintf("%<%s%>\n", config->colors->pkg, pkg);
+    cprintf("%<%s%>", config->colors->pkg, pkg);
     if (! config->quiet)
       cprintf(" %<%s%> -> %<%s%>\n", config->colors->outofdate, local_ver,
         config->colors->uptodate, remote_ver);
