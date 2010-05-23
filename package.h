@@ -19,15 +19,15 @@
 #define _COWER_PACKAGE_H
 
 struct aur_pkg_t {
-  const char* id;
+  int id;
   const char* name;
   const char* ver;
-  const char* cat;
+  int cat;
   const char* desc;
   const char* url;
   const char* urlpath;
   const char* lic;
-  const char* votes;
+  int votes;
   int ood;
 };
 

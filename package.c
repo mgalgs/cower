@@ -47,15 +47,12 @@ void aur_pkg_free(void *pkg) {
 
   struct aur_pkg_t *it = (struct aur_pkg_t*)pkg;
 
-  FREE(it->id);
   FREE(it->name);
   FREE(it->ver);
-  FREE(it->cat);
   FREE(it->desc);
   FREE(it->url);
   FREE(it->urlpath);
   FREE(it->lic);
-  FREE(it->votes);
 
   FREE(it);
 }
@@ -67,7 +64,7 @@ struct aur_pkg_t *aur_pkg_new() {
 
   pkg->id = pkg->name = pkg->ver = pkg->cat = pkg->desc = pkg->url = 
             pkg->urlpath = pkg->lic = pkg->votes = NULL;
-  pkg->ood = 0;
+  pkg->id = pkg->cat = pkg->ood = pkg->votes = 0;
 
   return pkg;
 }
