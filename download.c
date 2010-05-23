@@ -42,7 +42,7 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
 
   FILE *fd;
   const char *filename, *pkgname;
-  char *dir;
+  char *dir, *escaped;
   char fullpath[PATH_MAX + 1], url[AUR_URL_SIZE + 1];
   CURLcode curlstat;
   long httpcode;
@@ -66,6 +66,7 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
 
   pkgname = aurpkg->name;
 
+  escaped = curl_easy_escape(curl, pkgname, strlen(pkgname));
   snprintf(url, AUR_URL_SIZE, AUR_PKG_URL, pkgname, pkgname);
 
   if (config->verbose >= 2)
@@ -143,6 +144,7 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
   }
 
 cleanup:
+  curl_free(escaped);
   FREE(dir);
   return result;
 }

@@ -22,6 +22,7 @@
 #include "aur.h"
 #include "download.h"
 #include "conf.h"
+#include "curl.h"
 #include "search.h"
 #include "util.h"
 #include "yajl.h"
@@ -37,11 +38,19 @@
 alpm_list_t *aur_rpc_query(const char *query_type, const char* arg) {
 
   char url[AUR_URL_SIZE];
+  char *escaped;
+  alpm_list_t *ret;
+
+  escaped = curl_easy_escape(curl, arg, strlen(arg));
 
   /* Format URL to pass to curl */
-  snprintf(url, AUR_URL_SIZE, AUR_RPC_URL, query_type, arg);
+  snprintf(url, AUR_URL_SIZE, AUR_RPC_URL, query_type, escaped);
 
-  return aur_fetch_json(url); /* This needs to be freed in the calling function */
+  ret = aur_fetch_json(url);
+
+  curl_free(escaped);
+
+  return ret; /* This needs to be freed in the calling function */
 }
 
 alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {

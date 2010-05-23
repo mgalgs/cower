@@ -133,7 +133,6 @@ alpm_list_t *aur_fetch_json(const char *url) {
 
 cleanup:
   yajl_parse_complete(hand);
-
   yajl_gen_free(g);
   yajl_free(hand);
 
