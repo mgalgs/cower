@@ -213,7 +213,7 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
             "Name            : %<%s%>\n"
             "Version         : %<%s%>\n"
             "URL             : %<%s%>\n"
-            "AUR Page        : %<%s%s%>\n",
+            "AUR Page        : %<%s%d%>\n",
             config->colors->repo,
             config->colors->pkg, pkg->name,
             pkg->ood ? config->colors->outofdate : config->colors->uptodate, pkg->ver,
@@ -224,7 +224,7 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
            "Name:           : %s\n"
            "Version         : %s\n"
            "URL             : %s\n"
-           "AUR Page        : %s%s\n",
+           "AUR Page        : %s%d\n",
            pkg->name,
            pkg->ver,
            pkg->url,
@@ -234,8 +234,8 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
 
   printf("Category        : %s\n"
          "License         : %s\n"
-         "Number of Votes : %s\n",
-         aur_cat[atoi(pkg->cat)],
+         "Number of Votes : %d\n",
+         aur_cat[pkg->cat],
          pkg->lic,
          pkg->votes);
 

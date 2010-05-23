@@ -62,8 +62,7 @@ struct aur_pkg_t *aur_pkg_new() {
 
   pkg = calloc(1, sizeof *pkg);
 
-  pkg->id = pkg->name = pkg->ver = pkg->cat = pkg->desc = pkg->url = 
-            pkg->urlpath = pkg->lic = pkg->votes = NULL;
+  pkg->name = pkg->ver = pkg->desc = pkg->lic = pkg->url = pkg->urlpath = NULL;
   pkg->id = pkg->cat = pkg->ood = pkg->votes = 0;
 
   return pkg;

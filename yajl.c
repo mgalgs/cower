@@ -30,13 +30,13 @@ static int json_string(void *ctx, const unsigned char *data, unsigned int size) 
   }
 
   if (STREQ(parse_struct->curkey, AUR_ID))
-    parse_struct->aurpkg->id = strndup(val, size);
+    parse_struct->aurpkg->id = atoi(val);
   else if (STREQ(parse_struct->curkey, AUR_NAME))
     parse_struct->aurpkg->name = strndup(val, size);
   else if (STREQ(parse_struct->curkey, AUR_VER))
     parse_struct->aurpkg->ver = strndup(val, size);
   else if (STREQ(parse_struct->curkey, AUR_CAT))
-    parse_struct->aurpkg->cat = strndup(val, size);
+    parse_struct->aurpkg->cat = atoi(val);
   else if (STREQ(parse_struct->curkey, AUR_DESC))
     parse_struct->aurpkg->desc = strndup(val, size);
   else if (STREQ(parse_struct->curkey, AUR_URL))
@@ -46,7 +46,7 @@ static int json_string(void *ctx, const unsigned char *data, unsigned int size) 
   else if (STREQ(parse_struct->curkey, AUR_LICENSE))
     parse_struct->aurpkg->lic = strndup(val, size);
   else if (STREQ(parse_struct->curkey, AUR_VOTES))
-    parse_struct->aurpkg->votes = strndup(val, size);
+    parse_struct->aurpkg->votes = atoi(val);
   else if (STREQ(parse_struct->curkey, AUR_OOD))
     parse_struct->aurpkg->ood = strncmp(val, "1", 1) == 0 ? 1 : 0;
 
