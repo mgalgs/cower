@@ -182,7 +182,6 @@ alpm_list_t *alpm_query_foreign() {
 * @brief initialize alpm and register default DBs
 */
 void alpm_quick_init() {
-
   if (config->verbose > 1)
     printf("::DEBUG:: Initializing alpm\n");
 
@@ -207,28 +206,25 @@ void alpm_quick_init() {
   }
 
   while (fgets(line, PATH_MAX, pacfd)) {
-    strtrim(line); /* Trim whitespace from both ends */
+    strtrim(line);
 
+    /* strip out comments */
     if (line[0] == '#' || strlen(line) == 0)
       continue;
-
     if ((ptr = strchr(line, '#')))
       *ptr = '\0';
 
+    /* found a [section] */
     if (line[0] == '[' || line[(strlen(line) - 1)] == ']') {
-      ptr = line;
-      ptr++;
-      if (section) {
+      if (section)
         free(section);
 
-      }
-      section = strdup(ptr);
-      section[strlen(section) - 1] = '\0';
+      /* dupe the line without the square brackets */
+      section = strndup(line + 1, strlen(line) - 2);
 
-    if (strcmp(section, "options") != 0) {
-      alpm_db_register_sync(section);
-    }
-  } else {
+      if (strcmp(section, "options") != 0)
+        alpm_db_register_sync(section);
+    } else { /* plain option */
       char *key;
       key = line;
       ptr = line;
@@ -236,11 +232,10 @@ void alpm_quick_init() {
       strtrim(key);
       strtrim(ptr);
 
-      if (strcmp(key, "RootDir") == 0) {
+      if (strcmp(key, "RootDir") == 0)
         alpm_option_set_root(ptr);
-      } else if (strcmp(key, "DBPath") == 0) {
+      else if (strcmp(key, "DBPath") == 0)
         alpm_option_set_dbpath(ptr);
-      }
     }
   }
 
