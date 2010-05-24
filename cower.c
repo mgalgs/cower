@@ -31,7 +31,7 @@
 #include "update.h"
 #include "util.h"
 
-#define NUM_COLORS (sizeof(availcolors)/sizeof(availcolors[0]))
+#define NUM_COLORS 18
 
 static alpm_list_t *targets; /* Package argument list */
 
