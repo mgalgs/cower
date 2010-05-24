@@ -318,10 +318,11 @@ void print_pkg_search(alpm_list_t *search) {
 */
 void print_pkg_update(const char *pkg, const char *local_ver, const char *remote_ver) {
   if (config->color) {
-    cprintf("%<%s%>", config->colors->pkg, pkg);
     if (! config->quiet)
-      cprintf(" %<%s%> -> %<%s%>\n", config->colors->outofdate, local_ver,
-        config->colors->uptodate, remote_ver);
+      cprintf("%<%s%> %<%s%> -> %<%s%>\n", config->colors->pkg, pkg, 
+        config->colors->outofdate, local_ver, config->colors->uptodate, remote_ver);
+    else
+      cprintf("%<%s%>\n", config->colors->pkg, pkg);
   } else {
     if (! config->quiet)
       printf("%s %s -> %s\n", pkg, local_ver, remote_ver);
