@@ -55,16 +55,18 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray) {
 static alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
   FILE* fd;
   char *buffer, *bptr, *arraystart, *arrayend;
+  off_t fsize;
 
-  buffer = calloc(1, filesize(pkgbuild) + 1);
+  fsize = filesize(pkgbuild);
+
+  buffer = calloc(1, fsize + 1);
 
   fd = fopen(pkgbuild, "r");
-  fread(buffer, sizeof(char), BUFSIZ, fd); 
+  fread(buffer, sizeof(char), fsize, fd); 
   bptr = buffer;
 
-  /* This catches depends as well as makedepends.
-   * It's valid for multi package files as well,
-   * even though the AUR doesn't support them. */
+  /* This catches depends as well as makedepends.  It's valid for multi package
+   * files as well, even though the AUR doesn't support them. */
   while ((arraystart = strstr(bptr, PKGBUILD_DEPENDS)) != NULL) {
     arrayend = strchr(arraystart, ')');
     *arrayend = '\0';
