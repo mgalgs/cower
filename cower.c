@@ -148,8 +148,11 @@ static int parseargs(int argc, char **argv) {
   }
 
   /* Feed the remaining args into a linked list */
-  while (optind < argc)
-    targets = alpm_list_add(targets, strdup(argv[optind++]));
+  while (optind < argc) {
+    if (alpm_list_find_str(targets, argv[optind]) == NULL)
+      targets = alpm_list_add(targets, strdup(argv[optind]));
+    optind++;
+  }
 
   return 0;
 }
