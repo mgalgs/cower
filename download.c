@@ -41,8 +41,6 @@
 * @return       0 on success, 1 on failure
 */
 int aur_get_tarball(struct aur_pkg_t *aurpkg) {
-
-  FILE *fd;
   const char *filename, *pkgname;
   char *dir, *escaped;
   char fullpath[PATH_MAX + 1], url[AUR_URL_SIZE + 1];
@@ -94,47 +92,9 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
     result = 1;
   } else {
     fullpath[strlen(fullpath)] = '.'; /* Unmask extension */
-    fd = fopen(fullpath, "w");
-    if (fd != NULL) {
-      curl_easy_setopt(curl, CURLOPT_URL, url);
-      curl_easy_setopt(curl, CURLOPT_WRITEDATA, fd);
-      curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
 
-      curlstat = curl_easy_perform(curl);
-      if (curlstat != CURLE_OK) {
-        fprintf(stderr, "!! curl: %s\n", curl_easy_strerror(curlstat));
-        result = curlstat;
-        goto cleanup;
-      }
-
-      curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
-      if (httpcode != 200) {
-        fprintf(stderr, "!! curl: server responded with code %ld\n", httpcode);
-        goto cleanup;
-      }
-
-      if (config->color)
-        cprintf("%<::%> %<%s%> downloaded to %<%s%>\n",
-          config->colors->info,
-          config->colors->pkg, pkgname,
-          config->colors->uptodate, dir);
-      else
-        printf(":: %s downloaded to %s\n", pkgname, dir);
-
-      fclose(fd);
-
-      /* Fork off bsdtar to extract the taurball */
-      pid_t pid; pid = fork();
-      if (pid == 0) { /* Child process */
-        if (config->verbose >= 2)
-          fprintf(stderr, "::DEBUG bsdtar -C %s -xf %s\n", dir, fullpath);
-        result = execlp("bsdtar", "bsdtar", "-C", dir, "-xf", fullpath, NULL);
-      } else /* Back in the parent, waiting for child to finish */
-        while (! waitpid(pid, NULL, WNOHANG));
-
-        if (! result) /* If we get here, bsdtar finished successfully */
-          unlink(fullpath);
-    } else {
+    FILE *fd = fopen(fullpath, "w");
+    if (! fd) {
       result = errno;
       if (config->color)
         cfprintf(stderr, "%<::%> could not write to %s: ", config->colors->error, dir);
@@ -142,7 +102,47 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
         fprintf(stderr, "!! could not write to %s: ", dir);
       errno = result;
       perror("");
+      goto cleanup;
     }
+
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, fd);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
+
+    curlstat = curl_easy_perform(curl);
+    fclose(fd);
+
+    if (curlstat != CURLE_OK) {
+      fprintf(stderr, "!! curl: %s\n", curl_easy_strerror(curlstat));
+      result = curlstat;
+      goto cleanup;
+    }
+
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
+    if (httpcode != 200) {
+      fprintf(stderr, "!! curl: server responded with code %ld\n", httpcode);
+      goto cleanup;
+    }
+
+    if (config->color)
+      cprintf("%<::%> %<%s%> downloaded to %<%s%>\n",
+        config->colors->info,
+        config->colors->pkg, pkgname,
+        config->colors->uptodate, dir);
+    else
+      printf(":: %s downloaded to %s\n", pkgname, dir);
+
+    /* Fork off bsdtar to extract the taurball */
+    pid_t pid = fork();
+    if (pid == 0) { /* Child process */
+      if (config->verbose >= 2)
+        fprintf(stderr, "::DEBUG bsdtar -C %s -xf %s\n", dir, fullpath);
+      result = execlp("bsdtar", "bsdtar", "-C", dir, "-xf", fullpath, NULL);
+    } else /* Back in the parent, waiting for child to finish */
+      while (! waitpid(pid, NULL, WNOHANG));
+
+    if (! result) /* bsdtar finished with success -- delete the tarball */
+      unlink(fullpath);
   }
 
 cleanup:
