@@ -88,7 +88,7 @@ int aur_get_tarball(struct aur_pkg_t *aurpkg) {
     else
       fprintf(stderr, "!!");
 
-    fprintf(stderr, " %s already exists.\nUse -f to force this operation.\n",
+    fprintf(stderr, " %s already exists.\n   Use -f to force this operation.\n",
       fullpath);
 
     result = 1;
