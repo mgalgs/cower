@@ -52,7 +52,6 @@
 #define BOLDWHITE    17
 #define BOLDFG       18
 
-alpm_list_t *agg_search_results(alpm_list_t*, alpm_list_t*);
 int cfprintf(FILE*, const char*, ...);
 int cprintf(const char*, ...);
 int file_exists(const char*);

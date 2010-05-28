@@ -98,22 +98,6 @@ static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
   return count;
 }
 
-/**
-* @brief aggregate a search JSON array into an alpm_list_t
-*
-* @param agg      alpm_list_t to aggregate into
-* @param search   JSON to be aggregated
-*
-* @return head of the alpm_list_t
-*/
-alpm_list_t *agg_search_results(alpm_list_t *haystack, alpm_list_t *addthis) {
-  haystack = alpm_list_mmerge_dedupe(haystack, addthis, (alpm_list_fn_cmp)aur_pkg_cmp,
-    (alpm_list_fn_free)aur_pkg_free);
-
-  return haystack;
-}
-
-
 /** 
 * @brief front end to c_vfprintf
 * 
