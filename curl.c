@@ -33,6 +33,7 @@ int curl_local_init() {
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
   }
 
+  curl_easy_setopt(curl, CURLOPT_USERAGENT, COWER_USERAGENT);
   curl_easy_setopt(curl, CURLOPT_ENCODING, "deflate, gzip");
 
   return 0;

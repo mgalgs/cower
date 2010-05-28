@@ -21,6 +21,8 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 
+#define COWER_USERAGENT    "cower/2.x"
+
 int curl_local_init(void);
 
 CURL *curl;
