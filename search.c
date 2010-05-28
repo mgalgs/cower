@@ -82,7 +82,7 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
     }
 
     /* Aggregate searches into a single list and remove dupes */
-    resultset = agg_search_results(resultset, search);
+    resultset = alpm_list_mmerge_dedupe(resultset, search, aur_pkg_cmp, aur_pkg_free);
   }
 
   return resultset;
