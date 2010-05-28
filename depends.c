@@ -52,18 +52,10 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray) {
   return deplist;
 }
 
-static alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist) {
-  FILE* fd;
-  char *buffer, *bptr, *arraystart, *arrayend;
-  off_t fsize;
+static alpm_list_t *pkgbuild_get_deps(char *pkgbuild, alpm_list_t *deplist) {
+  char *bptr, *arraystart, *arrayend;
 
-  fsize = filesize(pkgbuild);
-
-  buffer = calloc(1, fsize + 1);
-
-  fd = fopen(pkgbuild, "r");
-  fread(buffer, sizeof(char), fsize, fd); 
-  bptr = buffer;
+  bptr = pkgbuild;
 
   /* This catches depends as well as makedepends.  It's valid for multi package
    * files as well, even though the AUR doesn't support them. */
@@ -77,16 +69,13 @@ static alpm_list_t *pkgbuild_get_deps(const char *pkgbuild, alpm_list_t *deplist
 
     bptr = arrayend + 1;
   }
-  fclose(fd);
-
-  free(buffer);
 
   return deplist;
 }
 
 int get_pkg_dependencies(const char *pkg) {
   const char *dir;
-  char *pkgbuild_path;
+  char *pkgbuild_path, *buffer;
   int ret = 0;
 
   if (config->download_dir == NULL)
@@ -98,7 +87,20 @@ int get_pkg_dependencies(const char *pkg) {
   snprintf(pkgbuild_path, strlen(dir) + strlen(pkg) + 11, "%s/%s/PKGBUILD", dir, pkg);
 
   alpm_list_t *deplist = NULL;
-  deplist = pkgbuild_get_deps(pkgbuild_path, deplist);
+
+  buffer = get_file_as_buffer(pkgbuild_path);
+  if (! buffer) {
+    if (config->color)
+      cfprintf(stderr, "%<::%> Could not open PKGBUILD for dependency parsing.\n",
+        config->colors->error);
+    else
+      fprintf(stderr, "!! Could not open PKGBUILD for dependency parsing.\n");
+    return 1;
+  }
+
+  deplist = pkgbuild_get_deps(buffer, deplist);
+
+  free(buffer);
 
   if (!config->quiet && config->verbose >= 1) {
     if (config->color)
