@@ -174,6 +174,25 @@ off_t filesize(const char *filename) {
   return st.st_size;
 }
 
+char *get_file_as_buffer(const char *filename) {
+  FILE *fd;
+  char *buf;
+  off_t fsize;
+
+  fsize = filesize(filename);
+
+  if (!fsize)
+    return NULL;
+
+  buf = calloc(1, fsize + 1);
+
+  fd = fopen(filename, "r");
+  fread(buf, 1, fsize, fd);
+  fclose(fd);
+
+  return buf;
+}
+
 /** 
 * @brief convert int to ascii representation
 * 

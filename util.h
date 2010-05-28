@@ -57,6 +57,7 @@ int cfprintf(FILE*, const char*, ...);
 int cprintf(const char*, ...);
 int file_exists(const char*);
 off_t filesize(const char*);
+char *get_file_as_buffer(const char*);
 char *itoa(unsigned int, int);
 void print_pkg_info(struct aur_pkg_t*);
 void print_pkg_search(alpm_list_t*);
