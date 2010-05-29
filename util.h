@@ -32,6 +32,8 @@
 #define TRUE  1
 #define FALSE 0
 
+#define MAX_OUTPUT_LENGTH   65
+
 /* colors */
 #define BLACK         0
 #define RED           1
@@ -58,9 +60,11 @@ int file_exists(const char*);
 off_t filesize(const char*);
 char *get_file_as_buffer(const char*);
 char *itoa(unsigned int, int);
+int line_starts_with(const char*, const char*);
 void print_pkg_info(struct aur_pkg_t*);
 void print_pkg_search(alpm_list_t*);
 void print_pkg_update(const char*, const char*, const char*);
+void print_wrapped(const char*, size_t, size_t);
 char *strtrim(char*);
 
 #endif /* _COWER_UTIL_H */
