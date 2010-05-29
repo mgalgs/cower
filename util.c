@@ -292,7 +292,6 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
     putchar('\n');
   }
 
-/* // Need to do something about this...
   if (pkg->optdepends) {
     printf("Optdepends:     : ");
 
@@ -303,7 +302,6 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
       printf("                  %s\n", (const char*)i->data);
     }
   }
-*/
 
   printf("Category        : %s\n"
          "License         : %s\n"

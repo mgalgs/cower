@@ -33,6 +33,19 @@
 static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray, int stripdeps) {
   char *token;
 
+  /* XXX: This will probably fail on some edge case */
+  if (strchr(deparray, ':')) { /* we're dealing with optdepdends */
+    token = strtok(deparray, "\'\"\n");
+    while (token) {
+      strtrim(token);
+      if (strlen(token))
+        deplist = alpm_list_add(deplist, strdup(token));
+
+      token = strtok(NULL, "\'\"\n");
+    }
+    return deplist;
+  }
+
   token = strtok(deparray, " \n");
   while (token) {
     if (*token == '\'' || *token == '\"')
@@ -59,60 +72,57 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray, int s
 }
 
 alpm_list_t *pkgbuild_get_deps(char *pkgbuild) {
-  char *bptr, *lineptr, *arrayend;
+  char *lineptr, *arrayend;
   alpm_list_t *deplist;
 
   deplist = NULL;
-  bptr = pkgbuild;
+  lineptr = pkgbuild;
 
-  /* Read line by line even though we've got the entire file in a buffer */
-  while (bptr && (lineptr = strchr(bptr, '\n'))) {
+  do {
     strtrim(++lineptr);
+    if (*lineptr == '#')
+      continue;
 
     if ((line_starts_with(lineptr, PKGBUILD_DEPENDS) != 0) && 
-        (line_starts_with(lineptr, PKGBUILD_MAKEDEPENDS) != 0)) {
-
-      bptr = strchr(lineptr, '\n');
+        (line_starts_with(lineptr, PKGBUILD_MAKEDEPENDS) != 0))
       continue;
-    }
 
     arrayend = strchr(lineptr, ')');
     *arrayend  = '\0';
 
     deplist = parse_bash_array(deplist, strchr(lineptr, '(') + 1, TRUE);
-    bptr = arrayend + 1;
-  }
+    lineptr = arrayend + 1;
+  } while ((lineptr = strchr(lineptr, '\n')));
 
   return deplist;
 }
 
 struct aur_pkg_t *populate_pkg_deps(struct aur_pkg_t *pkg, char *pkgbuild) {
-  char *bptr, *lineptr, *arrayend;
+  char *lineptr, *arrayend;
 
-  bptr = pkgbuild;
+  lineptr = pkgbuild;
 
-  /* Read line by line even though we've got the entire file in a buffer */
-  while (bptr && (lineptr = strchr(bptr, '\n'))) {
+  do {
     strtrim(++lineptr);
+    if (*lineptr == '#')
+      continue;
 
     alpm_list_t **deplist;
-    if (line_starts_with(lineptr, PKGBUILD_DEPENDS) == 0 ) {
+    if (line_starts_with(lineptr, PKGBUILD_DEPENDS) == 0 )
       deplist = &(pkg->depends);
-    } else if (line_starts_with(lineptr, PKGBUILD_MAKEDEPENDS) == 0) {
+    else if (line_starts_with(lineptr, PKGBUILD_MAKEDEPENDS) == 0)
       deplist = &(pkg->makedepends);
-    } else if (line_starts_with(lineptr, PKGBUILD_OPTDEPENDS) == 0) {
+    else if (line_starts_with(lineptr, PKGBUILD_OPTDEPENDS) == 0)
       deplist = &(pkg->optdepends);
-    } else {
-      bptr = strchr(lineptr, '\n');
+    else
       continue;
-    }
 
     arrayend = strchr(lineptr, ')');
     *arrayend  = '\0';
 
     *deplist = parse_bash_array(*deplist, strchr(lineptr, '(') + 1, FALSE);
-    bptr = arrayend + 1;
-  }
+    lineptr = arrayend + 1;
+  } while ((lineptr = strchr(lineptr, '\n')));
 
   return pkg;
 }
