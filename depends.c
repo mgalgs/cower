@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
 #include "aur.h"
@@ -31,7 +30,7 @@
 #include "search.h"
 #include "util.h"
 
-static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray) {
+static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray, int stripdeps) {
   char *token;
 
   token = strtok(deparray, " \n");
@@ -39,12 +38,19 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray) {
     if (*token == '\'' || *token == '\"')
       token++;
 
-    *(token + strcspn(token, "=<>\'\"")) = '\0';
+    if (stripdeps)
+      *(token + strcspn(token, "=<>\"\'")) = '\0';
+    else {
+      char *ptr = token + strlen(token) - 1;
+      if (*ptr == '\'' || *ptr == '\"' )
+        *ptr = '\0';
+    }
 
     if (config->verbose >= 2)
       fprintf(stderr, "::DEBUG Adding Depend: %s\n", token);
 
-    deplist = alpm_list_add(deplist, strdup(token));
+    if (alpm_list_find_str(deplist, token) == NULL)
+      deplist = alpm_list_add(deplist, strdup(token));
 
     token = strtok(NULL, " \n");
   }
@@ -52,25 +58,63 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray) {
   return deplist;
 }
 
-static alpm_list_t *pkgbuild_get_deps(char *pkgbuild, alpm_list_t *deplist) {
-  char *bptr, *arraystart, *arrayend;
+alpm_list_t *pkgbuild_get_deps(char *pkgbuild) {
+  char *bptr, *lineptr, *arrayend;
+  alpm_list_t *deplist;
 
+  deplist = NULL;
   bptr = pkgbuild;
 
-  /* This catches depends as well as makedepends.  It's valid for multi package
-   * files as well, even though the AUR doesn't support them. */
-  while ((arraystart = strstr(bptr, PKGBUILD_DEPENDS)) != NULL) {
-    arrayend = strchr(arraystart, ')');
-    *arrayend = '\0';
+  /* Read line by line even though we've got the entire file in a buffer */
+  while (bptr && (lineptr = strchr(bptr, '\n'))) {
+    strtrim(++lineptr);
 
-    /* This is a bit magical; however, if it fails, the PKGBUILD isn't valid Bash */
-    if (strncmp(arraystart - 3, PKGBUILD_OPTDEPENDS, strlen(PKGBUILD_OPTDEPENDS)) != 0)
-      deplist = parse_bash_array(deplist, arraystart + 9);
+    if ((line_starts_with(lineptr, PKGBUILD_DEPENDS) != 0) && 
+        (line_starts_with(lineptr, PKGBUILD_MAKEDEPENDS) != 0)) {
 
+      bptr = strchr(lineptr, '\n');
+      continue;
+    }
+
+    arrayend = strchr(lineptr, ')');
+    *arrayend  = '\0';
+
+    deplist = parse_bash_array(deplist, strchr(lineptr, '(') + 1, TRUE);
     bptr = arrayend + 1;
   }
 
   return deplist;
+}
+
+struct aur_pkg_t *populate_pkg_deps(struct aur_pkg_t *pkg, char *pkgbuild) {
+  char *bptr, *lineptr, *arrayend;
+
+  bptr = pkgbuild;
+
+  /* Read line by line even though we've got the entire file in a buffer */
+  while (bptr && (lineptr = strchr(bptr, '\n'))) {
+    strtrim(++lineptr);
+
+    alpm_list_t **deplist;
+    if (line_starts_with(lineptr, PKGBUILD_DEPENDS) == 0 ) {
+      deplist = &(pkg->depends);
+    } else if (line_starts_with(lineptr, PKGBUILD_MAKEDEPENDS) == 0) {
+      deplist = &(pkg->makedepends);
+    } else if (line_starts_with(lineptr, PKGBUILD_OPTDEPENDS) == 0) {
+      deplist = &(pkg->optdepends);
+    } else {
+      bptr = strchr(lineptr, '\n');
+      continue;
+    }
+
+    arrayend = strchr(lineptr, ')');
+    *arrayend  = '\0';
+
+    *deplist = parse_bash_array(*deplist, strchr(lineptr, '(') + 1, FALSE);
+    bptr = arrayend + 1;
+  }
+
+  return pkg;
 }
 
 int get_pkg_dependencies(const char *pkg) {
@@ -86,8 +130,6 @@ int get_pkg_dependencies(const char *pkg) {
   pkgbuild_path = calloc(1, PATH_MAX + 1);
   snprintf(pkgbuild_path, strlen(dir) + strlen(pkg) + 11, "%s/%s/PKGBUILD", dir, pkg);
 
-  alpm_list_t *deplist = NULL;
-
   buffer = get_file_as_buffer(pkgbuild_path);
   if (! buffer) {
     if (config->color)
@@ -98,8 +140,7 @@ int get_pkg_dependencies(const char *pkg) {
     return 1;
   }
 
-  deplist = pkgbuild_get_deps(buffer, deplist);
-
+  alpm_list_t *deplist = pkgbuild_get_deps(buffer);
   free(buffer);
 
   if (!config->quiet && config->verbose >= 1) {
