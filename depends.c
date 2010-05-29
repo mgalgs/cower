@@ -30,10 +30,10 @@
 #include "search.h"
 #include "util.h"
 
-static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray, int stripdeps) {
+static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray, int stripver) {
   char *token;
 
-  /* XXX: This will probably fail on some edge case */
+  /* XXX: This will fail sooner or later */
   if (strchr(deparray, ':')) { /* we're dealing with optdepdends */
     token = strtok(deparray, "\'\"\n");
     while (token) {
@@ -52,7 +52,7 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray, int s
     if (*token == '\'' || *token == '\"')
       token++;
 
-    if (stripdeps)
+    if (stripver)
       *(token + strcspn(token, "=<>\"\'")) = '\0';
     else {
       char *ptr = token + strlen(token) - 1;
