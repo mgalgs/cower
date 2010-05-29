@@ -20,7 +20,9 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 /* local */
 #include "aur.h"
@@ -158,6 +160,18 @@ off_t filesize(const char *filename) {
   return st.st_size;
 }
 
+static int get_screen_width(void) {
+  if(!isatty(1))
+    return 80;
+
+  struct winsize win;
+  if(ioctl(1, TIOCGWINSZ, &win) == 0)
+    return win.ws_col;
+
+  return 80;
+}
+
+
 char *get_file_as_buffer(const char *filename) {
   FILE *fd;
   char *buf;
@@ -204,12 +218,17 @@ char *itoa(unsigned int num, int base){
    return p;
 }
 
+int line_starts_with(const char *line, const char *startswith) {
+  return strncmp(line, startswith, strlen(startswith));
+}
+
 /** 
 * @brief print full information about a AUR package
 * 
 * @param pkg      JSON describing the package
 */
 void print_pkg_info(struct aur_pkg_t *pkg) {
+  int max_line_len = get_screen_width() - 17;
 
   if (config->color) {
     cprintf("Repository      : %<aur%>\n"
@@ -235,6 +254,57 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
 
   }
 
+  if (pkg->depends) {
+    printf("Depends:        : ");
+
+    int count = 0;
+    size_t deplen;
+    alpm_list_t *i;
+    for (i = pkg->depends; i; i = i->next) {
+      deplen = strlen(i->data);
+      if (count + deplen > max_line_len) {
+        printf("\n                  ");
+        count = 0;
+      }
+
+      count += printf("%s  ", (const char*)i->data);
+    }
+
+    putchar('\n');
+  }
+
+  if (pkg->makedepends) {
+    printf("Makedepends:    : ");
+
+    int count = 0;
+    size_t deplen;
+    alpm_list_t *i;
+    for (i = pkg->makedepends; i; i = i->next) {
+      deplen = strlen(i->data);
+      if (count + deplen > max_line_len) {
+        printf("\n                  ");
+        count = 0;
+      }
+
+      count += printf("%s  ", (const char*)i->data);
+    }
+
+    putchar('\n');
+  }
+
+/* // Need to do something about this...
+  if (pkg->optdepends) {
+    printf("Optdepends:     : ");
+
+    printf("%s\n", (const char*)pkg->optdepends->data);
+
+    alpm_list_t *i;
+    for (i = pkg->optdepends->next; i; i = i->next) {
+      printf("                  %s\n", (const char*)i->data);
+    }
+  }
+*/
+
   printf("Category        : %s\n"
          "License         : %s\n"
          "Number of Votes : %d\n",
@@ -252,33 +322,11 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
   printf("Description     : ");
 
   size_t desc_len = strlen(pkg->desc);
-  if (desc_len < 65) {
-    printf("%s\n\n", pkg->desc);
-    return;
-  }
+  if (desc_len < max_line_len)
+    printf("%s\n", pkg->desc);
+  else
+    print_wrapped(pkg->desc, max_line_len, 17);
 
-  /* A little bit of chicanery to neaten up long descriptions. */
-  size_t count = 0, actual;
-  const char *ptr;
-  do {
-    ptr = pkg->desc + count;
-
-    /* If this isn't the first iteration, back up to the first white space */
-    while (!isspace(*ptr) && ptr != pkg->desc)
-      ptr--;
-
-    /* Shorten the string until we find a null terminator or a space */
-    actual = 65; /* Our assumed column width */
-    while (!isspace(*(ptr + actual)) && *(ptr + actual) != '\0')
-      actual--;
-
-    /* On the last loop, we'll overwrite. Don't. */
-    if (count + actual > desc_len)
-      actual = desc_len - count;
-
-    count += fwrite(ptr, 1, actual, stdout);
-    printf("\n                 ");
-  } while (count < strlen(pkg->desc));
   putchar('\n');
 
 }
@@ -332,6 +380,36 @@ void print_pkg_update(const char *pkg, const char *local_ver, const char *remote
     else
       printf("%s\n", pkg);
   }
+}
+
+void print_wrapped(const char* buffer, size_t maxlength, size_t indent) {
+  size_t count, buflen;
+  const char *ptr, *endptr;
+
+  count = 0;
+  buflen = strlen(buffer);
+
+  do {
+    ptr = buffer + count;
+
+    /* don't set endptr beyond the end of the buffer */
+    if (ptr - buffer + maxlength <= buflen)
+      endptr = ptr + maxlength;
+    else
+      endptr = buffer + buflen;
+
+    /* back up EOL to a null terminator or space */
+    while (*(endptr) && !isspace(*(endptr)) )
+      endptr--;
+
+    count += fwrite(ptr, 1, endptr - ptr, stdout);
+
+    /* print a newline and an indent */
+    putchar('\n');
+    int i;
+    for (i = 0; i < indent; i++)
+      putchar(' ');
+  } while (*endptr);
 }
 
 /** 
