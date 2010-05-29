@@ -22,7 +22,7 @@ Pass this option twice to fetch dependencies.
 
 =item B<-i, --info>
 
-Show info for I<PACKAGES>(s).
+Show info for I<PACKAGES>(s). Pass this option twice to fetch more detailed info.
 
 =item B<-s, --search>
 
