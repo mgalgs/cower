@@ -63,13 +63,10 @@ struct config_t *config_new(void) {
   newconfig->colors = calloc(1, sizeof *(newconfig->colors));
 
   /* default options */
-  newconfig->op = 0;
+  newconfig->op = newconfig->color = newconfig->getdeps = newconfig->force =
+                  newconfig->quiet = newconfig->verbose = newconfig->moreinfo = 0;
+
   newconfig->download_dir = NULL;
-  newconfig->color = 0;
-  newconfig->getdeps = 0;
-  newconfig->force = 0;
-  newconfig->quiet = 0;
-  newconfig->verbose = 0;
 
   newconfig->colors->repo = BOLDMAGENTA;
   newconfig->colors->pkg = BOLDWHITE;

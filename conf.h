@@ -31,6 +31,7 @@ struct config_t {
   unsigned short force;
   unsigned short verbose;
   unsigned short quiet;
+  unsigned short moreinfo;
   const char *download_dir;
 
   struct color_cfg_t {
