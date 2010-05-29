@@ -198,35 +198,34 @@ static int read_config_file() {
     strtrim(key);
     strtrim(ptr);
 
-    /* TODO: Don't let invalid colors go silently */
-    if (STREQ(key, "repo")) {
-      if ((color = color_is_valid(ptr)) != 0)
-        config->colors->repo = color;
-    } else if (STREQ(key, "packages")) {
-      if ((color = color_is_valid(ptr)) != 0)
-        config->colors->pkg = color;
-    } else if (STREQ(key, "uptodate")) {
-      if ((color = color_is_valid(ptr)) != 0)
-        config->colors->uptodate = color;
-    } else if (STREQ(key, "outofdate")) {
-      if ((color = color_is_valid(ptr)) != 0)
-        config->colors->outofdate = color;
-    } else if (STREQ(key, "url")) {
-      if ((color = color_is_valid(ptr)) != 0)
-        config->colors->url = color;
-    } else if (STREQ(key, "info")) {
-      if ((color = color_is_valid(ptr)) != 0)
-        config->colors->info = color;
-    } else if (STREQ(key, "warn")) {
-      if ((color = color_is_valid(ptr)) != 0)
-        config->colors->warn = color;
-    } else if (STREQ(key, "error")) {
-      if ((color = color_is_valid(ptr)) != 0)
-        config->colors->error = color;
-    } else {
-      fprintf(stderr, "Error parsing config file: bad option '%s'\n", key);
+    unsigned short *popt = NULL; /* shut up gcc */
+    if (STREQ(key, "repo"))
+      popt = &(config->colors->repo);
+    else if (STREQ(key, "packages"))
+      popt = &(config->colors->pkg);
+    else if (STREQ(key, "uptodate"))
+      popt = &(config->colors->uptodate);
+    else if (STREQ(key, "outofdate"))
+      popt = &(config->colors->outofdate);
+    else if (STREQ(key, "url"))
+      popt = &(config->colors->url);
+    else if (STREQ(key, "info"))
+      popt = &(config->colors->info);
+    else if (STREQ(key, "warn"))
+      popt = &(config->colors->warn);
+    else if (STREQ(key, "error"))
+      popt = &(config->colors->error);
+    else {
+      cfprintf(stderr, "%<::%> bad option found in config: '%s'\n", key);
       ret = 1;
       break;
+    }
+
+    if ((color = color_is_valid(ptr)) > 0)
+      *popt = color;
+    else {
+      cfprintf(stderr, "%<::%> ignoring bad color found in config: '%s'\n", 
+        config->colors->warn, ptr);
     }
   }
 
