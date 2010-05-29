@@ -22,6 +22,55 @@
 #include "conf.h"
 #include "curl.h"
 
+struct response {
+  size_t size;
+  char *data;
+};
+
+static size_t write_callback(void *ptr, size_t size, size_t nmemb, void *data) {
+  size_t realsize = size * nmemb;
+  struct response *mem = (struct response*)data;
+
+  mem->data = realloc(mem->data, mem->size + realsize + 1);
+
+  if (mem->data) {
+    memcpy(&(mem->data[mem->size]), ptr, realsize);
+    mem->size += realsize;
+    mem->data[mem->size] = '\0';
+  }
+
+  return realsize;
+}
+
+char *curl_get_text_file(const char *url) {
+  long httpcode;
+  CURLcode curlstat;
+
+  struct response curl_data = {
+    .size = 0,
+    .data = NULL
+  };
+
+  curl_easy_setopt(curl, CURLOPT_URL, url);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &curl_data);
+
+  curlstat = curl_easy_perform(curl);
+  if (curlstat != CURLE_OK) {
+    fprintf(stderr, "!! curl: %s\n", curl_easy_strerror(curlstat));
+    return NULL;
+  }
+
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
+  if (httpcode != 200) {
+    fprintf(stderr, "!! curl: server responded with code %ld\n", httpcode);
+    free(curl_data.data);
+    return NULL;
+  }
+
+  return curl_data.data;
+}
+
 int curl_local_init() {
   curl = curl_easy_init();
 

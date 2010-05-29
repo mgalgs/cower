@@ -23,6 +23,7 @@
 
 #define COWER_USERAGENT    "cower/2.x"
 
+char *curl_get_text_file(const char*);
 int curl_local_init(void);
 
 CURL *curl;
