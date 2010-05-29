@@ -57,6 +57,9 @@ void aur_pkg_free(void *pkg) {
   FREELIST(it->depends);
   FREELIST(it->makedepends);
   FREELIST(it->optdepends);
+  FREELIST(it->provides);
+  FREELIST(it->conflicts);
+  FREELIST(it->replaces);
 
   FREE(it);
 }

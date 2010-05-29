@@ -29,11 +29,16 @@ struct aur_pkg_t {
   const char *url;
   const char *urlpath;
   const char *lic;
+  int votes;
+  int ood;
+
+  /* Detailed info */
   alpm_list_t *depends;
   alpm_list_t *makedepends;
   alpm_list_t *optdepends;
-  int votes;
-  int ood;
+  alpm_list_t *provides;
+  alpm_list_t *conflicts;
+  alpm_list_t *replaces;
 };
 
 int aur_pkg_cmp(const void*, const void*);

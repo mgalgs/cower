@@ -97,7 +97,7 @@ alpm_list_t *pkgbuild_get_deps(char *pkgbuild) {
   return deplist;
 }
 
-struct aur_pkg_t *populate_pkg_deps(struct aur_pkg_t *pkg, char *pkgbuild) {
+struct aur_pkg_t *get_extended_pkginfo(struct aur_pkg_t *pkg, char *pkgbuild) {
   char *lineptr, *arrayend;
 
   lineptr = pkgbuild;
@@ -114,6 +114,12 @@ struct aur_pkg_t *populate_pkg_deps(struct aur_pkg_t *pkg, char *pkgbuild) {
       deplist = &(pkg->makedepends);
     else if (line_starts_with(lineptr, PKGBUILD_OPTDEPENDS) == 0)
       deplist = &(pkg->optdepends);
+    else if (line_starts_with(lineptr, PKGBUILD_PROVIDES) == 0)
+      deplist = &(pkg->provides);
+    else if (line_starts_with(lineptr, PKGBUILD_REPLACES) == 0)
+      deplist = &(pkg->replaces);
+    else if (line_starts_with(lineptr, PKGBUILD_CONFLICTS) == 0)
+      deplist = &(pkg->conflicts);
     else
       continue;
 

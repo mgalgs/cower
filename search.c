@@ -100,7 +100,7 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
         continue;
       }
 
-      aurpkg = populate_pkg_deps(aurpkg, pkgbuild);
+      aurpkg = get_extended_pkginfo(aurpkg, pkgbuild);
       free(pkgbuild);
       curl_free(escaped);
     }

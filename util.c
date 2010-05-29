@@ -254,8 +254,26 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
 
   }
 
+  if (pkg->provides) {
+    printf("Provides        : ");
+    int count = 0;
+    size_t deplen;
+    alpm_list_t *i;
+    for (i = pkg->provides; i; i = i->next) {
+      deplen = strlen(i->data);
+      if (count + deplen > max_line_len) {
+        printf("\n                  ");
+        count = 0;
+      }
+
+      count += printf("%s  ", (const char*)i->data);
+    }
+
+    putchar('\n');
+  }
+
   if (pkg->depends) {
-    printf("Depends:        : ");
+    printf("Depends         : ");
 
     int count = 0;
     size_t deplen;
@@ -274,7 +292,7 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
   }
 
   if (pkg->makedepends) {
-    printf("Makedepends:    : ");
+    printf("Makedepends     : ");
 
     int count = 0;
     size_t deplen;
@@ -293,7 +311,7 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
   }
 
   if (pkg->optdepends) {
-    printf("Optdepends:     : ");
+    printf("Optdepends      : ");
 
     printf("%s\n", (const char*)pkg->optdepends->data);
 
@@ -301,6 +319,42 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
     for (i = pkg->optdepends->next; i; i = i->next) {
       printf("                  %s\n", (const char*)i->data);
     }
+  }
+
+  if (pkg->conflicts) {
+    printf("Conflicts       : ");
+    int count = 0;
+    size_t deplen;
+    alpm_list_t *i;
+    for (i = pkg->conflicts; i; i = i->next) {
+      deplen = strlen(i->data);
+      if (count + deplen > max_line_len) {
+        printf("\n                  ");
+        count = 0;
+      }
+
+      count += printf("%s  ", (const char*)i->data);
+    }
+
+    putchar('\n');
+  }
+
+  if (pkg->replaces) {
+    printf("Replaces        : ");
+    int count = 0;
+    size_t deplen;
+    alpm_list_t *i;
+    for (i = pkg->replaces; i; i = i->next) {
+      deplen = strlen(i->data);
+      if (count + deplen > max_line_len) {
+        printf("\n                  ");
+        count = 0;
+      }
+
+      count += printf("%s  ", (const char*)i->data);
+    }
+
+    putchar('\n');
   }
 
   printf("Category        : %s\n"

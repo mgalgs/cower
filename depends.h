@@ -24,10 +24,13 @@
 #define PKGBUILD_DEPENDS      "depends=("
 #define PKGBUILD_MAKEDEPENDS  "makedepends=("
 #define PKGBUILD_OPTDEPENDS   "optdepends=("
+#define PKGBUILD_PROVIDES     "provides=("
+#define PKGBUILD_CONFLICTS    "conflicts=("
+#define PKGBUILD_REPLACES     "replaces=("
 
 int get_pkg_dependencies(const char*);
 alpm_list_t *pkgbuild_get_deps(char*);
-struct aur_pkg_t *populate_pkg_deps(struct aur_pkg_t*, char*);
+struct aur_pkg_t *get_extended_pkginfo(struct aur_pkg_t*, char*);
 
 #endif /* _COWER_DEPENDS_H */
 
