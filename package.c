@@ -54,6 +54,10 @@ void aur_pkg_free(void *pkg) {
   FREE(it->urlpath);
   FREE(it->lic);
 
+  FREELIST(it->depends);
+  FREELIST(it->makedepends);
+  FREELIST(it->optdepends);
+
   FREE(it);
 }
 
@@ -63,6 +67,7 @@ struct aur_pkg_t *aur_pkg_new() {
   pkg = calloc(1, sizeof *pkg);
 
   pkg->name = pkg->ver = pkg->desc = pkg->lic = pkg->url = pkg->urlpath = NULL;
+  pkg->depends = pkg->makedepends = pkg->optdepends = NULL;
   pkg->id = pkg->cat = pkg->ood = pkg->votes = 0;
 
   return pkg;

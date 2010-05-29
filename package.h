@@ -18,15 +18,20 @@
 #ifndef _COWER_PACKAGE_H
 #define _COWER_PACKAGE_H
 
+#include <alpm_list.h>
+
 struct aur_pkg_t {
   int id;
-  const char* name;
-  const char* ver;
+  const char *name;
+  const char *ver;
   int cat;
-  const char* desc;
-  const char* url;
-  const char* urlpath;
-  const char* lic;
+  const char *desc;
+  const char *url;
+  const char *urlpath;
+  const char *lic;
+  alpm_list_t *depends;
+  alpm_list_t *makedepends;
+  alpm_list_t *optdepends;
   int votes;
   int ood;
 };
