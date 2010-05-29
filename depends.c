@@ -48,6 +48,7 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray, int s
 
   token = strtok(deparray, " \n");
   while (token) {
+    strtrim(token);
     if (*token == '\'' || *token == '\"')
       token++;
 
