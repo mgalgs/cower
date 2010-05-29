@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "aur.h"
+#include "depends.h"
 #include "download.h"
 #include "conf.h"
 #include "curl.h"
@@ -37,7 +38,7 @@
 */
 alpm_list_t *aur_rpc_query(const char *query_type, const char* arg) {
 
-  char url[AUR_URL_SIZE];
+  char url[AUR_URL_SIZE + 1];
   char *escaped;
   alpm_list_t *ret;
 
@@ -79,6 +80,29 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
         fprintf(stderr, "!!");
       }
       fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
+
+      continue;
+    }
+
+    if (STREQ(type, AUR_QUERY_TYPE_INFO) && config->moreinfo) {
+      char url[AUR_URL_SIZE + 1];
+      char *escaped, *pkgbuild;
+      struct aur_pkg_t *aurpkg = (struct aur_pkg_t*)search->data;
+
+      escaped = curl_easy_escape(curl, aurpkg->name, strlen(aurpkg->name));
+
+      snprintf(url, AUR_URL_SIZE, AUR_PKGBUILD_PATH, escaped, escaped);
+
+      pkgbuild = curl_get_text_file(url);
+
+      if (pkgbuild == NULL) {
+        fprintf(stderr, "error fetching pkgbuild\n");
+        continue;
+      }
+
+      aurpkg = populate_pkg_deps(aurpkg, pkgbuild);
+      free(pkgbuild);
+      curl_free(escaped);
     }
 
     /* Aggregate searches into a single list and remove dupes */
