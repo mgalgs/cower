@@ -113,7 +113,10 @@ static int parseargs(int argc, char **argv) {
           config->getdeps = 1;
         break;
       case 'i':
-        config->op |= OP_INFO;
+        if (! (config->op & OP_INFO))
+          config->op |= OP_INFO;
+        else
+          config->moreinfo = 1;
         break;
       case 's':
         config->op |= OP_SEARCH;
@@ -278,17 +281,9 @@ int main(int argc, char **argv) {
   }
 
   curl_global_init(CURL_GLOBAL_NOTHING);
-  curl_local_init();
-
-  if (config->verbose >= 2) {
-    printf("DEBUG => Options selected:\n");
-    printf("\tconfig->op = %d\n", config->op);
-    if (config->color) printf("\t--color\n");
-    if (config->getdeps) printf("\t-dd\n");
-    if (config->force) printf("\t--force\n");
-    if (config->verbose > 0) printf("\t--verbose=%d\n", config->verbose);
-    if (config->quiet) printf("\t--quiet\n");
-    if (config->download_dir) printf("\t--target=%s\n", config->download_dir);
+  if (curl_local_init() != 0) {
+    fprintf(stderr, "!! curl initialization failed. Please check your configuration.\n");
+    cleanup(1);
   }
 
   /* Order matters somewhat. Update must come before download
