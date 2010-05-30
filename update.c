@@ -67,7 +67,7 @@ int cower_do_update() {
       ret++; /* Found an update, increment */
 
       if (config->op & OP_DL) /* -d found with -u */
-        aur_get_tarball(aurpkg);
+        download_taurball(aurpkg);
       else {
         print_pkg_update(aurpkg->name, local_ver, remote_ver);
       }

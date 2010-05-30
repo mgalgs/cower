@@ -21,7 +21,7 @@
 #include "package.h"
 #include "pacman.h"
 
-int aur_get_tarball(struct aur_pkg_t*);
+int download_taurball(struct aur_pkg_t*);
 int cower_do_download(alpm_list_t*);
 
 #endif /* _DOWNLOAD_H */
