@@ -177,7 +177,7 @@ char *itoa(unsigned int num, int base){
 }
 
 void print_pkg_info(struct aur_pkg_t *pkg) {
-  int max_line_len = get_screen_width() - 17;
+  size_t max_line_len = get_screen_width() - 17;
 
   if (config->color) {
     cprintf("Repository      : %<aur%>\n"
@@ -205,8 +205,7 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
 
   if (pkg->provides) {
     printf("Provides        : ");
-    int count = 0;
-    size_t deplen;
+    size_t deplen, count = 0;
     alpm_list_t *i;
     for (i = pkg->provides; i; i = i->next) {
       deplen = strlen(i->data);
@@ -395,7 +394,7 @@ void print_wrapped(const char* buffer, size_t maxlength, size_t indent) {
 
     /* print a newline and an indent */
     putchar('\n');
-    int i;
+    size_t i;
     for (i = 0; i < indent; i++)
       putchar(' ');
   } while (*endptr);
