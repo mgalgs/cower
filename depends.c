@@ -38,8 +38,11 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray, int s
     token = strtok(deparray, "\'\"\n");
     while (token) {
       strtrim(token);
-      if (strlen(token))
+      if (strlen(token)) {
+        if (config->verbose >= 2)
+          fprintf(stderr, "::DEBUG Adding Depend: %s\n", token);
         deplist = alpm_list_add(deplist, strdup(token));
+      }
 
       token = strtok(NULL, "\'\"\n");
     }
@@ -74,6 +77,7 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray, int s
 
 void get_extended_pkginfo(char **pkgbuild, alpm_list_t **details[]) {
   char *lineptr, *arrayend;
+  int optdep = 0;
 
   lineptr = *pkgbuild;
 
@@ -87,9 +91,10 @@ void get_extended_pkginfo(char **pkgbuild, alpm_list_t **details[]) {
       deplist = details[PKGDETAIL_DEPENDS];
     else if (line_starts_with(lineptr, PKGBUILD_MAKEDEPENDS) == 0)
       deplist = details[PKGDETAIL_MAKEDEPENDS];
-    else if (line_starts_with(lineptr, PKGBUILD_OPTDEPENDS) == 0)
+    else if (line_starts_with(lineptr, PKGBUILD_OPTDEPENDS) == 0) {
       deplist = details[PKGDETAIL_OPTDEPENDS];
-    else if (line_starts_with(lineptr, PKGBUILD_PROVIDES) == 0)
+      optdep = 1;
+    } else if (line_starts_with(lineptr, PKGBUILD_PROVIDES) == 0)
       deplist = details[PKGDETAIL_PROVIDES];
     else if (line_starts_with(lineptr, PKGBUILD_REPLACES) == 0)
       deplist = details[PKGDETAIL_REPLACES];
@@ -98,8 +103,22 @@ void get_extended_pkginfo(char **pkgbuild, alpm_list_t **details[]) {
     else
       continue;
 
-    arrayend = strchr(lineptr, ')');
-    *arrayend  = '\0';
+    /* I really wish optdepends had a more 'official' guideline */
+    if (! optdep) {
+      arrayend = strchr(lineptr, ')');
+      *arrayend  = '\0';
+    } else {
+      int stack = 0;
+      arrayend = strchr(lineptr, '(');
+      do {
+        switch (*arrayend) {
+          case '(': stack++; break;
+          case ')': stack--; break;
+        }
+        arrayend++;
+      } while (stack);
+      *--arrayend = '\0';
+    }
 
     if (deplist)
       *deplist = parse_bash_array(*deplist, strchr(lineptr, '(') + 1, FALSE);
