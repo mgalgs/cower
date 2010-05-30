@@ -29,8 +29,8 @@
 #define PKGBUILD_REPLACES     "replaces=("
 
 int get_pkg_dependencies(const char*);
-alpm_list_t *pkgbuild_get_deps(char*);
-struct aur_pkg_t *get_extended_pkginfo(struct aur_pkg_t*, char*);
+alpm_list_t *pkgbuild_get_deps(char**);
+struct aur_pkg_t *get_extended_pkginfo(struct aur_pkg_t*, char**);
 
 #endif /* _COWER_DEPENDS_H */
 

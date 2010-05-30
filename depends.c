@@ -72,12 +72,12 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray, int s
   return deplist;
 }
 
-alpm_list_t *pkgbuild_get_deps(char *pkgbuild) {
+alpm_list_t *pkgbuild_get_deps(char **pkgbuild) {
   char *lineptr, *arrayend;
   alpm_list_t *deplist;
 
   deplist = NULL;
-  lineptr = pkgbuild;
+  lineptr = *pkgbuild;
 
   do {
     strtrim(++lineptr);
@@ -98,10 +98,10 @@ alpm_list_t *pkgbuild_get_deps(char *pkgbuild) {
   return deplist;
 }
 
-struct aur_pkg_t *get_extended_pkginfo(struct aur_pkg_t *pkg, char *pkgbuild) {
+struct aur_pkg_t *get_extended_pkginfo(struct aur_pkg_t *pkg, char **pkgbuild) {
   char *lineptr, *arrayend;
 
-  lineptr = pkgbuild;
+  lineptr = *pkgbuild;
 
   do {
     strtrim(++lineptr);
@@ -157,7 +157,7 @@ int get_pkg_dependencies(const char *pkg) {
     return 1;
   }
 
-  alpm_list_t *deplist = pkgbuild_get_deps(buffer);
+  alpm_list_t *deplist = pkgbuild_get_deps(&buffer);
   free(buffer);
 
   if (!config->quiet && config->verbose >= 1) {
