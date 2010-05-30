@@ -128,6 +128,7 @@ static yajl_callbacks callbacks = {
 };
 
 static size_t curl_write_yajl(void *ptr, size_t size, size_t nmemb, void *stream) {
+  NOOP(stream);
   size_t realsize = size * nmemb;
   yajl_parse(hand, ptr, realsize);
   return realsize;
