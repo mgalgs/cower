@@ -43,7 +43,7 @@ static int json_string(void *ctx, const unsigned char *data, unsigned int size) 
   struct yajl_parse_struct *parse_struct = (struct yajl_parse_struct*)ctx;
   const char *val = (const char*)data;
 
-  if(STREQ(parse_struct->curkey, AUR_QUERY_TYPE) && STRINGSTARTSWITH(val, AUR_QUERY_ERROR))
+  if(STREQ(parse_struct->curkey, AUR_QUERY_TYPE) && STR_STARTS_WITH(val, AUR_QUERY_ERROR))
     return 0;
 
   if (STREQ(parse_struct->curkey, AUR_ID))
@@ -152,16 +152,12 @@ alpm_list_t *aur_fetch_json(const char *url) {
   curlstat = curl_easy_perform(curl);
   if (curlstat != CURLE_OK) {
     fprintf(stderr, "!! curl: %s\n", curl_easy_strerror(curlstat));
-    goto cleanup;
+  } else {
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
+    if (httpcode != 200)
+      fprintf(stderr, "!! curl: server responded with code %ld\n", httpcode);
   }
 
-  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
-  if (httpcode != 200) {
-    fprintf(stderr, "!! curl: server responded with code %ld\n", httpcode);
-    goto cleanup;
-  }
-
-cleanup:
   aur_pkg_free(parse_struct->aurpkg);
   free(parse_struct);
   yajl_parse_complete(hand);
