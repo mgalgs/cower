@@ -92,7 +92,7 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
         continue;
       }
 
-      alpm_list_t **pkg_details[6];
+      alpm_list_t **pkg_details[PKGDETAIL_MAX];
       pkg_details[PKGDETAIL_DEPENDS] = &aurpkg->depends;
       pkg_details[PKGDETAIL_MAKEDEPENDS] = &aurpkg->makedepends;
       pkg_details[PKGDETAIL_OPTDEPENDS] = &aurpkg->optdepends;

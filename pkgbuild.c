@@ -138,7 +138,7 @@ int get_pkg_dependencies(const char *pkg) {
 
   alpm_list_t *deplist = NULL;
 
-  alpm_list_t **pkg_details[6];
+  alpm_list_t **pkg_details[PKGDETAIL_MAX];
   pkg_details[PKGDETAIL_DEPENDS] = &deplist;
   pkg_details[PKGDETAIL_MAKEDEPENDS] = &deplist;
 

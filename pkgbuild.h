@@ -35,6 +35,7 @@ enum {
   PKGDETAIL_PROVIDES,
   PKGDETAIL_CONFLICTS,
   PKGDETAIL_REPLACES,
+  PKGDETAIL_MAX /* sigil - must be last */
 };
 
 int get_pkg_dependencies(const char*);
