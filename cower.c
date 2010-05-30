@@ -239,19 +239,20 @@ printf("cower %s\n\
 Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
 \n\
  Operations:\n\
-  -d, --download          download PACKAGE(s)\n\
-                            pass -dd to download AUR dependencies\n\
-  -i, --info              show info for PACKAGE(s)\n\
-  -s, --search            search for PACKAGE(s)\n\
-  -u, --update            check for updates against AUR. If the \n\
+  -d, --download          Download PACKAGE(s). Pass twice to\n\
+                            download AUR dependencies.\n\
+  -i, --info              Show info for PACKAGE(s). Pass twice for\n\
+                            more detail.\n\
+  -s, --search            Search for PACKAGE(s).\n\
+  -u, --update            Check for updates against AUR. If the \n\
                             --download flag is passed as well,\n\
                             fetch each available update.\n\n", VERSION);
 printf(" General options:\n\
-  -c, --color             use colored output\n\
-  -f, --force             overwrite existing files when downloading\n\
-  -q, --quiet             output less to stdout\n\
-  -t DIR, --target=DIR    specify an alternate download directory\n\
-  -v, --verbose           be more verbose\n\n");
+  -c, --color             Use colored output.\n\
+  -f, --force             Overwrite existing files when downloading.\n\
+  -q, --quiet             Output less.\n\
+  -t DIR, --target=DIR    Specify an alternate download directory.\n\
+  -v, --verbose           Be more verbose.\n\n");
 }
 
 int main(int argc, char **argv) {
