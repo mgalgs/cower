@@ -25,19 +25,19 @@
 
 #include "aur.h"
 #include "conf.h"
-#include "depends.h"
+#include "pkgbuild.h"
 #include "download.h"
-#include "search.h"
+#include "query.h"
 #include "util.h"
 
-static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray, int stripver) {
+static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **deparray, int stripver) {
   char *token;
 
   /* XXX: This will fail sooner or later */
-  if (strchr(deparray, ':')) { /* we're dealing with optdepdends */
-    token = strtok(deparray, "\'\"\n");
+  if (strchr(*deparray, ':')) { /* we're dealing with optdepdends */
+    token = strtok(*deparray, "\'\"\n");
     while (token) {
-      strtrim(token);
+      ltrim(token);
       if (strlen(token)) {
         if (config->verbose >= 2)
           fprintf(stderr, "::DEBUG Adding Depend: %s\n", token);
@@ -49,9 +49,9 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray, int s
     return deplist;
   }
 
-  token = strtok(deparray, " \n");
+  token = strtok(*deparray, " \n");
   while (token) {
-    strtrim(token);
+    ltrim(token);
     if (*token == '\'' || *token == '\"')
       token++;
 
@@ -75,7 +75,7 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray, int s
   return deplist;
 }
 
-void get_extended_pkginfo(char **pkgbuild, alpm_list_t **details[]) {
+void pkgbuild_extinfo_get(char **pkgbuild, alpm_list_t **details[]) {
   char *lineptr, *arrayend;
 
   lineptr = *pkgbuild;
@@ -86,17 +86,17 @@ void get_extended_pkginfo(char **pkgbuild, alpm_list_t **details[]) {
       continue;
 
     alpm_list_t **deplist;
-    if (line_starts_with(lineptr, PKGBUILD_DEPENDS) == 0 )
+    if (STR_STARTS_WITH(lineptr, PKGBUILD_DEPENDS))
       deplist = details[PKGDETAIL_DEPENDS];
-    else if (line_starts_with(lineptr, PKGBUILD_MAKEDEPENDS) == 0)
+    else if (STR_STARTS_WITH(lineptr, PKGBUILD_MAKEDEPENDS))
       deplist = details[PKGDETAIL_MAKEDEPENDS];
-    else if (line_starts_with(lineptr, PKGBUILD_OPTDEPENDS) == 0)
+    else if (STR_STARTS_WITH(lineptr, PKGBUILD_OPTDEPENDS))
       deplist = details[PKGDETAIL_OPTDEPENDS];
-    else if (line_starts_with(lineptr, PKGBUILD_PROVIDES) == 0)
+    else if (STR_STARTS_WITH(lineptr, PKGBUILD_PROVIDES))
       deplist = details[PKGDETAIL_PROVIDES];
-    else if (line_starts_with(lineptr, PKGBUILD_REPLACES) == 0)
+    else if (STR_STARTS_WITH(lineptr, PKGBUILD_REPLACES))
       deplist = details[PKGDETAIL_REPLACES];
-    else if (line_starts_with(lineptr, PKGBUILD_CONFLICTS) == 0)
+    else if (STR_STARTS_WITH(lineptr, PKGBUILD_CONFLICTS))
       deplist = details[PKGDETAIL_CONFLICTS];
     else
       continue;
@@ -104,8 +104,10 @@ void get_extended_pkginfo(char **pkgbuild, alpm_list_t **details[]) {
     arrayend = strstr(lineptr, ")\n");
     *arrayend  = '\0';
 
-    if (deplist)
-      *deplist = parse_bash_array(*deplist, strchr(lineptr, '(') + 1, FALSE);
+    if (deplist) {
+      char *arrayptr = strchr(lineptr, '(') + 1;
+      *deplist = parse_bash_array(*deplist, &arrayptr, FALSE);
+    }
 
     lineptr = arrayend + 1;
   } while ((lineptr = strchr(lineptr, '\n')));
@@ -140,7 +142,7 @@ int get_pkg_dependencies(const char *pkg) {
   pkg_details[PKGDETAIL_DEPENDS] = &deplist;
   pkg_details[PKGDETAIL_MAKEDEPENDS] = &deplist;
 
-  get_extended_pkginfo(&buffer, pkg_details);
+  pkgbuild_extinfo_get(&buffer, pkg_details);
 
   free(buffer);
 
@@ -168,8 +170,8 @@ int get_pkg_dependencies(const char *pkg) {
     if (is_in_pacman(depend)) /* available in pacman */
       continue;
 
-    /* if we're here, we need to check the AUR */
-    alpm_list_t *results = aur_rpc_query(AUR_QUERY_TYPE_INFO, depend);
+    /* can't find it, check the AUR */
+    alpm_list_t *results = query_aur_rpc(AUR_QUERY_TYPE_INFO, depend);
     if (results) {
 
       if (config->verbose >= 2)
@@ -181,7 +183,8 @@ int get_pkg_dependencies(const char *pkg) {
       aur_pkg_free(results->data);
       alpm_list_free(results);
     }
-    /* Silently ignore packages that can't be found anywhere */
+    /* Silently ignore packages that can't be found anywhere 
+     * TODO: Maybe not silent if verbose? */
   }
 
   /* Cleanup */

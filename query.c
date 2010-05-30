@@ -20,23 +20,15 @@
 #include <string.h>
 
 #include "aur.h"
-#include "depends.h"
+#include "pkgbuild.h"
 #include "download.h"
 #include "conf.h"
 #include "curl.h"
-#include "search.h"
+#include "query.h"
 #include "util.h"
 #include "yajl.h"
 
-/** 
-* @brief send a query to the AUR's rpc interface
-*
-* @param type   search or info
-* @param arg    argument to query
-*
-* @return       a JSON loaded with the results of the query
-*/
-alpm_list_t *aur_rpc_query(const char *query_type, const char* arg) {
+alpm_list_t *query_aur_rpc(const char *query_type, const char* arg) {
 
   char url[AUR_URL_SIZE + 1];
   char *escaped;
@@ -44,14 +36,14 @@ alpm_list_t *aur_rpc_query(const char *query_type, const char* arg) {
 
   escaped = curl_easy_escape(curl, arg, strlen(arg));
 
-  /* Format URL to pass to curl */
+  /* format URL to pass to curl */
   snprintf(url, AUR_URL_SIZE, AUR_RPC_URL, query_type, escaped);
 
   ret = aur_fetch_json(url);
 
   curl_free(escaped);
 
-  return ret; /* This needs to be freed in the calling function */
+  return ret; /* needs to be freed in the calling function if not NULL */
 }
 
 alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
@@ -71,7 +63,7 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
       continue;
     }
 
-    alpm_list_t *search = aur_rpc_query(type, i->data);
+    alpm_list_t *search = query_aur_rpc(type, i->data);
 
     if (! search) {
       if (config->color) {
@@ -93,7 +85,7 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
 
       snprintf(url, AUR_URL_SIZE, AUR_PKGBUILD_PATH, escaped, escaped);
 
-      pkgbuild = curl_get_text_file(url);
+      pkgbuild = curl_textfile_get(url);
 
       if (pkgbuild == NULL) {
         fprintf(stderr, "error fetching pkgbuild\n");
@@ -107,7 +99,7 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
       pkg_details[PKGDETAIL_PROVIDES] = &aurpkg->provides;
       pkg_details[PKGDETAIL_CONFLICTS] = &aurpkg->conflicts;
       pkg_details[PKGDETAIL_REPLACES] = &aurpkg->replaces;
-      get_extended_pkginfo(&pkgbuild, pkg_details);
+      pkgbuild_extinfo_get(&pkgbuild, pkg_details);
 
       free(pkgbuild);
       curl_free(escaped);

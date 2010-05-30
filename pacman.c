@@ -25,13 +25,6 @@
 #include "conf.h"
 #include "util.h"
 
-/** 
-* @brief determine is a package is in pacman's sync DBs
-* 
-* @param pkg    package to search for
-* 
-* @return TRUE if foreign, else FALSE
-*/
 static int is_foreign(pmpkg_t *pkg) {
   const char *pkgname;
   alpm_list_t *i, *syncs;
@@ -47,16 +40,6 @@ static int is_foreign(pmpkg_t *pkg) {
   return TRUE;
 }
 
-/** 
-* @brief merge sort with duplicate deletion
-* 
-* @param left     left side of merge
-* @param right    right side of merge
-* @param fn       callback function for comparing data
-* @param fnf      callback function for deleting data
-* 
-* @return the merged list
-*/
 alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm_list_fn_cmp fn, alpm_list_fn_free fnf) {
 
   alpm_list_t *lp, *newlist;
@@ -119,15 +102,6 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
   return(newlist);
 }
 
-/** 
-* @brief Remove a specific node from a list
-* 
-* @param listhead     list to remove from
-* @param target       node within list to remove
-* @param fn           comparison function
-* 
-* @return the node following the removed node
-*/
 alpm_list_t *alpm_list_remove_item(alpm_list_t *listhead, alpm_list_t *target, alpm_list_fn_free fn) {
 
   alpm_list_t *next = NULL;
@@ -162,11 +136,6 @@ alpm_list_t *alpm_list_remove_item(alpm_list_t *listhead, alpm_list_t *target, a
   return next;
 }
 
-/** 
-* @brief search alpm's local db for foreign packages
-* 
-* @return a list of packages fufilling the criteria
-*/
 alpm_list_t *alpm_query_foreign() {
   alpm_list_t *i, *ret = NULL;
 
@@ -180,9 +149,6 @@ alpm_list_t *alpm_query_foreign() {
   return ret; /* This needs to be freed in the calling function */
 }
 
-/** 
-* @brief initialize alpm and register default DBs
-*/
 void alpm_quick_init() {
   if (config->verbose > 1)
     printf("::DEBUG:: Initializing alpm\n");
@@ -245,14 +211,6 @@ void alpm_quick_init() {
   fclose(pacfd);
 }
 
-
-/** 
-* @brief search alpm's sync DBs for a package
-* 
-* @param target   alpm_list_t with packages to search for
-* 
-* @return DB package was found in, or NULL
-*/
 pmdb_t *alpm_sync_search(alpm_list_t *target) {
 
   pmdb_t *db = NULL;
@@ -276,13 +234,6 @@ pmdb_t *alpm_sync_search(alpm_list_t *target) {
   return NULL; /* Not found */
 }
 
-/** 
-* @brief checks for a package by name in pacman's sync DBs
-* 
-* @param target   package name to find
-* 
-* @return 1 on success, 0 on failure
-*/
 int is_in_pacman(const char *target) {
 
   pmdb_t *found_in;

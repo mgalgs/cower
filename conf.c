@@ -26,13 +26,6 @@
 
 struct config_t *config = NULL; /* global config variable */
 
-/** 
-* @brief free a config struct
-* 
-* @param oldconfig  config to be freed
-* 
-* @return 0 on success, non-zero on failure
-*/
 int config_free(struct config_t *oldconfig) {
 
   if (oldconfig == NULL)
@@ -48,11 +41,6 @@ int config_free(struct config_t *oldconfig) {
   return 0;
 }
 
-/** 
-* @brief allocate a new config struct
-* 
-* @return the new config, or NULL on failure
-*/
 struct config_t *config_new(void) {
   struct config_t *newconfig = calloc(1, sizeof *newconfig);
   if(!newconfig) {

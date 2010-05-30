@@ -1,5 +1,5 @@
 /*
- *  depends.h
+ *  pkgbuild.h
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _COWER_DEPENDS_H
-#define _COWER_DEPENDS_H
+#ifndef _COWER_PKGBUILD_H
+#define _COWER_PKGBUILD_H
 
 #include "package.h"
 #include "pacman.h"
@@ -39,8 +39,8 @@ enum {
 
 int get_pkg_dependencies(const char*);
 alpm_list_t *pkgbuild_get_deps(char**);
-void get_extended_pkginfo(char**, alpm_list_t**[]);
+void pkgbuild_extinfo_get(char**, alpm_list_t**[]);
 
-#endif /* _COWER_DEPENDS_H */
+#endif /* _COWER_PKGBUILD_H */
 
 /* vim: set ts=2 sw=2 et: */

@@ -28,18 +28,11 @@
 #include "aur.h"
 #include "curl.h"
 #include "conf.h"
-#include "depends.h"
+#include "pkgbuild.h"
 #include "download.h"
-#include "search.h"
+#include "query.h"
 #include "util.h"
 
-/** 
-* @brief download a taurball described by a JSON
-* 
-* @param root   the json describing the taurball
-* 
-* @return       0 on success, 1 on failure
-*/
 int aur_get_tarball(struct aur_pkg_t *aurpkg) {
   const char *filename, *pkgname;
   char *dir, *escaped;
@@ -162,7 +155,7 @@ int cower_do_download(alpm_list_t *targets) {
     if (is_in_pacman(i->data)) /* Skip it */
       continue;
 
-    alpm_list_t *results = aur_rpc_query(AUR_QUERY_TYPE_INFO, i->data);
+    alpm_list_t *results = query_aur_rpc(AUR_QUERY_TYPE_INFO, i->data);
     if (results) { /* Found it in the AUR */
       dl_res = aur_get_tarball(results->data);
       ret += dl_res;

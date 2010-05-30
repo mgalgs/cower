@@ -21,15 +21,9 @@
 #include "conf.h"
 #include "download.h"
 #include "pacman.h"
-#include "search.h"
+#include "query.h"
 #include "util.h"
 
-
-/** 
-* @brief find updates in AUR
-*
-* @return number of updates found
-*/
 int cower_do_update() {
   int ret;
 
@@ -56,7 +50,7 @@ int cower_do_update() {
     }
 
     /* Do I exist in the AUR? */
-    alpm_list_t *results = aur_rpc_query(AUR_QUERY_TYPE_INFO, alpm_pkg_get_name(pmpkg));
+    alpm_list_t *results = query_aur_rpc(AUR_QUERY_TYPE_INFO, alpm_pkg_get_name(pmpkg));
 
     if (!results) /* Not found, next candidate */
       continue;

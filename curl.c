@@ -42,7 +42,7 @@ static size_t write_callback(void *ptr, size_t size, size_t nmemb, void *data) {
   return realsize;
 }
 
-char *curl_get_text_file(const char *url) {
+char *curl_textfile_get(const char *url) {
   long httpcode;
   CURLcode curlstat;
 

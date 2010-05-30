@@ -27,7 +27,7 @@
 #include "curl.h"
 #include "download.h"
 #include "pacman.h"
-#include "search.h"
+#include "query.h"
 #include "update.h"
 #include "util.h"
 

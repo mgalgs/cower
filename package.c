@@ -21,14 +21,6 @@
 #include "package.h"
 #include "util.h"
 
-/** 
-* @brief callback for comparing aur_pkg_t structs inside an alpm_list_t
-* 
-* @param p1   left side of the comparison
-* @param p2   right side of the comparison
-* 
-* @return     results of strcmp on names of each aur_pkg_t
-*/
 int aur_pkg_cmp(const void *p1, const void *p2) {
   struct aur_pkg_t *pkg1 = (struct aur_pkg_t*)p1;
   struct aur_pkg_t *pkg2 = (struct aur_pkg_t*)p2;
@@ -36,11 +28,6 @@ int aur_pkg_cmp(const void *p1, const void *p2) {
   return strcmp((const char*)pkg1->name, (const char*)pkg2->name);
 }
 
-/** 
-* @brief callback for freeing an aur_pkg_t inside an alpm_list_t
-* 
-* @param pkg  aur_pkg_t struct inside linked list
-*/
 void aur_pkg_free(void *pkg) {
   if (!pkg)
     return;

@@ -36,15 +36,6 @@ static char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
                            "science", "system", "x11", "xfce", "kernels" };
 
 
-/** 
-* @brief slimmed down printf with added patterns for color
-* 
-* @param fd       file descriptor to write to
-* @param fmt      string describing output
-* @param args     data to replace patterns in fmt
-* 
-* @return number of characters printed
-*/
 static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
   const char *p;
   int color, count = 0;
@@ -100,15 +91,6 @@ static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
   return count;
 }
 
-/** 
-* @brief front end to c_vfprintf
-* 
-* @param fd       file descriptor to write to
-* @param fmt      format describing output
-* @param ...      data to replace patterns in fmt
-* 
-* @return number of characters written
-*/
 int cfprintf(FILE *fd, const char *fmt, ...) {
   va_list args;
   int result;
@@ -120,14 +102,6 @@ int cfprintf(FILE *fd, const char *fmt, ...) {
   return result;
 }
 
-/** 
-* @brief front end to c_vfprintf
-* 
-* @param fmt      format describing output
-* @param ...      data to replace patterns in fmt
-* 
-* @return number of characters written
-*/
 int cprintf(const char *fmt, ...) {
   va_list args;
   int result;
@@ -139,13 +113,6 @@ int cprintf(const char *fmt, ...) {
   return result;
 }
 
-/** 
-* @brief check for existance of a file or directory
-* 
-* @param filename file or directory to check for existance of
-* 
-* @return 1 if exists, else 0
-*/
 int file_exists(const char *filename) {
   struct stat st;
 
@@ -191,16 +158,7 @@ char *get_file_as_buffer(const char *filename) {
   return buf;
 }
 
-/** 
-* @brief convert int to ascii representation
-* 
-* @param num      number to convert
-* @param base     numerical base to convert to
-* 
-* @return ascii representation of the num parameter
-*/
 char *itoa(unsigned int num, int base){
-
    static char retbuf[33];
    char *p;
 
@@ -218,15 +176,6 @@ char *itoa(unsigned int num, int base){
    return p;
 }
 
-int line_starts_with(const char *line, const char *startswith) {
-  return strncmp(line, startswith, strlen(startswith));
-}
-
-/** 
-* @brief print full information about a AUR package
-* 
-* @param pkg      JSON describing the package
-*/
 void print_pkg_info(struct aur_pkg_t *pkg) {
   int max_line_len = get_screen_width() - 17;
 
@@ -383,11 +332,6 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
 
 }
 
-/** 
-* @brief print aggregated search results.
-* 
-* @param search     alpm_list_t packed with aur_pkg_t structs.
-*/
 void print_pkg_search(alpm_list_t *search) {
   alpm_list_t *i;
   struct aur_pkg_t *pkg;
@@ -412,13 +356,6 @@ void print_pkg_search(alpm_list_t *search) {
   }
 }
 
-/** 
-* @brief print line indicating a package update
-* 
-* @param pkg          package name
-* @param local_ver    locally installed version
-* @param remote_ver   remotely available version
-*/
 void print_pkg_update(const char *pkg, const char *local_ver, const char *remote_ver) {
   if (config->color) {
     if (! config->quiet)
@@ -464,37 +401,44 @@ void print_wrapped(const char* buffer, size_t maxlength, size_t indent) {
   } while (*endptr);
 }
 
-/** 
-* @brief trim whitespace from string
-* 
-* @param str    string to trim
-* 
-* @return trimmed string
-*/
-char *strtrim(char *str) {
-
+char *ltrim(char *str) {
   char *pch = str;
 
-  if(str == NULL || *str == '\0')
-    return(str);
+  if (str == NULL || *str == '\0')
+    return str;
 
-  while(isspace(*pch))
+  while (isspace(*pch))
     pch++;
 
-  if(pch != str)
+  if (pch != str)
     memmove(str, pch, (strlen(pch) + 1));
 
-  if(*str == '\0')
+  return str;
+}
+
+char *strtrim(char *str) {
+  char *pch = str;
+
+  if (str == NULL || *str == '\0')
+    return str;
+
+  while (isspace(*pch))
+    pch++;
+
+  if (pch != str)
+    memmove(str, pch, (strlen(pch) + 1));
+
+  if (*str == '\0')
     return(str);
 
   pch = (str + strlen(str) - 1);
 
-  while(isspace(*pch))
+  while (isspace(*pch))
     pch--;
 
   *++pch = '\0';
 
-  return(str);
+  return str;
 }
 
 /* vim: set ts=2 sw=2 et: */

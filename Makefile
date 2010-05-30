@@ -2,7 +2,7 @@
 
 include config.mk
 
-SRC = conf.c cower.c curl.c depends.c download.c package.c pacman.c search.c util.c update.c yajl.c
+SRC = conf.c cower.c curl.c download.c package.c pacman.c pkgbuild.c query.c update.c util.c yajl.c
 OBJ = ${SRC:.c=.o}
 
 all: options cower doc
