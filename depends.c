@@ -72,33 +72,7 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *deparray, int s
   return deplist;
 }
 
-alpm_list_t *pkgbuild_get_deps(char **pkgbuild) {
-  char *lineptr, *arrayend;
-  alpm_list_t *deplist;
-
-  deplist = NULL;
-  lineptr = *pkgbuild;
-
-  do {
-    strtrim(++lineptr);
-    if (*lineptr == '#')
-      continue;
-
-    if ((line_starts_with(lineptr, PKGBUILD_DEPENDS) != 0) && 
-        (line_starts_with(lineptr, PKGBUILD_MAKEDEPENDS) != 0))
-      continue;
-
-    arrayend = strchr(lineptr, ')');
-    *arrayend  = '\0';
-
-    deplist = parse_bash_array(deplist, strchr(lineptr, '(') + 1, TRUE);
-    lineptr = arrayend + 1;
-  } while ((lineptr = strchr(lineptr, '\n')));
-
-  return deplist;
-}
-
-struct aur_pkg_t *get_extended_pkginfo(struct aur_pkg_t *pkg, char **pkgbuild) {
+void get_extended_pkginfo(char **pkgbuild, alpm_list_t **details[]) {
   char *lineptr, *arrayend;
 
   lineptr = *pkgbuild;
@@ -110,28 +84,28 @@ struct aur_pkg_t *get_extended_pkginfo(struct aur_pkg_t *pkg, char **pkgbuild) {
 
     alpm_list_t **deplist;
     if (line_starts_with(lineptr, PKGBUILD_DEPENDS) == 0 )
-      deplist = &(pkg->depends);
+      deplist = details[PKGDETAIL_DEPENDS];
     else if (line_starts_with(lineptr, PKGBUILD_MAKEDEPENDS) == 0)
-      deplist = &(pkg->makedepends);
+      deplist = details[PKGDETAIL_MAKEDEPENDS];
     else if (line_starts_with(lineptr, PKGBUILD_OPTDEPENDS) == 0)
-      deplist = &(pkg->optdepends);
+      deplist = details[PKGDETAIL_OPTDEPENDS];
     else if (line_starts_with(lineptr, PKGBUILD_PROVIDES) == 0)
-      deplist = &(pkg->provides);
+      deplist = details[PKGDETAIL_PROVIDES];
     else if (line_starts_with(lineptr, PKGBUILD_REPLACES) == 0)
-      deplist = &(pkg->replaces);
+      deplist = details[PKGDETAIL_REPLACES];
     else if (line_starts_with(lineptr, PKGBUILD_CONFLICTS) == 0)
-      deplist = &(pkg->conflicts);
+      deplist = details[PKGDETAIL_CONFLICTS];
     else
       continue;
 
     arrayend = strchr(lineptr, ')');
     *arrayend  = '\0';
 
-    *deplist = parse_bash_array(*deplist, strchr(lineptr, '(') + 1, FALSE);
+    if (deplist)
+      *deplist = parse_bash_array(*deplist, strchr(lineptr, '(') + 1, FALSE);
+
     lineptr = arrayend + 1;
   } while ((lineptr = strchr(lineptr, '\n')));
-
-  return pkg;
 }
 
 int get_pkg_dependencies(const char *pkg) {
@@ -157,7 +131,14 @@ int get_pkg_dependencies(const char *pkg) {
     return 1;
   }
 
-  alpm_list_t *deplist = pkgbuild_get_deps(&buffer);
+  alpm_list_t *deplist = NULL;
+
+  alpm_list_t **pkg_details[6];
+  pkg_details[PKGDETAIL_DEPENDS] = &deplist;
+  pkg_details[PKGDETAIL_MAKEDEPENDS] = &deplist;
+
+  get_extended_pkginfo(&buffer, pkg_details);
+
   free(buffer);
 
   if (!config->quiet && config->verbose >= 1) {

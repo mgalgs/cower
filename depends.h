@@ -28,9 +28,18 @@
 #define PKGBUILD_CONFLICTS    "conflicts=("
 #define PKGBUILD_REPLACES     "replaces=("
 
+enum {
+  PKGDETAIL_DEPENDS = 0,
+  PKGDETAIL_MAKEDEPENDS,
+  PKGDETAIL_OPTDEPENDS,
+  PKGDETAIL_PROVIDES,
+  PKGDETAIL_CONFLICTS,
+  PKGDETAIL_REPLACES,
+};
+
 int get_pkg_dependencies(const char*);
 alpm_list_t *pkgbuild_get_deps(char**);
-struct aur_pkg_t *get_extended_pkginfo(struct aur_pkg_t*, char**);
+void get_extended_pkginfo(char**, alpm_list_t**[]);
 
 #endif /* _COWER_DEPENDS_H */
 

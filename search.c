@@ -100,7 +100,15 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
         continue;
       }
 
-      aurpkg = get_extended_pkginfo(aurpkg, &pkgbuild);
+      alpm_list_t **pkg_details[6];
+      pkg_details[PKGDETAIL_DEPENDS] = &aurpkg->depends;
+      pkg_details[PKGDETAIL_MAKEDEPENDS] = &aurpkg->makedepends;
+      pkg_details[PKGDETAIL_OPTDEPENDS] = &aurpkg->optdepends;
+      pkg_details[PKGDETAIL_PROVIDES] = &aurpkg->provides;
+      pkg_details[PKGDETAIL_CONFLICTS] = &aurpkg->conflicts;
+      pkg_details[PKGDETAIL_REPLACES] = &aurpkg->replaces;
+      get_extended_pkginfo(&pkgbuild, pkg_details);
+
       free(pkgbuild);
       curl_free(escaped);
     }
