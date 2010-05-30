@@ -36,24 +36,20 @@
 #define MAX_OUTPUT_LENGTH   65
 
 /* colors */
-#define BLACK         0
-#define RED           1
-#define GREEN         2
-#define YELLOW        3
-#define BLUE          4
-#define MAGENTA       5
-#define CYAN          6
-#define WHITE         7
-#define FG            8
-#define BOLDBLACK    10
-#define BOLDRED      11
-#define BOLDGREEN    12
-#define BOLDYELLOW   13
-#define BOLDBLUE     14
-#define BOLDMAGENTA  15
-#define BOLDCYAN     16
-#define BOLDWHITE    17
-#define BOLDFG       18
+enum {
+  BLACK = 0,  RED,
+  GREEN,      YELLOW,
+  BLUE,       MAGENTA,
+  CYAN,       WHITE,
+  FG,         BG,
+  BOLDBLACK,  BOLDRED,
+  BOLDGREEN,  BOLDYELLOW,
+  BOLDBLUE,   BOLDMAGENTA,
+  BOLDCYAN,   BOLDWHITE,
+  BOLDFG,     BOLDBG,
+
+  COLOR_MAX, /* sigil - must be last */
+};
 
 int cfprintf(FILE*, const char*, ...);
 int cprintf(const char*, ...);

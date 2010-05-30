@@ -31,8 +31,6 @@
 #include "update.h"
 #include "util.h"
 
-#define NUM_COLORS 18
-
 static alpm_list_t *targets; /* Package argument list */
 
 static struct color_t {
@@ -61,7 +59,7 @@ static unsigned short color_is_valid(const char *colorname) {
   struct color_t key, *result;
   key.name = colorname;
 
-  result = bsearch(&key, availcolors, NUM_COLORS, sizeof(struct color_t), fn_cmp_color);
+  result = bsearch(&key, availcolors, COLOR_MAX, sizeof(struct color_t), fn_cmp_color);
 
   if (result != NULL)
     return ((struct color_t*)result)->val;
