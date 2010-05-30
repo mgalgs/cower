@@ -26,14 +26,15 @@
 #define C_ON      "\033[%d;3%dm"
 #define C_OFF     "\033[1;0m"
 
-#define STREQ(x,y)  (strcmp(x,y) == 0)
-#define FREE(p) do { free((void*)p); p = NULL; } while (0)
-#define STR_STARTS_WITH(x,y) (strncmp(x, y, strlen(y)) == 0)
+#define STREQ(x,y)            (strcmp(x,y) == 0)
+#define NOOP(x)               if(x){}
+#define FREE(p)               do { free((void*)p); p = NULL; } while (0)
+#define STR_STARTS_WITH(x,y)  (strncmp(x, y, strlen(y)) == 0)
 
-#define TRUE  1
-#define FALSE 0
+#define TRUE                  1
+#define FALSE                 0
 
-#define MAX_OUTPUT_LENGTH   65
+#define INDENT                17
 
 /* colors */
 enum {

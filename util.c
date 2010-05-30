@@ -177,7 +177,7 @@ char *itoa(unsigned int num, int base){
 }
 
 void print_pkg_info(struct aur_pkg_t *pkg) {
-  size_t max_line_len = get_screen_width() - 17;
+  size_t max_line_len = get_screen_width() - INDENT;
 
   if (config->color) {
     cprintf("Repository      : %<aur%>\n"
@@ -325,7 +325,7 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
   if (desc_len < max_line_len)
     printf("%s\n", pkg->desc);
   else
-    print_wrapped(pkg->desc, max_line_len, 17);
+    print_wrapped(pkg->desc, max_line_len, INDENT);
 
   putchar('\n');
 
