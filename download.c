@@ -41,8 +41,8 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   long httpcode;
   int result = 0;
 
+  /* establish download dir */
   dir = calloc(1, PATH_MAX + 1);
-
   if (! config->download_dir) /* use pwd */
     dir = getcwd(dir, PATH_MAX);
   else
@@ -62,7 +62,7 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
 
   snprintf(fullpath, PATH_MAX, "%s/%s", dir, filename);
 
-  /* Mask extension to check for the exploded dir existing */
+  /* temporarily mask extension to check for the exploded dir existing */
   if (STREQ(fullpath + strlen(fullpath) - 7, ".tar.gz"))
     fullpath[strlen(fullpath) - 7] = '\0';
 
@@ -75,70 +75,75 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
     fprintf(stderr, " %s already exists.\n   Use -f to force this operation.\n",
       fullpath);
 
-    result = 1;
-  } else {
-    fullpath[strlen(fullpath)] = '.'; /* Unmask extension */
+    FREE(dir);
+    return 1;
+  }
 
-    FILE *fd = fopen(fullpath, "w");
-    if (! fd) {
-      result = errno;
-      if (config->color)
-        cfprintf(stderr, "%<::%> could not write to %s: ", config->colors->error, dir);
-      else
-        fprintf(stderr, "!! could not write to %s: ", dir);
-      errno = result;
-      perror("");
-    } else {
+  fullpath[strlen(fullpath)] = '.'; /* unmask extension */
 
-      escaped = curl_easy_escape(curl, pkgname, strlen(pkgname));
-      snprintf(url, AUR_URL_SIZE, AUR_PKG_URL, pkgname, pkgname);
+  /* check for write access */
+  FILE *fd = fopen(fullpath, "w");
+  if (! fd) {
+    result = errno;
+    if (config->color)
+      cfprintf(stderr, "%<::%> could not write to %s: ", config->colors->error, dir);
+    else
+      fprintf(stderr, "!! could not write to %s: ", dir);
+    errno = result;
+    perror("");
 
-      if (config->verbose >= 2)
-        fprintf(stderr, "::DEBUG Fetching URL %s\n", url);
+    FREE(dir);
+    return result;
+  }
 
-      curl_easy_setopt(curl, CURLOPT_URL, url);
-      curl_easy_setopt(curl, CURLOPT_WRITEDATA, fd);
-      curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
+  /* all clear to download */
+  escaped = curl_easy_escape(curl, pkgname, strlen(pkgname));
+  snprintf(url, AUR_URL_SIZE, AUR_PKG_URL, pkgname, pkgname);
 
-      curl_free(escaped);
+  if (config->verbose >= 2)
+    fprintf(stderr, "::DEBUG Fetching URL %s\n", url);
 
-      curlstat = curl_easy_perform(curl);
-      fclose(fd);
+  curl_easy_setopt(curl, CURLOPT_URL, url);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, fd);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
 
-      if (curlstat != CURLE_OK) {
-        fprintf(stderr, "!! curl: %s\n", curl_easy_strerror(curlstat));
-        result = curlstat;
+  curl_free(escaped);
 
-      } else { /* curl reported no error */
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
-        if (httpcode != 200) { 
-          fprintf(stderr, "!! curl: server responded with code %ld\n", httpcode);
-          result = httpcode;
+  curlstat = curl_easy_perform(curl);
+  fclose(fd);
 
-        } else { /* http response is kosher */
-          if (config->color) {
-            cprintf("%<::%> %<%s%> downloaded to %<%s%>\n",
-              config->colors->info,
-              config->colors->pkg, pkgname,
-              config->colors->uptodate, dir);
-          } else
-            printf(":: %s downloaded to %s\n", pkgname, dir);
+  if (curlstat != CURLE_OK) {
+    fprintf(stderr, "!! curl: %s\n", curl_easy_strerror(curlstat));
+    result = curlstat;
 
-          /* fork bsdtar and extract the downloaded taurball */
-          pid_t pid = fork();
-          if (pid == 0) {
-            if (config->verbose >= 2)
-              fprintf(stderr, "::DEBUG bsdtar -C %s -xf %s\n", dir, fullpath);
+  } else { /* curl reported no error */
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
+    if (httpcode != 200) {
+      fprintf(stderr, "!! curl: server responded with code %ld\n", httpcode);
+      result = httpcode;
 
-            result = execlp("bsdtar", "bsdtar", "-C", dir, "-xf", fullpath, NULL);
+    } else { /* http response is kosher */
+      if (config->color) {
+        cprintf("%<::%> %<%s%> downloaded to %<%s%>\n",
+          config->colors->info,
+          config->colors->pkg, pkgname,
+          config->colors->uptodate, dir);
+      } else
+        printf(":: %s downloaded to %s\n", pkgname, dir);
 
-          } else /* wait for bsdtar to finish */
-            while (! waitpid(pid, NULL, WNOHANG));
+      /* fork bsdtar and extract the downloaded taurball */
+      pid_t pid = fork();
+      if (pid == 0) {
+        if (config->verbose >= 2)
+          fprintf(stderr, "::DEBUG bsdtar -C %s -xf %s\n", dir, fullpath);
 
-          if (result == 0) /* no errors, delete the tarball */
-            unlink(fullpath);
-        }
-      }
+        result = execlp("bsdtar", "bsdtar", "-C", dir, "-xf", fullpath, NULL);
+
+      } else /* wait for bsdtar to finish */
+        while (! waitpid(pid, NULL, WNOHANG));
+
+      if (result == 0) /* no errors, delete the tarball */
+        unlink(fullpath);
     }
   }
 
