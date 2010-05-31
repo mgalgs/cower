@@ -40,7 +40,7 @@ enum {
 
 int get_pkg_dependencies(const char*);
 alpm_list_t *pkgbuild_get_deps(char**);
-void pkgbuild_extinfo_get(char**, alpm_list_t**[]);
+void pkgbuild_extinfo_get(char**, alpm_list_t**[], int);
 
 #endif /* _COWER_PKGBUILD_H */
 

@@ -75,7 +75,7 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **deparray, int 
   return deplist;
 }
 
-void pkgbuild_extinfo_get(char **pkgbuild, alpm_list_t **details[]) {
+void pkgbuild_extinfo_get(char **pkgbuild, alpm_list_t **details[], int stripver) {
   char *lineptr, *arrayend;
 
   lineptr = *pkgbuild;
@@ -106,7 +106,7 @@ void pkgbuild_extinfo_get(char **pkgbuild, alpm_list_t **details[]) {
 
     if (deplist) {
       char *arrayptr = strchr(lineptr, '(') + 1;
-      *deplist = parse_bash_array(*deplist, &arrayptr, FALSE);
+      *deplist = parse_bash_array(*deplist, &arrayptr, stripver);
     }
 
     lineptr = arrayend + 1;
@@ -138,11 +138,11 @@ int get_pkg_dependencies(const char *pkg) {
 
   alpm_list_t *deplist = NULL;
 
-  alpm_list_t **pkg_details[PKGDETAIL_MAX];
-  pkg_details[PKGDETAIL_DEPENDS] = &deplist;
-  pkg_details[PKGDETAIL_MAKEDEPENDS] = &deplist;
+  alpm_list_t **pkg_details[PKGDETAIL_MAX] = {
+    &deplist, &deplist, NULL, NULL, NULL, NULL
+  };
 
-  pkgbuild_extinfo_get(&buffer, pkg_details);
+  pkgbuild_extinfo_get(&buffer, pkg_details, TRUE);
 
   free(buffer);
 
