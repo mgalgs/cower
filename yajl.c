@@ -30,7 +30,6 @@
 #include "util.h"
 #include "yajl.h"
 
-static yajl_handle hand;
 static alpm_list_t *pkg_list;
 
 struct yajl_parse_struct {
@@ -128,9 +127,10 @@ static yajl_callbacks callbacks = {
 };
 
 static size_t curl_write_yajl(void *ptr, size_t size, size_t nmemb, void *stream) {
-  NOOP(stream);
+  yajl_handle *hand = (yajl_handle*)stream;
+
   size_t realsize = size * nmemb;
-  yajl_parse(hand, ptr, realsize);
+  yajl_parse(*hand, ptr, realsize);
   return realsize;
 }
 
@@ -138,15 +138,18 @@ alpm_list_t *aur_fetch_json(const char *url) {
   CURLcode curlstat;
   long httpcode;
   struct yajl_parse_struct *parse_struct;
+  yajl_handle hand;
 
+  hand = NULL;
   pkg_list = NULL;
+
   parse_struct = malloc(sizeof *parse_struct);
   parse_struct->aurpkg = NULL;
   parse_struct->json_depth = 0;
 
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_yajl);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, NULL);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &hand);
 
   hand = yajl_alloc(&callbacks, NULL, NULL, (void*)parse_struct);
 
