@@ -1,5 +1,5 @@
 /*
- *  search.c
+ *  query.c
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -92,14 +92,12 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
         continue;
       }
 
-      alpm_list_t **pkg_details[PKGDETAIL_MAX];
-      pkg_details[PKGDETAIL_DEPENDS] = &aurpkg->depends;
-      pkg_details[PKGDETAIL_MAKEDEPENDS] = &aurpkg->makedepends;
-      pkg_details[PKGDETAIL_OPTDEPENDS] = &aurpkg->optdepends;
-      pkg_details[PKGDETAIL_PROVIDES] = &aurpkg->provides;
-      pkg_details[PKGDETAIL_CONFLICTS] = &aurpkg->conflicts;
-      pkg_details[PKGDETAIL_REPLACES] = &aurpkg->replaces;
-      pkgbuild_extinfo_get(&pkgbuild, pkg_details);
+      alpm_list_t **pkg_details[PKGDETAIL_MAX] = {
+        &aurpkg->depends, &aurpkg->makedepends, &aurpkg->optdepends,
+        &aurpkg->provides, &aurpkg->conflicts, &aurpkg->replaces
+      };
+
+      pkgbuild_extinfo_get(&pkgbuild, pkg_details, FALSE);
 
       free(pkgbuild);
       curl_free(escaped);

@@ -1,5 +1,5 @@
 /*
- *  depends.c
+ *  pkgbuild.c
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -117,6 +117,7 @@ int get_pkg_dependencies(const char *pkg) {
   const char *dir;
   char *pkgbuild_path, *buffer;
   int ret = 0;
+  alpm_list_t *deplist = NULL;
 
   if (config->download_dir == NULL)
     dir = getcwd(NULL, 0);
@@ -136,14 +137,11 @@ int get_pkg_dependencies(const char *pkg) {
     return 1;
   }
 
-  alpm_list_t *deplist = NULL;
-
   alpm_list_t **pkg_details[PKGDETAIL_MAX] = {
     &deplist, &deplist, NULL, NULL, NULL, NULL
   };
 
   pkgbuild_extinfo_get(&buffer, pkg_details, TRUE);
-
   free(buffer);
 
   if (!config->quiet && config->verbose >= 1) {
