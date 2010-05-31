@@ -30,9 +30,8 @@
 #include "util.h"
 #include "yajl.h"
 
-static alpm_list_t *pkg_list;
-
 struct yajl_parse_struct {
+  alpm_list_t **pkg_list;
   struct aur_pkg_t *aurpkg;
   char curkey[32];
   int json_depth;
@@ -106,7 +105,9 @@ static int json_end_map(void *ctx) {
     return 0;
   }
 
-  pkg_list = alpm_list_add_sorted(pkg_list, parse_struct->aurpkg, aur_pkg_cmp);
+  *parse_struct->pkg_list = alpm_list_add_sorted(*parse_struct->pkg_list,
+                                                 parse_struct->aurpkg,
+                                                 aur_pkg_cmp);
   parse_struct->aurpkg = NULL;
 
   return 1;
@@ -139,11 +140,12 @@ alpm_list_t *aur_fetch_json(const char *url) {
   long httpcode;
   struct yajl_parse_struct *parse_struct;
   yajl_handle hand;
+  alpm_list_t *results;
 
-  hand = NULL;
-  pkg_list = NULL;
+  results = NULL;
 
   parse_struct = malloc(sizeof *parse_struct);
+  parse_struct->pkg_list = &results;
   parse_struct->aurpkg = NULL;
   parse_struct->json_depth = 0;
 
@@ -167,7 +169,7 @@ alpm_list_t *aur_fetch_json(const char *url) {
   yajl_parse_complete(hand);
   yajl_free(hand);
 
-  return pkg_list;
+  return results;
 }
 
 /* vim: set ts=2 sw=2 et: */
