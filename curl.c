@@ -21,6 +21,7 @@
 
 #include "conf.h"
 #include "curl.h"
+#include "util.h"
 
 struct response {
   size_t size;
@@ -63,7 +64,12 @@ char *curl_textfile_get(const char *url) {
 
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
   if (httpcode != 200) {
-    fprintf(stderr, "!! curl: server responded with code %ld\n", httpcode);
+    if (config->color)
+      cfprintf(stderr, "%<::%> curl: server responded with code %l\n",
+        config->colors->error, httpcode);
+    else
+      fprintf(stderr, "!! curl: server responded with code %ld\n", httpcode);
+
     free(curl_data.data);
     return NULL;
   }
@@ -77,7 +83,7 @@ int curl_local_init() {
   if (! curl)
     return 1;
 
-  if (config->verbose > 3) {
+  if (config->verbose >= 3) { /* super secret verbosity level */
     printf("::DEBUG:: Initializing curl\n");
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
   }

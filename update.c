@@ -39,7 +39,7 @@ int cower_do_update() {
   for (i = foreign_pkgs; i; i = i->next) {
     pmpkg_t *pmpkg = i->data;
 
-    if (config->verbose > 0) {
+    if (config->verbose >= 1) {
       if (config->color) {
         cprintf("%<::%> Checking %<%s%> for updates...\n", 
           config->colors->info,

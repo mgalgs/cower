@@ -150,7 +150,7 @@ alpm_list_t *alpm_query_foreign() {
 }
 
 void alpm_quick_init() {
-  if (config->verbose > 1)
+  if (config->verbose >= 2)
     printf("::DEBUG:: Initializing alpm\n");
 
   FILE *pacfd;
