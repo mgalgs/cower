@@ -125,7 +125,7 @@ int get_pkg_dependencies(const char *pkg) {
     dir = realpath(config->download_dir, NULL);
 
   pkgbuild_path = calloc(1, PATH_MAX + 1);
-  snprintf(pkgbuild_path, strlen(dir) + strlen(pkg) + 11, "%s/%s/PKGBUILD", dir, pkg);
+  snprintf(pkgbuild_path, PATH_MAX, "%s/%s/PKGBUILD", dir, pkg);
 
   buffer = get_file_as_buffer(pkgbuild_path);
   if (! buffer) {
