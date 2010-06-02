@@ -37,7 +37,8 @@ static struct color_t {
   const char *name;
   unsigned short val;
 } availcolors[] = {
-  { "BLACK",             BLACK }, { "BLUE",               BLUE },
+  { "BG",                   BG }, { "BLACK",             BLACK },
+  { "BLUE",               BLUE }, { "BOLDBG",           BOLDBG },
   { "BOLDBLACK",     BOLDBLACK }, { "BOLDBLUE",       BOLDBLUE },
   { "BOLDCYAN",       BOLDCYAN }, { "BOLDFG",           BOLDFG },
   { "BOLDGREEN",     BOLDGREEN }, { "BOLDMAGENTA", BOLDMAGENTA },
@@ -59,7 +60,7 @@ static unsigned short color_is_valid(const char *colorname) {
   struct color_t key, *result;
   key.name = colorname;
 
-  result = bsearch(&key, availcolors, COLOR_MAX, sizeof(struct color_t), fn_cmp_color);
+  result = bsearch(&key, availcolors, 20, sizeof(struct color_t), fn_cmp_color);
 
   if (result != NULL)
     return ((struct color_t*)result)->val;
