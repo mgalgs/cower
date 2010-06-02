@@ -142,9 +142,10 @@ static int parseargs(int argc, char **argv) {
       case 'v':
         config->verbose++;
         break;
-      case '?': 
+
+      case '?':
         return 1;
-      default: 
+      default:
         return 1;
     }
   }
@@ -302,6 +303,8 @@ int main(int argc, char **argv) {
 
       alpm_list_free_inner(results, aur_pkg_free);
       alpm_list_free(results);
+    } else {
+      ret = 2;
     }
   } else if (config->op & OP_SEARCH) {
     alpm_list_t *results = cower_do_query(targets, AUR_QUERY_TYPE_SEARCH);
@@ -309,6 +312,8 @@ int main(int argc, char **argv) {
       print_pkg_search(results);
       alpm_list_free_inner(results, aur_pkg_free);
       alpm_list_free(results);
+    } else {
+      ret = 2;
     }
   }
 
