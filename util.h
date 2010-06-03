@@ -34,7 +34,7 @@
 #define TRUE                  1
 #define FALSE                 0
 
-#define INDENT                17
+#define INDENT                18
 
 /* colors */
 enum {

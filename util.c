@@ -177,7 +177,7 @@ char *itoa(unsigned int num, int base){
 }
 
 void print_pkg_info(struct aur_pkg_t *pkg) {
-  size_t max_line_len = get_screen_width() - INDENT;
+  size_t max_line_len = get_screen_width() - INDENT - 1;
 
   if (config->color) {
     cprintf("Repository      : %<aur%>\n"
@@ -209,7 +209,7 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
     alpm_list_t *i;
     for (i = pkg->provides; i; i = i->next) {
       deplen = strlen(i->data);
-      if (count + deplen > max_line_len) {
+      if (count + deplen >= max_line_len) {
         printf("\n                  ");
         count = 0;
       }
@@ -228,7 +228,7 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
     alpm_list_t *i;
     for (i = pkg->depends; i; i = i->next) {
       deplen = strlen(i->data);
-      if (count + deplen > max_line_len) {
+      if (count + deplen >= max_line_len) {
         printf("\n                  ");
         count = 0;
       }
@@ -247,7 +247,7 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
     alpm_list_t *i;
     for (i = pkg->makedepends; i; i = i->next) {
       deplen = strlen(i->data);
-      if (count + deplen > max_line_len) {
+      if (count + deplen >= max_line_len) {
         printf("\n                  ");
         count = 0;
       }
