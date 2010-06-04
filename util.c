@@ -191,136 +191,49 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
             config->colors->url, pkg->url,
             config->colors->url, AUR_PKG_URL_FORMAT, pkg->id);
   } else {
-    printf("Repository      : aur\n"
-           "Name:           : %s\n"
-           "Version         : %s\n"
-           "URL             : %s\n"
-           "AUR Page        : %s%d\n",
-           pkg->name,
-           pkg->ver,
-           pkg->url,
-           AUR_PKG_URL_FORMAT, pkg->id);
-
+    printf("%-*s: aur\n%-*s: %s\n%-*s: %s\n%-*s: %s\n%-*s: %s%d\n",
+           INDENT - 2, PKG_OUT_REPO,
+           INDENT - 2, PKG_OUT_NAME, pkg->name,
+           INDENT - 2, PKG_OUT_VERSION, pkg->ver,
+           INDENT - 2, PKG_OUT_URL, pkg->url,
+           INDENT - 2, PKG_OUT_AURPAGE, AUR_PKG_URL_FORMAT, pkg->id);
   }
 
-  if (pkg->provides) {
-    printf("Provides        : ");
-    size_t deplen, count = 0;
-    alpm_list_t *i;
-    for (i = pkg->provides; i; i = i->next) {
-      deplen = strlen(i->data);
-      if (count + deplen >= max_line_len) {
-        printf("%-*s", INDENT + 1, " \n");
-        count = 0;
+  if (config->moreinfo) {
+    print_extinfo_list(PKG_OUT_PROVIDES, pkg->provides, max_line_len, INDENT);
+    print_extinfo_list(PKG_OUT_DEPENDS, pkg->depends, max_line_len, INDENT);
+    print_extinfo_list(PKG_OUT_MAKEDEPENDS, pkg->makedepends, max_line_len, INDENT);
+
+    /* Always making excuses for optdepends... */
+    if (pkg->optdepends) {
+      printf("Optdepends      : ");
+
+      printf("%s\n", (const char*)pkg->optdepends->data);
+
+      alpm_list_t *i;
+      for (i = pkg->optdepends->next; i; i = i->next) {
+        printf("%*s", INDENT, " ");
+        printf("%s\n", (const char*)i->data);
       }
-
-      count += printf("%s  ", (const char*)i->data);
     }
 
-    putchar('\n');
+    print_extinfo_list(PKG_OUT_CONFLICTS, pkg->conflicts, max_line_len, INDENT);
+    print_extinfo_list(PKG_OUT_REPLACES, pkg->replaces, max_line_len, INDENT);
   }
 
-  if (pkg->depends) {
-    printf("Depends         : ");
-
-    int count = 0;
-    size_t deplen;
-    alpm_list_t *i;
-    for (i = pkg->depends; i; i = i->next) {
-      deplen = strlen(i->data);
-      if (count + deplen >= max_line_len) {
-        printf("%-*s", INDENT + 1, "\n");
-        count = 0;
-      }
-
-      count += printf("%s  ", (const char*)i->data);
-    }
-
-    putchar('\n');
-  }
-
-  if (pkg->makedepends) {
-    printf("Makedepends     : ");
-
-    int count = 0;
-    size_t deplen;
-    alpm_list_t *i;
-    for (i = pkg->makedepends; i; i = i->next) {
-      deplen = strlen(i->data);
-      if (count + deplen >= max_line_len) {
-        printf("%-*s", INDENT + 1, "\n");
-        count = 0;
-      }
-
-      count += printf("%s  ", (const char*)i->data);
-    }
-
-    putchar('\n');
-  }
-
-  if (pkg->optdepends) {
-    printf("Optdepends      : ");
-
-    printf("%s\n", (const char*)pkg->optdepends->data);
-
-    alpm_list_t *i;
-    for (i = pkg->optdepends->next; i; i = i->next) {
-      printf("%*s", INDENT, " ");
-      printf("%s\n", (const char*)i->data);
-    }
-  }
-
-  if (pkg->conflicts) {
-    printf("Conflicts       : ");
-    int count = 0;
-    size_t deplen;
-    alpm_list_t *i;
-    for (i = pkg->conflicts; i; i = i->next) {
-      deplen = strlen(i->data);
-      if (count + deplen > max_line_len) {
-        printf("%-*s", INDENT + 1, "\n");
-        count = 0;
-      }
-
-      count += printf("%s  ", (const char*)i->data);
-    }
-
-    putchar('\n');
-  }
-
-  if (pkg->replaces) {
-    printf("Replaces        : ");
-    int count = 0;
-    size_t deplen;
-    alpm_list_t *i;
-    for (i = pkg->replaces; i; i = i->next) {
-      deplen = strlen(i->data);
-      if (count + deplen > max_line_len) {
-        printf("%-*s", INDENT, " \n");
-        count = 0;
-      }
-
-      count += printf("%s  ", (const char*)i->data);
-    }
-
-    putchar('\n');
-  }
-
-  printf("Category        : %s\n"
-         "License         : %s\n"
-         "Number of Votes : %d\n",
-         aur_cat[pkg->cat],
-         pkg->lic,
-         pkg->votes);
+  printf("%-*s: %s\n%-*s: %s\n%-*s: %d\n",
+         INDENT - 2, PKG_OUT_CAT, aur_cat[pkg->cat],
+         INDENT - 2, PKG_OUT_LICENSE, pkg->lic,
+         INDENT - 2, PKG_OUT_NUMVOTES, pkg->votes);
 
   if (config->color) {
     cprintf("Out of Date     : %<%s%>\n", pkg->ood ? 
       config->colors->outofdate : config->colors->uptodate, pkg->ood ? "Yes" : "No");
   } else {
-    printf("Out of Date     : %s\n", pkg->ood ? "Yes" : "No");
+    printf("%-*s: %s\n", INDENT - 2, PKG_OUT_OOD, pkg->ood ? "Yes" : "No");
   }
 
-  printf("Description     : ");
+  printf("%-*s: ", INDENT - 2, PKG_OUT_DESC);
 
   size_t desc_len = strlen(pkg->desc);
   if (desc_len < max_line_len)
@@ -369,6 +282,26 @@ void print_pkg_update(const char *pkg, const char *local_ver, const char *remote
     else
       printf("%s\n", pkg);
   }
+}
+
+void print_extinfo_list(const char *field, alpm_list_t *list, size_t max_line_len, int indent) {
+  if (!list)
+    return;
+
+  printf("%-*s: ", indent - 2, field);
+
+  int count = 0;
+  size_t deplen;
+  alpm_list_t *i;
+  for (i = list; i; i = i->next) {
+    deplen = strlen(i->data);
+    if (count + deplen >= max_line_len) {
+      printf("%-*s", indent + 1, "\n");
+      count = 0;
+    }
+    count += printf("%s  ", (const char*)i->data);
+  }
+  putchar('\n');
 }
 
 void print_wrapped(const char* buffer, size_t maxlength, int indent) {

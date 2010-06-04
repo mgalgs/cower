@@ -20,6 +20,22 @@
 
 #include <alpm_list.h>
 
+#define PKG_OUT_REPO          "Repository"
+#define PKG_OUT_NAME          "Name"
+#define PKG_OUT_VERSION       "Version"
+#define PKG_OUT_URL           "URL"
+#define PKG_OUT_AURPAGE       "AUR Page"
+#define PKG_OUT_PROVIDES      "Provides"
+#define PKG_OUT_DEPENDS       "Depends"
+#define PKG_OUT_MAKEDEPENDS   "Makedepends"
+#define PKG_OUT_CONFLICTS     "Conflicts"
+#define PKG_OUT_REPLACES      "Replaces"
+#define PKG_OUT_CAT           "Category"
+#define PKG_OUT_NUMVOTES      "Number of Votes"
+#define PKG_OUT_LICENSE       "License"
+#define PKG_OUT_OOD           "Out of Date"
+#define PKG_OUT_DESC          "Description"
+
 struct aur_pkg_t {
   int id;
   const char *name;
