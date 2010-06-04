@@ -210,7 +210,7 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
     for (i = pkg->provides; i; i = i->next) {
       deplen = strlen(i->data);
       if (count + deplen >= max_line_len) {
-        printf("\n                  ");
+        printf("%-*s", INDENT + 1, " \n");
         count = 0;
       }
 
@@ -229,7 +229,7 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
     for (i = pkg->depends; i; i = i->next) {
       deplen = strlen(i->data);
       if (count + deplen >= max_line_len) {
-        printf("\n                  ");
+        printf("%-*s", INDENT + 1, "\n");
         count = 0;
       }
 
@@ -248,7 +248,7 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
     for (i = pkg->makedepends; i; i = i->next) {
       deplen = strlen(i->data);
       if (count + deplen >= max_line_len) {
-        printf("\n                  ");
+        printf("%-*s", INDENT + 1, "\n");
         count = 0;
       }
 
@@ -265,7 +265,8 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
 
     alpm_list_t *i;
     for (i = pkg->optdepends->next; i; i = i->next) {
-      printf("                  %s\n", (const char*)i->data);
+      printf("%*s", INDENT, " ");
+      printf("%s\n", (const char*)i->data);
     }
   }
 
@@ -277,7 +278,7 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
     for (i = pkg->conflicts; i; i = i->next) {
       deplen = strlen(i->data);
       if (count + deplen > max_line_len) {
-        printf("\n                  ");
+        printf("%-*s", INDENT + 1, "\n");
         count = 0;
       }
 
@@ -295,7 +296,7 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
     for (i = pkg->replaces; i; i = i->next) {
       deplen = strlen(i->data);
       if (count + deplen > max_line_len) {
-        printf("\n                  ");
+        printf("%-*s", INDENT, " \n");
         count = 0;
       }
 
@@ -370,7 +371,7 @@ void print_pkg_update(const char *pkg, const char *local_ver, const char *remote
   }
 }
 
-void print_wrapped(const char* buffer, size_t maxlength, size_t indent) {
+void print_wrapped(const char* buffer, size_t maxlength, int indent) {
   size_t count, buflen;
   const char *ptr, *endptr;
 
@@ -393,10 +394,7 @@ void print_wrapped(const char* buffer, size_t maxlength, size_t indent) {
     count += fwrite(ptr, 1, endptr - ptr, stdout);
 
     /* print a newline and an indent */
-    putchar('\n');
-    size_t i;
-    for (i = 0; i < indent; i++)
-      putchar(' ');
+    printf("%-*s", indent, "\n");
   } while (*endptr);
 }
 

@@ -61,7 +61,7 @@ char *itoa(unsigned int, int);
 void print_pkg_info(struct aur_pkg_t*);
 void print_pkg_search(alpm_list_t*);
 void print_pkg_update(const char*, const char*, const char*);
-void print_wrapped(const char*, size_t, size_t);
+void print_wrapped(const char*, size_t, int);
 char *ltrim(char*);
 char *strtrim(char*);
 
