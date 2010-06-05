@@ -266,8 +266,10 @@ int main(int argc, char **argv) {
   config = config_new();
 
   ret = parseargs(argc, argv);
-  if (ret > 0)
+  if (ret > 0) {
+    usage();
     cleanup(ret);
+  }
 
   if (!config->op) {
     usage();
