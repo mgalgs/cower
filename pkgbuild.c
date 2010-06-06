@@ -165,10 +165,10 @@ int get_pkg_dependencies(const char *pkg) {
       continue;
     }
 
-    if (is_in_pacman(depend)) /* available in pacman */
+    if (is_in_pacman(depend))
       continue;
 
-    /* can't find it, check the AUR */
+    /* can't find it in pacman, check the AUR */
     alpm_list_t *results = query_aur_rpc(AUR_QUERY_TYPE_INFO, depend);
     if (results) {
 
@@ -180,9 +180,15 @@ int get_pkg_dependencies(const char *pkg) {
 
       aur_pkg_free(results->data);
       alpm_list_free(results);
+      continue;
     }
-    /* Silently ignore packages that can't be found anywhere 
-     * TODO: Maybe not silent if verbose? */
+
+    /* can't find it anywhere -- warn about this */
+    if (config->color)
+      cfprintf(stderr, "%<::%> Unresolvable dependency: '%s'\n",
+        config->colors->warn, depend);
+     else
+      fprintf(stderr, "^^ Unresolvable dependency: '%s'\n", depend);
   }
 
   /* Cleanup */
