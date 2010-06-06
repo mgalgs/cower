@@ -211,10 +211,8 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
       printf("%s\n", (const char*)pkg->optdepends->data);
 
       alpm_list_t *i;
-      for (i = pkg->optdepends->next; i; i = i->next) {
-        printf("%*s", INDENT, " ");
-        printf("%s\n", (const char*)i->data);
-      }
+      for (i = pkg->optdepends->next; i; i = i->next)
+        printf("%*s%s\n", INDENT, "", (const char*)i->data);
     }
 
     print_extinfo_list(PKG_OUT_CONFLICTS, pkg->conflicts, max_line_len, INDENT);
@@ -305,30 +303,38 @@ void print_extinfo_list(const char *field, alpm_list_t *list, size_t max_line_le
 }
 
 void print_wrapped(const char* buffer, size_t maxlength, int indent) {
-  size_t count, buflen;
-  const char *ptr, *endptr;
+  int pos, lastSpace;
 
-  count = 0;
-  buflen = strlen(buffer);
+  pos = lastSpace = 0;
+  while(buffer[pos] != 0) {
+    int isLf = (buffer[pos] == '\n');
 
-  do {
-    ptr = buffer + count;
+    if (isLf || pos == maxlength) {
+      if (isLf || lastSpace == 0)
+        lastSpace = pos;
 
-    /* don't set endptr beyond the end of the buffer */
-    if (ptr - buffer + maxlength <= buflen)
-      endptr = ptr + maxlength;
-    else
-      endptr = buffer + buflen;
+      while(*buffer != 0 && lastSpace-- > 0)
+        putchar(*buffer++);
 
-    /* back up EOL to a null terminator or space */
-    while (*(endptr) && !isspace(*(endptr)) )
-      endptr--;
+      putchar('\n');
+      if (indent)
+        printf("%*s", indent, "");
 
-    count += fwrite(ptr, 1, endptr - ptr, stdout);
+      if (isLf) /* newline in the stream, skip it */
+        buffer++;
 
-    /* print a newline and an indent */
-    printf("%-*s", indent, "\n");
-  } while (*endptr);
+      while (*buffer && isspace(*buffer))
+        buffer++;
+
+      lastSpace = pos = 0;
+    } else {
+      if (isspace(buffer[pos]))
+        lastSpace = pos;
+
+      pos++;
+    }
+  }
+  printf("%s\n", buffer);
 }
 
 char *ltrim(char *str) {
