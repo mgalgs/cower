@@ -35,7 +35,7 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **deparray, int 
 
   /* XXX: This will fail sooner or later */
   if (strchr(*deparray, ':')) { /* we're dealing with optdepdends */
-    token = strtok(*deparray, "\'\"\n");
+    token = strtok(*deparray, "\\\'\"\n");
     while (token) {
       ltrim(token);
       if (strlen(token)) {
@@ -44,7 +44,7 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **deparray, int 
         deplist = alpm_list_add(deplist, strdup(token));
       }
 
-      token = strtok(NULL, "\'\"\n");
+      token = strtok(NULL, "\\\'\"\n");
     }
     return deplist;
   }
