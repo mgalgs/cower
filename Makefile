@@ -28,7 +28,7 @@ cower: ${OBJ}
 doc: cower.1
 cower.1: README.pod
 	@printf "   %-8s %s\n" DOC cower.1
-	@pod2man --section=1 --center=" " --release=" " --name="COWER" --date="cower-VERSION" README.pod > cower.1
+	@pod2man --section=1 --center=" " --release=" " --name="COWER" --date="cower-${VERSION}" README.pod > cower.1
 
 install: cower cower.1
 	@printf "   %-8s %s\n" INSTALL ${DESTDIR}${PREFIX}/bin/cower
@@ -37,7 +37,7 @@ install: cower cower.1
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/cower
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@printf "   %-8s %s\n" INSTALL ${DESTDIR}${MANPREFIX}/man1/cower.1
-	@sed "s/\^VERSION/${VERSION}/g" < cower.1 > ${DESTDIR}${MANPREFIX}/man1/cower.1
+	@cp -f cower.1 ${DESTDIR}${MANPREFIX}/man1/cower.1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/cower.1
 	@printf "   %-8s %s\n" INSTALL ${DESTDIR}/etc/bash_completion.d/cower
 	@mkdir -p ${DESTDIR}/etc/bash_completion.d
