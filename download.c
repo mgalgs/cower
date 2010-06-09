@@ -165,7 +165,6 @@ int cower_do_download(alpm_list_t *targets) {
     alpm_list_t *results = query_aur_rpc(AUR_QUERY_TYPE_INFO, i->data);
     if (results) { /* Found it in the AUR */
       dl_res = download_taurball(results->data);
-      ret += dl_res;
 
       /* If the download didn't go smoothly, it's not ok to get depends */
       if (dl_res == 0 && config->getdeps)
@@ -179,6 +178,8 @@ int cower_do_download(alpm_list_t *targets) {
       else
         fprintf(stderr, "!!");
       fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
+
+      ret = 1;
     }
   }
 
