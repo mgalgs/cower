@@ -4,7 +4,7 @@ _cower() {
   local cur prev opts src ng_set
 
   # save current nullglob setting and turn it on
-  #ng_set=$(shopt -p nullglob)
+  ng_set=$(shopt -p nullglob)
   shopt -s nullglob
 
   COMPREPLY=()
@@ -32,7 +32,7 @@ _cower() {
   esac
 
   # restore the previous nullglob setting
-  #$ng_set
+  $ng_set
 
 }
 
