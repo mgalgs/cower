@@ -138,11 +138,11 @@ static int get_screen_width(void) {
   return 80;
 }
 
-
 char *get_file_as_buffer(const char *filename) {
   FILE *fd;
   char *buf;
   off_t fsize;
+  size_t nread;
 
   fsize = filesize(filename);
 
@@ -152,10 +152,10 @@ char *get_file_as_buffer(const char *filename) {
   buf = calloc(1, fsize + 1);
 
   fd = fopen(filename, "r");
-  fread(buf, 1, fsize, fd);
+  nread = fread(buf, 1, fsize, fd);
   fclose(fd);
 
-  return buf;
+  return nread == 0 ? NULL : buf;
 }
 
 char *itoa(unsigned int num, int base){
@@ -303,7 +303,7 @@ void print_extinfo_list(const char *field, alpm_list_t *list, size_t max_line_le
 }
 
 void print_wrapped(const char* buffer, size_t maxlength, int indent) {
-  int pos, lastSpace;
+  unsigned pos, lastSpace;
 
   pos = lastSpace = 0;
   while(buffer[pos] != 0) {
