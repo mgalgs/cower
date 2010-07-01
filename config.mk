@@ -11,7 +11,7 @@ CURLINC = /usr/include/curl
 YAJLINC = /usr/include/yajl
 
 INCS = -I. -I/usr/include -I${CURLINC} -I${YAJLINC}
-LIBS = -L/usr/lib -lc -lcurl -lalpm -lyajl
+LIBS = -L/usr/lib -lc -lcurl -lalpm -lyajl -larchive
 
 # flags
 CPPFLAGS = -DVERSION=\"${VERSION}\"

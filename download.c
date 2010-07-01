@@ -19,11 +19,12 @@
 
 #include <errno.h>
 #include <linux/limits.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/wait.h>
+
+#include <archive.h>
+#include <archive_entry.h>
 
 #include "aur.h"
 #include "curl.h"
@@ -32,6 +33,33 @@
 #include "download.h"
 #include "query.h"
 #include "util.h"
+
+static int archive_extract_tar_gz(FILE *fd) {
+  struct archive *archive = archive_read_new();
+  struct archive_entry *entry;
+  const int archive_flags = ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_TIME;
+
+  archive_read_support_compression_all(archive);
+  archive_read_support_format_all(archive);
+
+  if (archive_read_open_FILE(archive, fd) != ARCHIVE_OK)
+    return 1;
+
+  while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
+    switch (archive_read_extract(archive, entry, archive_flags)) {
+      case ARCHIVE_OK:
+      case ARCHIVE_WARN:
+      case ARCHIVE_RETRY: break;
+      case ARCHIVE_EOF:
+      case ARCHIVE_FATAL: return 1; break;
+    }
+  }
+
+  archive_read_close(archive);
+  archive_read_finish(archive);
+
+  return 0;
+}
 
 int download_taurball(struct aur_pkg_t *aurpkg) {
   const char *filename, *pkgname;
@@ -82,7 +110,7 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   fullpath[strlen(fullpath)] = '.'; /* unmask extension */
 
   /* check for write access */
-  FILE *fd = fopen(fullpath, "w");
+  FILE *fd = fopen(fullpath, "w+");
   if (! fd) {
     result = errno;
     if (config->color)
@@ -110,7 +138,6 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   curl_free(escaped);
 
   curlstat = curl_easy_perform(curl);
-  fclose(fd);
 
   if (curlstat != CURLE_OK) {
     fprintf(stderr, "!! curl: %s\n", curl_easy_strerror(curlstat));
@@ -131,26 +158,20 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
       } else
         printf(":: %s downloaded to %s\n", pkgname, dir);
 
-      /* fork bsdtar and extract the downloaded taurball */
-      pid_t pid = fork();
-      if (pid == 0) {
-        if (config->verbose >= 2)
-          fprintf(stderr, "::DEBUG bsdtar -C %s -xf %s\n", dir, fullpath);
+      if (config->download_dir)
+        chdir(dir);
 
-        result = execlp("bsdtar", "bsdtar", "-C", dir, "-xf", fullpath, NULL);
-
-      } else /* wait for bsdtar to finish */
-        while (! waitpid(pid, NULL, WNOHANG));
-
-      if (result == 0) /* no errors, delete the tarball */
+      rewind(fd);
+      if (archive_extract_tar_gz(fd) == 0) /* no errors, delete the tarball */
         unlink(fullpath);
     }
   }
 
+  fclose(fd);
+
   FREE(dir);
   return result;
 }
-
 
 int cower_do_download(alpm_list_t *targets) {
   alpm_list_t *i;
