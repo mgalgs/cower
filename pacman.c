@@ -174,6 +174,7 @@ void alpm_quick_init() {
   }
 
   while (fgets(line, PATH_MAX, pacfd)) {
+    alpm_list_t *list = NULL, *item = NULL;
     strtrim(line);
 
     /* strip out comments */
@@ -200,10 +201,18 @@ void alpm_quick_init() {
       strtrim(key);
       strtrim(ptr);
 
-      if (strcmp(key, "RootDir") == 0)
+      if (STREQ(key, "RootDir"))
         alpm_option_set_root(ptr);
-      else if (strcmp(key, "DBPath") == 0)
+      else if (STREQ(key, "DBPath"))
         alpm_option_set_dbpath(ptr);
+      else if (STREQ(key, "IgnorePkg")) {
+        list = strsplit(ptr, ' ');
+        for (item = list; item; item = item->next) {
+          if (alpm_list_find_str(config->ignorepkgs, item->data) == NULL) {
+            config->ignorepkgs = alpm_list_add(config->ignorepkgs, strdup(item->data));
+          }
+        }
+      }
     }
   }
 

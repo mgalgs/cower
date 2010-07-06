@@ -66,9 +66,18 @@ int cower_do_update() {
     if (alpm_pkg_vercmp(remote_ver, local_ver) > 0) {
       ret++; /* Found an update, increment */
 
-      if (config->op & OP_DL) /* -d found with -u */
-        download_taurball(aurpkg);
-      else {
+      /* download if -d passed with -u but not ignored */
+      if ((config->op & OP_DL)) {
+        if (alpm_list_find_str(config->ignorepkgs, aurpkg->name) != NULL) {
+          if (config->color) {
+            cfprintf(stderr, "%<::%> ignoring package %s\n", config->colors->warn, aurpkg->name);
+          } else {
+            fprintf(stderr, "^^ ignoring package %s\n", aurpkg->name);
+          }
+        } else {
+          download_taurball(aurpkg);
+        }
+      } else {
         print_pkg_update(aurpkg->name, local_ver, remote_ver);
       }
     }

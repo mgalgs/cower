@@ -48,6 +48,11 @@ Use colored output.
 
 Overwrite existing files when downloading.
 
+=item B<--ignore>
+
+Ignore a package upgrade. Can be used more than once. Also accepts a comma delimited list as
+a single argument. Packages listed in pacman's IgnorePkg directive are honored.
+
 =item B<-q, --quiet>
 
 Output less.

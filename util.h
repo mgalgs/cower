@@ -18,6 +18,7 @@
 #define _COWER_UTIL_H
 
 #include <stdio.h>
+#include <alpm_list.h>
 
 #include "pacman.h"
 #include "package.h"
@@ -65,6 +66,7 @@ void print_pkg_update(const char*, const char*, const char*);
 void print_wrapped(const char*, size_t, int);
 char *ltrim(char*);
 char *strtrim(char*);
+alpm_list_t *strsplit(const char*, const char);
 
 #endif /* _COWER_UTIL_H */
 

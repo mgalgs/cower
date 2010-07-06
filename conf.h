@@ -21,6 +21,8 @@
 #ifndef _COWER_CONF_H
 #define _COWER_CONF_H
 
+#include <alpm_list.h>
+
 struct config_t {
   /* operations */
   int op;
@@ -33,6 +35,8 @@ struct config_t {
   unsigned short quiet;
   unsigned short moreinfo;
   const char *download_dir;
+
+  alpm_list_t *ignorepkgs;
 
   struct color_cfg_t {
     unsigned short repo;
@@ -51,6 +55,10 @@ enum {
   OP_INFO = 2,
   OP_DL = 4,
   OP_UPDATE = 8
+};
+
+enum {
+  OP_IGNORE = 1000
 };
 
 int config_free(struct config_t *oldconfig);

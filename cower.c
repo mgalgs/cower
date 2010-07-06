@@ -91,6 +91,7 @@ static int parseargs(int argc, char **argv) {
 
     /* Options */
     {"color",     no_argument,        0, 'c'},
+    {"ignore",    required_argument,  0, OP_IGNORE},
     {"verbose",   no_argument,        0, 'v'},
     {"force",     no_argument,        0, 'f'},
     {"quiet",     no_argument,        0, 'q'},
@@ -99,9 +100,9 @@ static int parseargs(int argc, char **argv) {
   };
 
   while ((opt = getopt_long(argc, argv, "disucfqt:v", opts, &option_index))) {
-    if (opt < 0) {
+    alpm_list_t *item = NULL, *list = NULL;
+    if (opt < 0)
       break;
-    }
 
     switch (opt) {
       /* Operations */
@@ -141,6 +142,14 @@ static int parseargs(int argc, char **argv) {
         break;
       case 'v':
         config->verbose++;
+        break;
+      case OP_IGNORE:
+        list = strsplit(optarg, ',');
+        for (item = list; item; item = item->next) {
+          if (alpm_list_find_str(config->ignorepkgs, item->data) == NULL) {
+            config->ignorepkgs = alpm_list_add(config->ignorepkgs, strdup(item->data));
+          }
+        }
         break;
 
       case '?':
@@ -250,6 +259,7 @@ Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
 printf(" General options:\n\
   -c, --color             Use colored output.\n\
   -f, --force             Overwrite existing files when downloading.\n\
+      --ignore PKG        Ignore a package upgrade (can be used more than once)\n\
   -q, --quiet             Output less.\n\
   -t DIR, --target=DIR    Specify an alternate download directory.\n\
   -v, --verbose           Be more verbose.\n\n");

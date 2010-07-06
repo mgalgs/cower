@@ -16,6 +16,7 @@
  */
 
 /* standard */
+#define _GNU_SOURCE
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -375,6 +376,31 @@ char *strtrim(char *str) {
   *++pch = '\0';
 
   return str;
+}
+
+alpm_list_t *strsplit(const char *str, const char splitchar) {
+  alpm_list_t *list = NULL;
+  const char *prev = str;
+  char *dup = NULL;
+
+  while((str = strchr(str, splitchar))) {
+    dup = strndup(prev, str - prev);
+    if(dup == NULL) {
+      return(NULL);
+    }
+    list = alpm_list_add(list, dup);
+
+    str++;
+    prev = str;
+  }
+
+  dup = strdup(prev);
+  if(dup == NULL) {
+    return(NULL);
+  }
+  list = alpm_list_add(list, dup);
+
+  return(list);
 }
 
 /* vim: set ts=2 sw=2 et: */

@@ -31,12 +31,12 @@ int config_free(struct config_t *oldconfig) {
   if (oldconfig == NULL)
     return -1;
 
+  /* free composited memory */
   free(oldconfig->colors);
-
-  /* free malloc'd strings within config */
   FREE(oldconfig->download_dir);
-  free(oldconfig);
-  oldconfig = NULL;
+  FREELIST(oldconfig->ignorepkgs);
+
+  FREE(oldconfig);
 
   return 0;
 }
@@ -55,6 +55,8 @@ struct config_t *config_new(void) {
                   newconfig->quiet = newconfig->verbose = newconfig->moreinfo = 0;
 
   newconfig->download_dir = NULL;
+
+  newconfig->ignorepkgs = NULL;
 
   newconfig->colors->repo = BOLDMAGENTA;
   newconfig->colors->pkg = BOLDWHITE;
