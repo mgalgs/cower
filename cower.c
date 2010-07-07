@@ -259,9 +259,9 @@ Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
 printf(" General options:\n\
   -c, --color             Use colored output.\n\
   -f, --force             Overwrite existing files when downloading.\n\
-      --ignore PKG        Ignore a package upgrade (can be used more than once)\n\
+      --ignore <pkg>      Ignore a package upgrade (can be used more than once)\n\
   -q, --quiet             Output less.\n\
-  -t DIR, --target=DIR    Specify an alternate download directory.\n\
+  -t, --target <dir>      Specify an alternate download directory.\n\
   -v, --verbose           Be more verbose.\n\n");
 }
 
