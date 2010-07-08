@@ -93,7 +93,7 @@ B<BLACK>, B<BLUE>, B<CYAN>, B<FG>, B<GREEN>, B<MAGENTA>, B<RED>, B<WHITE>, B<YEL
 
 All colors are also available in bold by prefixing BOLD (e.g. B<BOLDYELLOW>).
 
-All keys and values are case sensitive. Comments, if desired, can be specifde with a #. If a
+All keys and values are case sensitive. Comments, if desired, can be specfied with a #. If a
 color is not specified, a default will prevail.
 
 =head1 AUTHOR
