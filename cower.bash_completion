@@ -1,23 +1,23 @@
 #!/bin/bash
 
 _cower() {
-  local cur prev opts src ng_set
+  local ng_set cower_exec cur prev opts src
 
-  # save current nullglob setting and turn it on
+  # nullglob avoids problems when no results found
   ng_set=$(shopt -p nullglob)
   shopt -s nullglob
 
   COMPREPLY=()
   cur=${COMP_WORDS[COMP_CWORD]}
   prev=${COMP_WORDS[COMP_CWORD-1]}
+
   cower_exec=$(type -P cower)
   [[ -z $cower_exec ]] && return 0
 
-  # Valid longopts
   opts="-d --download -i --info -s --search -u --update -c --color \
         -f --force -q --quiet -t --target -v --verbose"
 
-  # complete --info searches
+  # complete options
   if [[ $cur == -* ]]; then
     COMPREPLY=( $(compgen -W "$opts" -- $cur ) )
     return 0
@@ -26,12 +26,13 @@ _cower() {
     return 0
   fi
 
+  # complete package names
   case "$prev" in
     -@(!(-*)[di]*|-download|-info))
       COMPREPLY=( $(compgen -W "$([[ ${#cur} -ge 2 ]] && $cower_exec -sq $cur 2>/dev/null)" -- $cur ) ) ;;
   esac
 
-  # restore the previous nullglob setting
+  # restore nullglob setting
   $ng_set
 
 }
