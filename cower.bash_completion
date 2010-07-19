@@ -1,11 +1,10 @@
 #!/bin/bash
 
 _cower() {
-  local ng_set cower_exec cur prev opts src
+  local ng cower_exec cur prev opts src
 
   # nullglob avoids problems when no results found
-  ng_set=$(shopt -p nullglob)
-  shopt -s nullglob
+  [[ ! -o nullglob ]] && { shopt -s nullglob; ng=1; }
 
   COMPREPLY=()
   cur=${COMP_WORDS[COMP_CWORD]}
@@ -32,8 +31,8 @@ _cower() {
       COMPREPLY=( $(compgen -W "$([[ ${#cur} -ge 2 ]] && $cower_exec -sq $cur 2>/dev/null)" -- $cur ) ) ;;
   esac
 
-  # restore nullglob setting
-  $ng_set
+  # restore nullglob setting if it was turned on
+  [[ $ng ]] && shopt -u nullglob
 
 }
 
