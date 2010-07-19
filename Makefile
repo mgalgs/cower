@@ -2,18 +2,21 @@
 
 include config.mk
 
-SRC = conf.c cower.c curl.c download.c package.c pacman.c pkgbuild.c query.c update.c util.c yajl.c
+SRC = ${shell ls *.c}
 OBJ = ${SRC:.c=.o}
 
-all: options cower doc
+all: buildopts cower doc
 
-options:
-	@echo cower build options:
-	@echo "PREFIX    = ${PREFIX}"
-	@echo "MANPREFIX = ${MANPREFIX}"
+buildopts:
+	@echo build options:
 	@echo "CC        = ${CC}"
 	@echo "CFLAGS    = ${CFLAGS}"
 	@echo "LDFLAGS   = ${LDFLAGS}"
+
+installopts:
+	@echo install options:
+	@echo "PREFIX    = ${PREFIX}"
+	@echo "MANPREFIX = ${MANPREFIX}"
 
 .c.o:
 	@printf "   %-8s %s\n" CC $@
@@ -30,7 +33,7 @@ cower.1: README.pod
 	@printf "   %-8s %s\n" DOC cower.1
 	@pod2man --section=1 --center=" " --release=" " --name="COWER" --date="cower-${VERSION}" README.pod > cower.1
 
-install: cower cower.1
+install: installopts cower cower.1
 	@printf "   %-8s %s\n" INSTALL ${DESTDIR}${PREFIX}/bin/cower
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
 	@cp -f cower ${DESTDIR}${PREFIX}/bin
@@ -65,5 +68,5 @@ clean:
 	@printf "   %-8s %s\n" CLEAN "*.o cower cower.1"
 	@rm -f *.o cower cower.1
 
-.PHONY: all clean dist doc install options uninstall
+.PHONY: all clean dist doc install buildopts installopts uninstall
 
