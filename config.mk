@@ -2,8 +2,8 @@
 VERSION = $(shell git describe)
 
 # paths
-PREFIX = /usr/local
-MANPREFIX = ${PREFIX}/share/man
+PREFIX ?= /usr/local
+MANPREFIX ?= ${PREFIX}/share/man
 
 # includes and libs
 ALPMINC = /usr/include
