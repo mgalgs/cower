@@ -35,20 +35,15 @@ cower.1: README.pod
 
 install: installopts cower cower.1
 	@printf "   %-8s %s\n" INSTALL ${DESTDIR}${PREFIX}/bin/cower
-	@mkdir -p ${DESTDIR}${PREFIX}/bin
-	@cp -f cower ${DESTDIR}${PREFIX}/bin
-	@chmod 755 ${DESTDIR}${PREFIX}/bin/cower
-	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
+	@install -D -m755 cower ${DESTDIR}${PREFIX}/bin/cower
 	@printf "   %-8s %s\n" INSTALL ${DESTDIR}${MANPREFIX}/man1/cower.1
-	@cp -f cower.1 ${DESTDIR}${MANPREFIX}/man1/cower.1
-	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/cower.1
+	@install -D -m644 cower.1 ${DESTDIR}${MANPREFIX}/man1/cower.1
 	@printf "   %-8s %s\n" INSTALL ${DESTDIR}/etc/bash_completion.d/cower
-	@mkdir -p ${DESTDIR}/etc/bash_completion.d
-	@cp -f cower.bash_completion ${DESTDIR}/etc/bash_completion.d/cower
+	@install -D -m644 bash_completion ${DESTDIR}/etc/bash_completion.d/cower
 
 dist: clean
 	@mkdir -p cower-${VERSION}
-	@cp -R ${SRC} *.h Makefile config.mk README.pod cower.bash_completion cower-${VERSION}
+	@cp -R ${SRC} *.h Makefile config.mk README.pod bash_completion cower-${VERSION}
 	@sed "s/VERSION =.*/VERSION = $(shell git describe)/" < config.mk > cower-${VERSION}/config.mk
 	@printf "   %-8s %s\n" TAR cower-${VERSION}.tar
 	@tar -cf cower-${VERSION}.tar cower-${VERSION}
