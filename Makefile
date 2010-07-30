@@ -31,7 +31,7 @@ cower: ${OBJ}
 doc: cower.1
 cower.1: README.pod
 	@printf "   %-8s %s\n" DOC cower.1
-	@pod2man --section=1 --center=" " --release=" " --name="COWER" --date="cower-${VERSION}" README.pod > cower.1
+	@pod2man --section=1 --center="Cower Manual" --name="COWER" --release="cower ${VERSION}" README.pod > cower.1
 
 install: installopts cower cower.1
 	@printf "   %-8s %s\n" INSTALL ${DESTDIR}${PREFIX}/bin/cower
