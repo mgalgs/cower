@@ -69,10 +69,12 @@ int cower_do_update() {
       /* download if -d passed with -u but not ignored */
       if ((config->op & OP_DL)) {
         if (alpm_list_find_str(config->ignorepkgs, aurpkg->name) != NULL) {
-          if (config->color) {
-            cfprintf(stderr, "%<::%> ignoring package %s\n", config->colors->warn, aurpkg->name);
-          } else {
-            fprintf(stderr, "^^ ignoring package %s\n", aurpkg->name);
+          if (! config->quiet) {
+            if (config->color) {
+              cfprintf(stderr, "%<::%> ignoring package %s\n", config->colors->warn, aurpkg->name);
+            } else {
+              fprintf(stderr, "^^ ignoring package %s\n", aurpkg->name);
+            }
           }
         } else {
           download_taurball(aurpkg);
