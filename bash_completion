@@ -26,10 +26,9 @@ _cower() {
   fi
 
   # complete package names
-  case "$prev" in
-    -@(!(-*)[di]*|-download|-info))
-      COMPREPLY=( $(compgen -W "$([[ ${#cur} -ge 2 ]] && $cower_exec -sq $cur 2>/dev/null)" -- $cur ) ) ;;
-  esac
+  if [[ ${COMP_WORDS[@]} = *-@(!(-*)[di]*|-download|-info)* ]]; then
+    COMPREPLY=( $(compgen -W "$([[ ${#cur} -ge 2 ]] && $cower_exec -sq $cur 2>/dev/null)" -- $cur ) )
+  fi
 
   # restore nullglob setting if it was turned on
   [[ $ng ]] && shopt -u nullglob
