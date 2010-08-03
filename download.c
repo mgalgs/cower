@@ -164,6 +164,12 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
       rewind(fd);
       if (archive_extract_tar_gz(fd) == 0) /* no errors, delete the tarball */
         unlink(fullpath);
+      else {
+        if (config->color) {
+          cfprintf(stderr, "%<::%> failed to extract %s\n", config->colors->error, fullpath);
+        } else
+          printf("!! failed to extract %s\n", fullpath);
+      }
     }
   }
 
