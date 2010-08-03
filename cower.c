@@ -17,10 +17,12 @@
 
 #define _GNU_SOURCE
 
+#include <ctype.h> /* isspace */
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h> /* isatty */
 
 #include "aur.h"
 #include "conf.h"
@@ -284,6 +286,29 @@ int main(int argc, char **argv) {
   if (!config->op) {
     usage();
     cleanup(1);
+  }
+
+  /* read package arguments from stdin if we have none yet */
+  if(!targets && !isatty(0)) {
+    char line[BUFSIZ];
+    int i = 0;
+    while((line[i] = fgetc(stdin)) != EOF) {
+      if(isspace(line[i])) {
+        line[i] = 0;
+        /* avoid adding zero length arg, if multiple spaces separate args */
+        if(i > 0) {
+          targets = alpm_list_add(targets, strdup(line));
+          i = 0;
+        }
+      } else {
+        ++i;
+      }
+    }
+    /* end of stream -- check for data still in line buffer */
+    if(i > 0) {
+      targets = alpm_list_add(targets, strdup(line));
+    }
+    freopen(ctermid(NULL), "r", stdin);
   }
 
   if (config->color) {
