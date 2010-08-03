@@ -212,6 +212,7 @@ void alpm_quick_init() {
             config->ignorepkgs = alpm_list_add(config->ignorepkgs, strdup(item->data));
           }
         }
+        FREELIST(list);
       }
     }
   }
