@@ -3,7 +3,7 @@
 _cower() {
   local ng cower_exec cur prev opts src
 
-  # nullglob avoids problems when no results found
+  # nullglob avoids problems when no results are found
   [[ ! -o nullglob ]] && { shopt -s nullglob; ng=1; }
 
   COMPREPLY=()
@@ -19,18 +19,13 @@ _cower() {
   # complete options
   if [[ $cur == -* ]]; then
     COMPREPLY=( $(compgen -W "$opts" -- $cur ) )
-    return 0
   elif [[ $cur == --target= || $prev == '-t' ]]; then
-    COMPREPLY=( $(compgen -d -- $cur) )
-    return 0
-  fi
-
-  # complete package names
-  if [[ ${COMP_WORDS[@]} = *-@(!(-*)[di]*|-download|-info)* ]]; then
+    COMPREPLY=( $(compgen -f -- $cur) )
+  elif [[ ${COMP_WORDS[@]} = *-@(!(-*)[di]*|-download|-info)* ]]; then
     COMPREPLY=( $(compgen -W "$([[ ${#cur} -ge 2 ]] && $cower_exec -sq $cur 2>/dev/null)" -- $cur ) )
   fi
 
-  # restore nullglob setting if it was turned on
+  # restore nullglob setting
   [[ $ng ]] && shopt -u nullglob
 
 }
