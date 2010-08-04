@@ -21,7 +21,7 @@ _cower() {
     COMPREPLY=( $(compgen -W "$opts" -- $cur ) )
     return 0
   elif [[ $cur == --target= || $prev == '-t' ]]; then
-    _filedir -d
+    COMPREPLY=( $(compgen -d -- $cur) )
     return 0
   fi
 
