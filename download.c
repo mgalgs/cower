@@ -86,7 +86,7 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   }
 
   pkgname = aurpkg->name;
-  filename = strrchr(aurpkg->urlpath, '/') + 1;
+  filename = basename(aurpkg->urlpath);
 
   snprintf(fullpath, PATH_MAX, "%s/%s", dir, filename);
 
