@@ -126,7 +126,8 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
 
   /* all clear to download */
   escaped = curl_easy_escape(curl, pkgname, strlen(pkgname));
-  snprintf(url, AUR_URL_SIZE, AUR_PKG_URL, pkgname, pkgname);
+  snprintf(url, AUR_URL_SIZE, AUR_PKG_URL, escaped, escaped);
+  curl_free(escaped);
 
   if (config->verbose >= 2)
     fprintf(stderr, "::DEBUG Fetching URL %s\n", url);
@@ -134,8 +135,6 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, fd);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
-
-  curl_free(escaped);
 
   curlstat = curl_easy_perform(curl);
 
