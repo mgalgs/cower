@@ -49,8 +49,7 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **deparray, int 
     return deplist;
   }
 
-  token = strtok(*deparray, " \n");
-  while (token) {
+  for (token = strtok(*deparray, " \n"); token; token = strtok(NULL, " \n")) {
     ltrim(token);
     if (*token == '\'' || *token == '\"')
       token++;
@@ -69,7 +68,6 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **deparray, int 
     if (alpm_list_find_str(deplist, token) == NULL)
       deplist = alpm_list_add(deplist, strdup(token));
 
-    token = strtok(NULL, " \n");
   }
 
   return deplist;
