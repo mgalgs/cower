@@ -18,6 +18,7 @@
 /* standard */
 #define _GNU_SOURCE
 #include <ctype.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -401,6 +402,21 @@ alpm_list_t *strsplit(const char *str, const char splitchar) {
   list = alpm_list_add(list, dup);
 
   return(list);
+}
+
+char *relative_to_absolute_path(const char *relpath) {
+  if (*relpath == '/') { /* already absolute */
+    return strdup(relpath);
+  }
+
+  char *abspath = NULL;
+
+  abspath = getcwd(abspath, PATH_MAX + 1);
+  abspath = strcat(abspath, "/");
+  abspath = strcat(abspath, relpath);
+
+  return abspath;
+
 }
 
 /* vim: set ts=2 sw=2 et: */

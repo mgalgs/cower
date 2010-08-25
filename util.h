@@ -67,6 +67,7 @@ void print_wrapped(const char*, size_t, int);
 char *ltrim(char*);
 char *strtrim(char*);
 alpm_list_t *strsplit(const char*, const char);
+char *relative_to_absolute_path(const char*);
 
 #endif /* _COWER_UTIL_H */
 
