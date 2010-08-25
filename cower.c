@@ -140,7 +140,7 @@ static int parseargs(int argc, char **argv) {
       case 't':
         if (config->download_dir)
           FREE(config->download_dir);
-        config->download_dir = strndup(optarg, PATH_MAX);
+        config->download_dir = relative_to_absolute_path(optarg);
         break;
       case 'v':
         config->verbose++;
