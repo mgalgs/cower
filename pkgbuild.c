@@ -99,7 +99,7 @@ void pkgbuild_extinfo_get(char **pkgbuild, alpm_list_t **details[], int stripver
     else
       continue;
 
-    arrayend = strstr(lineptr, ")\n");
+    arrayend = strchr(lineptr, ')');
     *arrayend  = '\0';
 
     if (deplist) {
