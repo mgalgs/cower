@@ -19,7 +19,6 @@
 #define _COWER_CURL_H
 
 #include <curl/curl.h>
-#include <curl/easy.h>
 
 #define COWER_USERAGENT    "cower/2.x"
 
