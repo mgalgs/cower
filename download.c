@@ -51,7 +51,7 @@ static int archive_extract_tar_gz(FILE *fd) {
       case ARCHIVE_WARN:
       case ARCHIVE_RETRY: break;
       case ARCHIVE_EOF:
-      case ARCHIVE_FATAL: return 1; break;
+      case ARCHIVE_FATAL: return 1;
     }
   }
 
