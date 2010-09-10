@@ -44,16 +44,13 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **deparray, int 
 
   /* XXX: This will fail sooner or later */
   if (strchr(*deparray, ':')) { /* we're dealing with optdepdends */
-    token = strtok(*deparray, "\\\'\"\n");
-    while (token) {
+    for (token = strtok(*deparray, "\\\'\"\n"); token; token = strtok(NULL, "\\\'\"\n")) {
       ltrim(token);
       if (strlen(token)) {
         if (config->verbose >= 2)
           fprintf(stderr, "::DEBUG Adding Depend: %s\n", token);
         deplist = alpm_list_add(deplist, strdup(token));
       }
-
-      token = strtok(NULL, "\\\'\"\n");
     }
     return deplist;
   }
