@@ -421,8 +421,8 @@ char *relative_to_absolute_path(const char *relpath) {
   char *abspath = NULL;
 
   abspath = getcwd(abspath, PATH_MAX + 1);
-  abspath = strcat(abspath, "/");
-  abspath = strcat(abspath, relpath);
+  abspath = strncat(abspath, "/", PATH_MAX - strlen(abspath));
+  abspath = strncat(abspath, relpath, PATH_MAX - strlen(abspath));
 
   return abspath;
 
