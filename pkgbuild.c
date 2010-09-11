@@ -57,14 +57,14 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **deparray, int 
 
   for (token = strtok(*deparray, " \n"); token; token = strtok(NULL, " \n")) {
     ltrim(token);
-    if (*token == '\'' || *token == '\"')
+    if (strchr("\'\"", *token))
       token++;
 
     if (stripver)
       *(token + strcspn(token, "=<>\"\'")) = '\0';
     else {
       char *ptr = token + strlen(token) - 1;
-      if (*ptr == '\'' || *ptr == '\"' )
+      if (strchr("\'\"", *ptr))
         *ptr = '\0';
     }
 
