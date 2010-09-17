@@ -68,6 +68,10 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **deparray, int 
         *ptr = '\0';
     }
 
+    /* some people feel compelled to escape newlines inside arrays. these people suck. */
+    if STREQ(token, "\\")
+      continue;
+
     if (config->verbose >= 2)
       fprintf(stderr, "::DEBUG Adding Depend: %s\n", token);
 
