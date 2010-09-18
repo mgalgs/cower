@@ -2,7 +2,7 @@
 
 include config.mk
 
-SRC = ${shell ls *.c}
+SRC = ${wildcard *.c}
 OBJ = ${SRC:.c=.o}
 
 all: buildopts cower doc
