@@ -24,6 +24,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,18 +40,19 @@
 
 alpm_list_t *query_aur_rpc(const char *query_type, const char* arg) {
 
-  char url[AUR_URL_SIZE + 1];
+  char *url;
   char *escaped;
   alpm_list_t *ret;
 
   escaped = curl_easy_escape(curl, arg, strlen(arg));
 
   /* format URL to pass to curl */
-  snprintf(url, AUR_URL_SIZE, AUR_RPC_URL, query_type, escaped);
+  asprintf(&url, AUR_RPC_URL, query_type, escaped);
 
   ret = aur_fetch_json(url);
 
   curl_free(escaped);
+  free(url);
 
   return ret; /* needs to be freed in the calling function if not NULL */
 }
@@ -86,15 +88,16 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
     }
 
     if (STREQ(type, AUR_QUERY_TYPE_INFO) && config->moreinfo) {
-      char url[AUR_URL_SIZE + 1];
+      char *url;
       char *escaped, *pkgbuild;
       struct aur_pkg_t *aurpkg = (struct aur_pkg_t*)search->data;
 
       escaped = curl_easy_escape(curl, aurpkg->name, strlen(aurpkg->name));
 
-      snprintf(url, AUR_URL_SIZE, AUR_PKGBUILD_PATH, escaped, escaped);
+      asprintf(&url, AUR_PKGBUILD_PATH, escaped, escaped);
 
       pkgbuild = curl_textfile_get(url);
+      free(url);
 
       if (pkgbuild == NULL) {
         fprintf(stderr, "error fetching pkgbuild\n");

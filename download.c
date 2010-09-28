@@ -72,8 +72,7 @@ static int archive_extract_tar_gz(FILE *fd) {
 
 int download_taurball(struct aur_pkg_t *aurpkg) {
   const char *filename, *pkgname;
-  char *dir, *escaped;
-  char fullpath[PATH_MAX + 1], url[AUR_URL_SIZE + 1];
+  char *dir, *escaped, *fullpath, *url;
   CURLcode curlstat;
   long httpcode;
   int result = 0;
@@ -97,7 +96,7 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   pkgname = aurpkg->name;
   filename = basename(aurpkg->urlpath);
 
-  snprintf(fullpath, PATH_MAX, "%s/%s", dir, filename);
+  asprintf(&fullpath, "%s/%s", dir, filename);
 
   /* temporarily mask extension to check for the exploded dir existing */
   if (STREQ(fullpath + strlen(fullpath) - 7, ".tar.gz"))
@@ -112,6 +111,7 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
     fprintf(stderr, " %s already exists.\n   Use -f to force this operation.\n",
       fullpath);
 
+    FREE(fullpath);
     FREE(dir);
     return 1;
   }
@@ -130,12 +130,13 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
     perror("");
 
     FREE(dir);
+    FREE(fullpath);
     return result;
   }
 
   /* all clear to download */
   escaped = curl_easy_escape(curl, pkgname, strlen(pkgname));
-  snprintf(url, AUR_URL_SIZE, AUR_PKG_URL, escaped, escaped);
+  asprintf(&url, AUR_PKG_URL, escaped, escaped);
   curl_free(escaped);
 
   if (config->verbose >= 2)
@@ -183,7 +184,10 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
 
   fclose(fd);
 
+  FREE(fullpath);
+  FREE(url);
   FREE(dir);
+
   return result;
 }
 

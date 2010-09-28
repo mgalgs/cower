@@ -183,21 +183,20 @@ static int parseargs(int argc, char **argv) {
 static int read_config_file() {
   int ret = 0;
   char *ptr, *xdg_config_home;
-  char config_path[PATH_MAX + 1], line[BUFSIZ + 1];
+  char *config_path, line[BUFSIZ + 1];
 
   xdg_config_home = getenv("XDG_CONFIG_HOME");
   if (xdg_config_home) {
-    snprintf(&config_path[0], PATH_MAX, "%s/cower/cower.conf",
-      xdg_config_home);
+    asprintf(&config_path, "%s/cower/cower.conf", xdg_config_home);
   } else { /* try to guess at where .config is */
-    snprintf(&config_path[0], PATH_MAX, "%s/.config/cower/cower.conf",
-      getenv("HOME"));
+    asprintf(&config_path, "%s/.config/cower/cower.conf", getenv("HOME"));
   }
 
   if (!file_exists(config_path)) {
     /* Return without error. Nothing bad happened, we
      * just don't have a config file to look at.
      */
+    free(config_path);
     return ret;
   }
 
@@ -250,6 +249,7 @@ static int read_config_file() {
   }
 
   fclose(conf_fd);
+  free(config_path);
 
   return ret;
 }
