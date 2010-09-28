@@ -33,8 +33,6 @@
 #define AUR_RPC_URL           "http://aur.archlinux.org/rpc.php?type=%s&arg=%s"
 #define AUR_PKG_URL_FORMAT    "http://aur.archlinux.org/packages.php?ID="
 
-#define AUR_URL_SIZE          256
-
 #define AUR_QUERY_TYPE        "type"
 #define AUR_QUERY_TYPE_INFO   "info"
 #define AUR_QUERY_TYPE_SEARCH "search"
