@@ -78,11 +78,10 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   int result = 0;
 
   /* establish download dir */
-  dir = calloc(1, PATH_MAX + 1);
   if (! config->download_dir) /* use pwd */
-    dir = getcwd(dir, PATH_MAX);
-  else
-    dir = realpath(config->download_dir, dir);
+    dir = getcwd(NULL, PATH_MAX);
+  else /* resolve specified dir */
+    dir = realpath(config->download_dir, NULL);
 
   if (! dir) {
     if (config->color)
