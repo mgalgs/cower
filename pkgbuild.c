@@ -162,22 +162,26 @@ int get_pkg_dependencies(const char *pkg) {
 
   alpm_list_t *i = deplist;
   for (i = deplist; i; i = i->next) {
-    const char* depend = i->data;
+    char *depend = i->data;
+    alpm_list_t *targ = NULL;
+
     if (config->verbose >= 2)
       printf("::DEBUG Attempting to find %s\n", depend);
 
-    if (alpm_db_get_pkg(db_local, depend)) { /* installed */
+    targ = alpm_list_add(targ, depend);
+    alpm_list_t *results = alpm_db_search(db_local, targ);
+    if (results) { /* installed */
       if (config->verbose >= 2)
         printf("::DEBUG %s is installed\n", depend);
 
-      continue;
+      goto finish;
     }
 
     if (is_in_pacman(depend))
-      continue;
+      goto finish;
 
     /* can't find it in pacman, check the AUR */
-    alpm_list_t *results = query_aur_rpc(AUR_QUERY_TYPE_INFO, depend);
+    results = query_aur_rpc(AUR_QUERY_TYPE_INFO, depend);
     if (results) {
 
       if (config->verbose >= 2)
@@ -187,8 +191,7 @@ int get_pkg_dependencies(const char *pkg) {
       download_taurball(results->data);
 
       aur_pkg_free(results->data);
-      alpm_list_free(results);
-      continue;
+      goto finish;
     }
 
     /* can't find it anywhere -- warn about this */
@@ -197,6 +200,11 @@ int get_pkg_dependencies(const char *pkg) {
         config->colors->warn, depend);
      else
       fprintf(stderr, "^^ Unresolvable dependency: '%s'\n", depend);
+
+
+    finish:
+      alpm_list_free(results);
+      alpm_list_free(targ);
   }
 
   /* Cleanup */
