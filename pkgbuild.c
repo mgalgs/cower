@@ -127,12 +127,11 @@ int get_pkg_dependencies(const char *pkg) {
   alpm_list_t *deplist = NULL;
 
   if (config->download_dir == NULL)
-    dir = getcwd(NULL, 0);
+    dir = getcwd(NULL, PATH_MAX);
   else
     dir = realpath(config->download_dir, NULL);
 
-  pkgbuild_path = calloc(1, PATH_MAX + 1);
-  snprintf(pkgbuild_path, PATH_MAX, "%s/%s/PKGBUILD", dir, pkg);
+  asprintf(&pkgbuild_path, "%s/%s/PKGBUILD", dir, pkg);
 
   buffer = get_file_as_buffer(pkgbuild_path);
   if (! buffer) {
