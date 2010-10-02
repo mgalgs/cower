@@ -138,7 +138,8 @@ static int parseargs(int argc, char **argv) {
 
       /* Options */
       case 'c':
-        config->color = 1;
+        if (isatty(STDOUT_FILENO))
+          config->color = 1;
         break;
       case 'f':
         config->force = 1;
