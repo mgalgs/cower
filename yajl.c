@@ -31,7 +31,6 @@
 #include <string.h>
 
 #include <yajl/yajl_parse.h>
-#include <yajl/yajl_gen.h>
 
 #include "aur.h"
 #include "conf.h"
