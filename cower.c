@@ -101,7 +101,7 @@ static int parseargs(int argc, char **argv) {
     {"download",  no_argument,        0, 'd'},
 
     /* Options */
-    {"color",     no_argument,        0, 'c'},
+    {"color",     optional_argument,  0, 'c'},
     {"ignore",    required_argument,  0, OP_IGNORE},
     {"verbose",   no_argument,        0, 'v'},
     {"force",     no_argument,        0, 'f'},
@@ -138,7 +138,12 @@ static int parseargs(int argc, char **argv) {
 
       /* Options */
       case 'c':
-        if (isatty(STDOUT_FILENO))
+        if (!optarg || STREQ(optarg, "auto")) {
+          if (isatty(STDOUT_FILENO))
+            config->color = 1;
+          else
+            config->color = 0;
+        } else if (STREQ(optarg, "always"))
           config->color = 1;
         break;
       case 'f':
@@ -269,7 +274,7 @@ Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
                             --download flag is passed as well,\n\
                             fetch each available update.\n\n", VERSION);
 printf(" General options:\n\
-  -c, --color             Use colored output.\n\
+  -c, --color[=WHEN]      Use colored output. WHEN is `always' or `auto'.\n\
   -f, --force             Overwrite existing files when downloading.\n\
       --ignore <pkg>      Ignore a package upgrade (can be used more than once)\n\
   -q, --quiet             Output less.\n\

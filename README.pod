@@ -40,9 +40,10 @@ if any, at the same time.
 
 =over 4
 
-=item B<-c, --color>
+=item B<-c, --color[=WHEN}>
 
-Use colored output.
+Use colored output. WHEN is `always' or `auto'. Color will be disabled in a pipe unless WHEN
+is set to auto.
 
 =item B<-f, --force>
 
