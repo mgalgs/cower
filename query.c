@@ -47,7 +47,8 @@ alpm_list_t *query_aur_rpc(const char *query_type, const char* arg) {
   escaped = curl_easy_escape(curl, arg, strlen(arg));
 
   /* format URL to pass to curl */
-  asprintf(&url, AUR_RPC_URL, query_type, escaped);
+  if (asprintf(&url, AUR_RPC_URL, query_type, escaped) < 0)
+    return NULL;
 
   ret = aur_fetch_json(url);
 
@@ -94,7 +95,8 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
 
       escaped = curl_easy_escape(curl, aurpkg->name, strlen(aurpkg->name));
 
-      asprintf(&url, AUR_PKGBUILD_PATH, escaped, escaped);
+      if (asprintf(&url, AUR_PKGBUILD_PATH, escaped, escaped) < 0)
+        return NULL;
 
       pkgbuild = curl_textfile_get(url);
       free(url);

@@ -94,7 +94,8 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   pkgname = aurpkg->name;
   filename = basename(aurpkg->urlpath);
 
-  asprintf(&fullpath, "%s/%s", dir, filename);
+  if (asprintf(&fullpath, "%s/%s", dir, filename) < 0)
+    return (-ENOMEM);
 
   /* temporarily mask extension to check for the exploded dir existing */
   if (STREQ(fullpath + strlen(fullpath) - 7, ".tar.gz"))
@@ -134,7 +135,9 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
 
   /* all clear to download */
   escaped = curl_easy_escape(curl, pkgname, strlen(pkgname));
-  asprintf(&url, AUR_PKG_URL, escaped, escaped);
+  if (asprintf(&url, AUR_PKG_URL, escaped, escaped) < 0)
+    return -ENOMEM;
+
   curl_free(escaped);
 
   if (config->verbose >= 2)
@@ -166,7 +169,8 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
         printf(":: %s downloaded to %s\n", pkgname, dir);
 
       if (config->download_dir)
-        chdir(dir);
+        if (chdir(dir) != 0)
+          return errno;
 
       rewind(fd);
       if (archive_extract_tar_gz(fd) == 0) /* no errors, delete the tarball */

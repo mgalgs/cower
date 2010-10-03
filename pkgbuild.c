@@ -25,6 +25,7 @@
  */
 
 #define _GNU_SOURCE
+#include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
@@ -131,7 +132,8 @@ int get_pkg_dependencies(const char *pkg) {
   else
     dir = realpath(config->download_dir, NULL);
 
-  asprintf(&pkgbuild_path, "%s/%s/PKGBUILD", dir, pkg);
+  if (asprintf(&pkgbuild_path, "%s/%s/PKGBUILD", dir, pkg) < 0)
+    return -ENOMEM;
 
   buffer = get_file_as_buffer(pkgbuild_path);
   if (! buffer) {
