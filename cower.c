@@ -44,6 +44,8 @@
 
 static alpm_list_t *targets; /* Package argument list */
 
+static void usage();
+
 static struct color_t {
   const char *name;
   unsigned short val;
@@ -102,6 +104,7 @@ static int parseargs(int argc, char **argv) {
 
     /* Options */
     {"color",     optional_argument,  0, 'c'},
+    {"help",      no_argument,        0, 'h'},
     {"ignore",    required_argument,  0, OP_IGNORE},
     {"verbose",   no_argument,        0, 'v'},
     {"force",     no_argument,        0, 'f'},
@@ -110,7 +113,7 @@ static int parseargs(int argc, char **argv) {
     {0, 0, 0, 0}
   };
 
-  while ((opt = getopt_long(argc, argv, "disucfqt:v", opts, &option_index))) {
+  while ((opt = getopt_long(argc, argv, "dhisucfqt:v", opts, &option_index))) {
     alpm_list_t *item = NULL, *list = NULL;
     if (opt < 0)
       break;
@@ -149,9 +152,10 @@ static int parseargs(int argc, char **argv) {
       case 'f':
         config->force = 1;
         break;
+      case 'h':
+        return 0;
       case 'q':
         config->quiet = 1;
-        break;
       case 't':
         if (config->download_dir)
           FREE(config->download_dir);
@@ -277,6 +281,7 @@ printf(" General options:\n\
   -c, --color[=WHEN]      Use colored output. WHEN is `always' or `auto'.\n\
   -f, --force             Overwrite existing files when downloading.\n\
       --ignore <pkg>      Ignore a package upgrade (can be used more than once)\n\
+  -h, --help              Display this help and exit\n\
   -q, --quiet             Output less.\n\
   -t, --target <dir>      Specify an alternate download directory.\n\
   -v, --verbose           Be more verbose.\n\n");

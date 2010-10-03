@@ -49,6 +49,10 @@ is set to always.
 
 Overwrite existing files when downloading.
 
+=item B<-h, --help>
+
+Display the help message and quit.
+
 =item B<--ignore> <'pkg'>
 
 Ignore a package upgrade. Can be used more than once. Also accepts a comma delimited list as
