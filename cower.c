@@ -178,6 +178,7 @@ static int parseargs(int argc, char **argv) {
         return 0;
       case 'q':
         config->quiet = 1;
+        break;
       case 't':
         if (config->download_dir)
           FREE(config->download_dir);
