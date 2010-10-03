@@ -44,8 +44,6 @@
 
 static alpm_list_t *targets; /* Package argument list */
 
-static void usage();
-
 static struct color_t {
   const char *name;
   unsigned short val;
@@ -90,6 +88,29 @@ static void cleanup(int ret) {
   config_free(config);
 
   exit(ret);
+}
+
+static void usage() {
+printf("cower %s\n\
+Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
+\n\
+ Operations:\n\
+  -d, --download          Download PACKAGE(s). Pass twice to\n\
+                            download AUR dependencies.\n\
+  -i, --info              Show info for PACKAGE(s). Pass twice for\n\
+                            more detail.\n\
+  -s, --search            Search for PACKAGE(s).\n\
+  -u, --update            Check for updates against AUR. If the \n\
+                            --download flag is passed as well,\n\
+                            fetch each available update.\n\n", VERSION);
+printf(" General options:\n\
+  -c, --color[=WHEN]      Use colored output. WHEN is `always' or `auto'.\n\
+  -f, --force             Overwrite existing files when downloading.\n\
+      --ignore <pkg>      Ignore a package upgrade (can be used more than once)\n\
+  -h, --help              Display this help and exit\n\
+  -q, --quiet             Output less.\n\
+  -t, --target <dir>      Specify an alternate download directory.\n\
+  -v, --verbose           Be more verbose.\n\n");
 }
 
 static int parseargs(int argc, char **argv) {
@@ -262,29 +283,6 @@ static int read_config_file() {
   free(config_path);
 
   return ret;
-}
-
-static void usage() {
-printf("cower %s\n\
-Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
-\n\
- Operations:\n\
-  -d, --download          Download PACKAGE(s). Pass twice to\n\
-                            download AUR dependencies.\n\
-  -i, --info              Show info for PACKAGE(s). Pass twice for\n\
-                            more detail.\n\
-  -s, --search            Search for PACKAGE(s).\n\
-  -u, --update            Check for updates against AUR. If the \n\
-                            --download flag is passed as well,\n\
-                            fetch each available update.\n\n", VERSION);
-printf(" General options:\n\
-  -c, --color[=WHEN]      Use colored output. WHEN is `always' or `auto'.\n\
-  -f, --force             Overwrite existing files when downloading.\n\
-      --ignore <pkg>      Ignore a package upgrade (can be used more than once)\n\
-  -h, --help              Display this help and exit\n\
-  -q, --quiet             Output less.\n\
-  -t, --target <dir>      Specify an alternate download directory.\n\
-  -v, --verbose           Be more verbose.\n\n");
 }
 
 int main(int argc, char **argv) {
