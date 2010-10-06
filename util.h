@@ -60,7 +60,7 @@ enum {
   BOLDCYAN,   BOLDWHITE,
   BOLDFG,     BOLDBG,
 
-  COLOR_MAX, /* sigil - must be last */
+  COLOR_MAX  /* sigil - must be last */
 };
 
 int cfprintf(FILE*, const char*, ...);
