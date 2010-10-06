@@ -195,7 +195,7 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
 
 int cower_do_download(alpm_list_t *targets) {
   alpm_list_t *i;
-  int ret = 0, dl_res;
+  int ret = 0;
 
   alpm_quick_init();
 
@@ -205,10 +205,9 @@ int cower_do_download(alpm_list_t *targets) {
 
     alpm_list_t *results = query_aur_rpc(AUR_QUERY_TYPE_INFO, i->data);
     if (results) { /* Found it in the AUR */
-      dl_res = download_taurball(results->data);
 
       /* If the download didn't go smoothly, it's not ok to get depends */
-      if (dl_res == 0 && config->getdeps)
+      if (!download_taurball(results->data) && config->getdeps)
         get_pkg_dependencies(i->data);
 
       aur_pkg_free(results->data);
