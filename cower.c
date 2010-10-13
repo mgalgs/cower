@@ -27,7 +27,6 @@
 #define _GNU_SOURCE
 
 #include <ctype.h> /* isspace */
-#include <errno.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -197,9 +196,9 @@ static int parseargs(int argc, char **argv) {
         break;
 
       case '?':
-        return -EINVAL;
+        return 1;
       default:
-        return -EINVAL;
+        return 1;
     }
   }
 
@@ -220,11 +219,9 @@ static int read_config_file() {
 
   xdg_config_home = getenv("XDG_CONFIG_HOME");
   if (xdg_config_home) {
-    if (asprintf(&config_path, "%s/cower/cower.conf", xdg_config_home) < 0)
-      cleanup(-ENOMEM);
+    asprintf(&config_path, "%s/cower/cower.conf", xdg_config_home);
   } else { /* try to guess at where .config is */
-    if (asprintf(&config_path, "%s/.config/cower/cower.conf", getenv("HOME")) < 0)
-      cleanup(-ENOMEM);
+    asprintf(&config_path, "%s/.config/cower/cower.conf", getenv("HOME"));
   }
 
   if (!file_exists(config_path)) {
@@ -330,8 +327,7 @@ int main(int argc, char **argv) {
     if(i > 0) {
       targets = alpm_list_add(targets, strdup(line));
     }
-    if (!freopen(ctermid(NULL), "r", stdin))
-      cleanup(-EBADF);
+    freopen(ctermid(NULL), "r", stdin);
   }
 
   if (config->color) {
