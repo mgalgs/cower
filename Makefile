@@ -59,11 +59,12 @@ uninstall:
 	@echo removing bash completion
 	@rm -f ${DESTDIR}/etc/bash_completion.d/cower
 
-cscope:
+cscope: cscope.out
+cscope.out:
 	cscope -b
 
 clean:
-	@printf "   %-8s %s\n" CLEAN "*.o cower cower.1"
+	@printf "   %-8s %s\n" CLEAN "*.o cower cower.1 cscope.out"
 	@rm -f *.o cower cower.1 cscope.out
 
 .PHONY: all clean dist doc install buildopts installopts uninstall
