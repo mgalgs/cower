@@ -1,5 +1,6 @@
 # cower version
-VERSION = $(shell git describe)
+REF ?= master
+VERSION = $(shell git describe ${REF})
 
 # paths
 PREFIX ?= /usr/local
