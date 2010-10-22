@@ -149,7 +149,7 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
     if (httpcode != 200) {
       fprintf(stderr, "!! curl: server responded with code %ld\n", httpcode);
-      result = httpcode;
+      result = 1;
 
     } else { /* http response is kosher */
       if (config->color) {
