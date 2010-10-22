@@ -42,16 +42,14 @@
 #include "query.h"
 #include "util.h"
 
-static int archive_extract_tar_gz(FILE *fd) {
-  struct archive *archive = archive_read_new();
+size_t archive_extract_stream(void *ptr, size_t size, size_t nmemb, void *userdata) {
+  struct archive *archive = (struct archive*)userdata;
   struct archive_entry *entry;
+
   const int archive_flags = ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_TIME;
 
-  archive_read_support_compression_all(archive);
-  archive_read_support_format_all(archive);
-
-  if (archive_read_open_FILE(archive, fd) != ARCHIVE_OK)
-    return 1;
+  if (archive_read_open_memory(archive, ptr, size *nmemb) != ARCHIVE_OK)
+    return 0;
 
   while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
     switch (archive_read_extract(archive, entry, archive_flags)) {
@@ -59,22 +57,22 @@ static int archive_extract_tar_gz(FILE *fd) {
       case ARCHIVE_WARN:
       case ARCHIVE_RETRY: break;
       case ARCHIVE_EOF:
-      case ARCHIVE_FATAL: return 1;
+      case ARCHIVE_FATAL: return 0;
     }
   }
 
   archive_read_close(archive);
-  archive_read_finish(archive);
 
-  return 0;
+  return size * nmemb;
 }
 
 int download_taurball(struct aur_pkg_t *aurpkg) {
-  const char *filename, *pkgname;
+  const char *pkgname;
   char *dir, *escaped, *fullpath, *url;
   CURLcode curlstat;
   long httpcode;
   int result = 0;
+  struct archive *archive;
 
   /* establish download dir */
   if (! config->download_dir) /* use pwd */
@@ -92,13 +90,8 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   }
 
   pkgname = aurpkg->name;
-  filename = basename(aurpkg->urlpath);
 
-  asprintf(&fullpath, "%s/%s", dir, filename);
-
-  /* temporarily mask extension to check for the exploded dir existing */
-  if (STREQ(fullpath + strlen(fullpath) - 7, ".tar.gz"))
-    fullpath[strlen(fullpath) - 7] = '\0';
+  asprintf(&fullpath, "%s/%s", dir, pkgname);
 
   if (file_exists(fullpath) && ! config->force) {
     if (config->color)
@@ -114,24 +107,6 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
     return 1;
   }
 
-  fullpath[strlen(fullpath)] = '.'; /* unmask extension */
-
-  /* check for write access */
-  FILE *fd = fopen(fullpath, "w+");
-  if (! fd) {
-    result = errno;
-    if (config->color)
-      cfprintf(stderr, "%<::%> could not write to %s: ", config->colors->error, dir);
-    else
-      fprintf(stderr, "!! could not write to %s: ", dir);
-    errno = result;
-    perror("");
-
-    FREE(dir);
-    FREE(fullpath);
-    return result;
-  }
-
   /* all clear to download */
   escaped = curl_easy_escape(curl, pkgname, strlen(pkgname));
   asprintf(&url, AUR_PKG_URL, escaped, escaped);
@@ -140,11 +115,31 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   if (config->verbose >= 2)
     fprintf(stderr, "::DEBUG Fetching URL %s\n", url);
 
+  if (access(dir, W_OK)) {
+    if (config->color)
+      cfprintf(stderr, "%<::%> could not write to %s\n", config->colors->error, dir);
+    else
+      fprintf(stderr, "!! could not write to %s\n", dir);
+
+    FREE(dir);
+    FREE(fullpath);
+    return 1;
+  }
+
+  archive = archive_read_new();
+  archive_read_support_compression_all(archive);
+  archive_read_support_format_all(archive);
+
   curl_easy_setopt(curl, CURLOPT_URL, url);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, fd);
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, archive);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, archive_extract_stream);
+
+  if (config->download_dir)
+    chdir(dir);
 
   curlstat = curl_easy_perform(curl);
+
+  archive_read_finish(archive);
 
   if (curlstat != CURLE_OK) {
     fprintf(stderr, "!! curl: %s\n", curl_easy_strerror(curlstat));
@@ -164,23 +159,8 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
           config->colors->uptodate, dir);
       } else
         printf(":: %s downloaded to %s\n", pkgname, dir);
-
-      if (config->download_dir)
-        chdir(dir);
-
-      rewind(fd);
-      if (archive_extract_tar_gz(fd) == 0) /* no errors, delete the tarball */
-        unlink(fullpath);
-      else {
-        if (config->color) {
-          cfprintf(stderr, "%<::%> failed to extract %s\n", config->colors->error, fullpath);
-        } else
-          printf("!! failed to extract %s\n", fullpath);
-      }
     }
   }
-
-  fclose(fd);
 
   FREE(fullpath);
   FREE(url);
