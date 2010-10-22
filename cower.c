@@ -336,7 +336,7 @@ int main(int argc, char **argv) {
       cleanup(ret);
   }
 
-  curl_global_init(CURL_GLOBAL_NOTHING);
+  curl_global_init(CURL_GLOBAL_SSL);
   if (curl_local_init() != 0) {
     fprintf(stderr, "!! curl initialization failed. Please check your configuration.\n");
     cleanup(1);
