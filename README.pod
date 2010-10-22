@@ -62,6 +62,10 @@ a single argument. Packages listed in pacman's IgnorePkg directive are honored.
 
 Output less.
 
+=item B<--ssl>
+
+Establish secure connections over https.
+
 =item B<-t, --target> <'dir'>
 
 Download taurballs to alternate directory, specified by I<DIR>. Either a relative or absolute

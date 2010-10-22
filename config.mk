@@ -15,9 +15,9 @@ INCS = -I. -I/usr/include -I${CURLINC} -I${YAJLINC}
 LIBS = -L/usr/lib -lc -lcurl -lalpm -lyajl -larchive
 
 # flags
-CPPFLAGS = -DVERSION=\"${VERSION}\"
-CFLAGS += -std=c99 -pedantic -Wall ${INCS} ${CPPFLAGS}
-LDFLAGS += ${LIBS}
+CPPFLAGS = -DCOWER_VERSION=\"${VERSION}\"
+CFLAGS += -pipe -std=c99 -pedantic -Wall -Wextra ${INCS} ${CPPFLAGS} -fno-builtin -g
+LDFLAGS += ${LIBS} -pthread
 
 # compiler and linker
-CC = gcc -pipe -g
+CC = gcc

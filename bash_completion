@@ -1,7 +1,7 @@
 #!/bin/bash
 
 _cower() {
-  local ng cower_exec cur prev opts src
+  local ng cower_exec cur prev opts src ng
 
   # nullglob avoids problems when no results are found
   [[ ! -o nullglob ]] && { shopt -s nullglob; ng=1; }
