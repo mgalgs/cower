@@ -190,10 +190,9 @@ int cower_do_download(alpm_list_t *targets) {
       alpm_list_free(results);
     } else { /* Not found anywhere */
       if (config->color)
-        cfprintf(stderr, "%<%s%>", config->colors->error, "::");
+        cfprintf(stderr, "%<::%> no results for \"%s\"\n", config->colors->error, (const char*)i->data); 
       else
-        fprintf(stderr, "!!");
-      fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
+        fprintf(stderr, "!! no results for \"%s\"\n", (const char*)i->data);
 
       ret = 1;
     }
