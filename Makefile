@@ -42,7 +42,9 @@ install: installopts cower cower.1
 	@install -D -m644 bash_completion ${DESTDIR}/etc/bash_completion.d/cower
 
 dist:
+	@sed -i "s/VERSION =.*/VERSION = $(shell git describe)/" config.mk
 	@git archive --prefix=cower-${VERSION}/ ${REF} | gzip -9 > cower-${VERSION}.tar.gz
+	@git checkout config.mk
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
