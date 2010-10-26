@@ -41,10 +41,15 @@ install: installopts cower cower.1
 	@printf "   %-8s %s\n" INSTALL ${DESTDIR}/etc/bash_completion.d/cower
 	@install -D -m644 bash_completion ${DESTDIR}/etc/bash_completion.d/cower
 
-dist:
-	@sed -i "s/VERSION =.*/VERSION = $(shell git describe)/" config.mk
-	@git archive --prefix=cower-${VERSION}/ ${REF} | gzip -9 > cower-${VERSION}.tar.gz
-	@git checkout config.mk
+dist: clean
+	@mkdir -p cower-${VERSION}
+	@cp -R ${SRC} *.h Makefile config.mk README.pod bash_completion cower-${VERSION}
+	@sed "s/VERSION =.*/VERSION = $(shell git describe)/" < config.mk > cower-${VERSION}/config.mk
+	@printf "   %-8s %s\n" TAR cower-${VERSION}.tar
+	@tar -cf cower-${VERSION}.tar cower-${VERSION}
+	@printf "   %-8s %s\n" GZIP cower-${VERSION}.tar.gz
+	@gzip cower-${VERSION}.tar
+	@rm -rf cower-${VERSION}
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
