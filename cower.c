@@ -290,11 +290,6 @@ static int read_config_file() {
 }
 
 int main(int argc, char **argv) {
-  if (argc == 1) {
-    usage();
-    cleanup(1);
-  }
-
   int ret;
 
   config = config_new();
