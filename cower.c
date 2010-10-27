@@ -270,7 +270,11 @@ static int read_config_file() {
     else if (STREQ(key, "error"))
       popt = &(config->colors->error);
     else {
-      cfprintf(stderr, "%<::%> bad option found in config: '%s'\n", key);
+      if (config->color) {
+        cfprintf(stderr, "%<::%> bad option found in config: '%s'\n", config->colors->error, key);
+      } else {
+        fprintf(stderr, "!! bad option found in config: '%s'\n", key);
+      }
       ret = 1;
       break;
     }
