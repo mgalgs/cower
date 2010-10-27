@@ -104,7 +104,7 @@ Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
                             --download flag is passed as well,\n\
                             fetch each available update.\n\n", VERSION);
 printf(" General options:\n\
-  -c, --color[=WHEN]      Use colored output. WHEN is `always' or `auto'.\n\
+  -c, --color[=WHEN]      Use colored output. WHEN is `never', `always' or `auto'.\n\
   -f, --force             Overwrite existing files when downloading.\n\
       --ignore <pkg>      Ignore a package upgrade (can be used more than once)\n\
   -h, --help              Display this help and exit\n\
@@ -167,8 +167,11 @@ static int parseargs(int argc, char **argv) {
             config->color = 1;
           else
             config->color = 0;
-        } else if (STREQ(optarg, "always"))
+        } else if (STREQ(optarg, "always")) {
           config->color = 1;
+        } else if (STREQ(optarg, "never")) {
+          config->color = 0;
+        }
         break;
       case 'f':
         config->force = 1;

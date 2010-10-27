@@ -42,8 +42,8 @@ if any, at the same time.
 
 =item B<-c, --color[=WHEN]>
 
-Use colored output. WHEN is `always' or `auto'. Color will be disabled in a pipe unless WHEN
-is set to always.
+Use colored output. WHEN is `never', `always' or `auto'. Color will be disabled in a pipe
+unless WHEN is set to always.
 
 =item B<-f, --force>
 
