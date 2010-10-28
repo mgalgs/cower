@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <alpm_list.h>
 
+#include "conf.h"
 #include "pacman.h"
 #include "package.h"
 
@@ -63,8 +64,10 @@ enum {
   COLOR_MAX  /* sigil - must be last */
 };
 
-int cfprintf(FILE*, const char*, ...);
-int cprintf(const char*, ...);
+int cwr_asprintf(char**, const char*, ...) __attribute__((format(printf,2,3)));
+int cwr_fprintf(FILE*, loglevel_t, const char*, ...) __attribute__((format(printf,3,4)));
+int cwr_printf(loglevel_t, const char*, ...) __attribute__((format(printf,2,3)));
+int cwr_vfprintf(FILE*, loglevel_t, const char*, va_list) __attribute__((format(printf,3,0)));
 int file_exists(const char*);
 off_t filesize(const char*);
 char *get_file_as_buffer(const char*);

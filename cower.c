@@ -105,6 +105,7 @@ Usage: cower [options] <operation> PACKAGE [PACKAGE2..]\n\
                             fetch each available update.\n\n", VERSION);
 printf(" General options:\n\
   -c, --color[=WHEN]      Use colored output. WHEN is `never', `always' or `auto'.\n\
+      --debug             Show debug output\n\
   -f, --force             Overwrite existing files when downloading.\n\
       --ignore <pkg>      Ignore a package upgrade (can be used more than once)\n\
   -h, --help              Display this help and exit\n\
@@ -125,6 +126,7 @@ static int parseargs(int argc, char **argv) {
 
     /* Options */
     {"color",     optional_argument,  0, 'c'},
+    {"debug",     no_argument,        0, OP_DEBUG},
     {"help",      no_argument,        0, 'h'},
     {"ignore",    required_argument,  0, OP_IGNORE},
     {"verbose",   no_argument,        0, 'v'},
@@ -187,7 +189,7 @@ static int parseargs(int argc, char **argv) {
         config->download_dir = relative_to_absolute_path(optarg);
         break;
       case 'v':
-        config->verbose++;
+        config->logmask |= LOG_VERBOSE;
         break;
       case OP_IGNORE:
         list = strsplit(optarg, ',');
@@ -196,6 +198,9 @@ static int parseargs(int argc, char **argv) {
             config->ignorepkgs = alpm_list_add(config->ignorepkgs, strdup(item->data));
           }
         }
+        break;
+      case OP_DEBUG:
+        config->logmask |= LOG_DEBUG;
         break;
 
       case '?':
@@ -222,9 +227,9 @@ static int read_config_file() {
 
   xdg_config_home = getenv("XDG_CONFIG_HOME");
   if (xdg_config_home) {
-    asprintf(&config_path, "%s/cower/cower.conf", xdg_config_home);
+    cwr_asprintf(&config_path, "%s/cower/cower.conf", xdg_config_home);
   } else { /* try to guess at where .config is */
-    asprintf(&config_path, "%s/.config/cower/cower.conf", getenv("HOME"));
+    cwr_asprintf(&config_path, "%s/.config/cower/cower.conf", getenv("HOME"));
   }
 
   if (!file_exists(config_path)) {
@@ -270,20 +275,15 @@ static int read_config_file() {
     else if (STREQ(key, "error"))
       popt = &(config->colors->error);
     else {
-      if (config->color) {
-        cfprintf(stderr, "%<::%> bad option found in config: '%s'\n", config->colors->error, key);
-      } else {
-        fprintf(stderr, "!! bad option found in config: '%s'\n", key);
-      }
+      cwr_fprintf(stderr, LOG_ERROR, "bad option found in config: '%s'\n", key);
       ret = 1;
       break;
     }
 
-    if ((color = color_is_valid(ptr)) > 0)
+    if ((color = color_is_valid(ptr)) > 0) {
       *popt = color;
-    else {
-      cfprintf(stderr, "%<::%> ignoring bad color found in config: '%s'\n", 
-        config->colors->warn, ptr);
+    } else {
+      cwr_fprintf(stderr, LOG_WARN, "ignoring bad color found in config: '%s'\n", ptr);
     }
   }
 
@@ -291,6 +291,38 @@ static int read_config_file() {
   free(config_path);
 
   return ret;
+}
+
+static void string_setup() {
+  if (config->color) {
+    cwr_asprintf(&config->strings->repo, C_ON,
+        config->colors->repo / 10, config->colors->repo % 10);
+    cwr_asprintf(&config->strings->pkg,
+        C_ON, config->colors->pkg / 10, config->colors->pkg % 10);
+    cwr_asprintf(&config->strings->uptodate,
+        C_ON, config->colors->uptodate / 10, config->colors->uptodate % 10);
+    cwr_asprintf(&config->strings->outofdate,
+        C_ON, config->colors->outofdate / 10, config->colors->outofdate % 10);
+    cwr_asprintf(&config->strings->url,
+        C_ON, config->colors->url / 10, config->colors->url % 10);
+    cwr_asprintf(&config->strings->info,
+        C_ON "::" C_OFF, config->colors->info / 10, config->colors->info % 10);
+    cwr_asprintf(&config->strings->error,
+        C_ON "::" C_OFF, config->colors->error / 10, config->colors->error % 10);
+    cwr_asprintf(&config->strings->warn,
+        C_ON "::" C_OFF, config->colors->warn / 10, config->colors->warn % 10);
+    cwr_asprintf(&config->strings->c_off, C_OFF);
+  } else {
+    config->strings->repo = "";
+    config->strings->pkg = "";
+    config->strings->uptodate = "";
+    config->strings->outofdate = "";
+    config->strings->url = "";
+    config->strings->info = "::";
+    config->strings->error = "*!*";
+    config->strings->warn = "*?*";
+    config->strings->c_off = "";
+  }
 }
 
 int main(int argc, char **argv) {
@@ -338,9 +370,11 @@ int main(int argc, char **argv) {
       cleanup(ret);
   }
 
+  string_setup();
+
   curl_global_init(CURL_GLOBAL_SSL);
   if (curl_local_init() != 0) {
-    fprintf(stderr, "!! curl initialization failed. Please check your configuration.\n");
+    cwr_fprintf(stderr, LOG_ERROR, "curl initialization failed. Please check your configuration.\n");
     cleanup(1);
   }
 

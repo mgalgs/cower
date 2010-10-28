@@ -81,27 +81,17 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
     dir = realpath(config->download_dir, NULL);
 
   if (! dir) {
-    if (config->color)
-      cfprintf(stderr, "%<::%> specified path does not exist.\n", config->colors->error);
-    else
-      fprintf(stderr, "!! specified path does not exist.\n");
-
+    cwr_fprintf(stderr, LOG_ERROR, "specified path does not exist.\n");
     return 1;
   }
 
   pkgname = aurpkg->name;
 
-  asprintf(&fullpath, "%s/%s", dir, pkgname);
+  cwr_asprintf(&fullpath, "%s/%s", dir, pkgname);
 
   if (file_exists(fullpath) && ! config->force) {
-    if (config->color)
-      cfprintf(stderr, "%<::%>", config->colors->error);
-    else
-      fprintf(stderr, "!!");
-
-    fprintf(stderr, " %s already exists.\n   Use -f to force this operation.\n",
-      fullpath);
-
+    cwr_fprintf(stderr, LOG_ERROR, "%s already exists.\n"
+        "Use -f to force this operation.\n", fullpath);
     FREE(fullpath);
     FREE(dir);
     return 1;
@@ -109,18 +99,13 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
 
   /* all clear to download */
   escaped = curl_easy_escape(curl, pkgname, strlen(pkgname));
-  asprintf(&url, AUR_PKG_URL, escaped, escaped);
+  cwr_asprintf(&url, AUR_PKG_URL, escaped, escaped);
   curl_free(escaped);
 
-  if (config->verbose >= 2)
-    fprintf(stderr, "::DEBUG Fetching URL %s\n", url);
+  cwr_printf(LOG_DEBUG, "Fetching URL %s\n", url);
 
   if (access(dir, W_OK)) {
-    if (config->color)
-      cfprintf(stderr, "%<::%> could not write to %s\n", config->colors->error, dir);
-    else
-      fprintf(stderr, "!! could not write to %s\n", dir);
-
+    cwr_fprintf(stderr, LOG_ERROR, "could not write to %s\n", dir);
     FREE(dir);
     FREE(fullpath);
     return 1;
@@ -142,23 +127,20 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   archive_read_finish(archive);
 
   if (curlstat != CURLE_OK) {
-    fprintf(stderr, "!! curl: %s\n", curl_easy_strerror(curlstat));
+    cwr_fprintf(stderr, LOG_ERROR, "curl: %s\n", curl_easy_strerror(curlstat));
     result = curlstat;
 
   } else { /* curl reported no error */
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
     if (httpcode != 200) {
-      fprintf(stderr, "!! curl: server responded with code %ld\n", httpcode);
+      cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with code %ld\n",
+          httpcode);
       result = 1;
 
     } else { /* http response is kosher */
-      if (config->color) {
-        cprintf("%<::%> %<%s%> downloaded to %<%s%>\n",
-          config->colors->info,
-          config->colors->pkg, pkgname,
-          config->colors->uptodate, dir);
-      } else
-        printf(":: %s downloaded to %s\n", pkgname, dir);
+      cwr_printf(LOG_INFO, "%s%s%s downloaded to %s%s%s\n",
+          config->strings->pkg, pkgname, config->strings->c_off,
+          config->strings->uptodate, dir, config->strings->c_off);
     }
   }
 
@@ -189,11 +171,8 @@ int cower_do_download(alpm_list_t *targets) {
       aur_pkg_free(results->data);
       alpm_list_free(results);
     } else { /* Not found anywhere */
-      if (config->color)
-        cfprintf(stderr, "%<::%> no results for \"%s\"\n", config->colors->error, (const char*)i->data); 
-      else
-        fprintf(stderr, "!! no results for \"%s\"\n", (const char*)i->data);
-
+      cwr_fprintf(stderr, LOG_ERROR, "no results for \"%s\"\n",
+          (const char*)i->data); 
       ret = 1;
     }
   }

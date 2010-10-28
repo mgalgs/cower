@@ -29,6 +29,14 @@
 
 #include <alpm_list.h>
 
+typedef enum __loglevel_t {
+  LOG_INFO    = 1,
+  LOG_ERROR   = (1 << 1),
+  LOG_WARN    = (1 << 2),
+  LOG_VERBOSE = (1 << 3),
+  LOG_DEBUG   = (1 << 4)
+} loglevel_t;
+
 struct config_t {
   /* operations */
   int op;
@@ -37,9 +45,9 @@ struct config_t {
   unsigned short color;
   unsigned short getdeps;
   unsigned short force;
-  unsigned short verbose;
   unsigned short quiet;
   unsigned short moreinfo;
+  loglevel_t logmask;
   const char *download_dir;
 
   alpm_list_t *ignorepkgs;
@@ -54,6 +62,18 @@ struct config_t {
     unsigned short warn;
     unsigned short error;
   } *colors;
+
+  struct strings_t {
+    char *repo;
+    char *pkg;
+    char *uptodate;
+    char *outofdate;
+    char *url;
+    char *info;
+    char *warn;
+    char *error;
+    char *c_off;
+  } *strings;
 };
 
 enum {
@@ -64,7 +84,8 @@ enum {
 };
 
 enum {
-  OP_IGNORE = 1000
+  OP_IGNORE = 1000,
+  OP_DEBUG = 1001,
 };
 
 int config_free(struct config_t *oldconfig);

@@ -47,7 +47,7 @@ alpm_list_t *query_aur_rpc(const char *query_type, const char* arg) {
   escaped = curl_easy_escape(curl, arg, strlen(arg));
 
   /* format URL to pass to curl */
-  asprintf(&url, AUR_RPC_URL, query_type, escaped);
+  cwr_asprintf(&url, AUR_RPC_URL, query_type, escaped);
 
   ret = aur_fetch_json(url);
 
@@ -64,26 +64,15 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
 
   for (i = targets; i; i = i->next) {
     if (STREQ(type, AUR_QUERY_TYPE_SEARCH) && strlen(i->data) < 2) {
-      if (config->color) {
-        cfprintf(stderr, "%<::%> search string '%s' too short.\n",
-          config->colors->error, (const char*)i->data);
-      } else {
-        fprintf(stderr, "!! search string '%s' too short.\n",
+      cwr_fprintf(stderr, LOG_ERROR, "search string '%s' too short.\n",
           (const char*)i->data);
-      }
       continue;
     }
 
     alpm_list_t *search = query_aur_rpc(type, i->data);
 
     if (! search) {
-      if (config->color) {
-        cfprintf(stderr, "%<::%>", config->colors->error);
-      } else {
-        fprintf(stderr, "!!");
-      }
-      fprintf(stderr, " no results for \"%s\"\n", (const char*)i->data);
-
+      cwr_fprintf(stderr, LOG_ERROR, "no results for \"%s\"\n", (const char*)i->data);
       continue;
     }
 
@@ -94,13 +83,13 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
 
       escaped = curl_easy_escape(curl, aurpkg->name, strlen(aurpkg->name));
 
-      asprintf(&url, AUR_PKGBUILD_PATH, escaped, escaped);
+      cwr_asprintf(&url, AUR_PKGBUILD_PATH, escaped, escaped);
 
       pkgbuild = curl_textfile_get(url);
       free(url);
 
       if (pkgbuild == NULL) {
-        fprintf(stderr, "error fetching pkgbuild\n");
+        cwr_fprintf(stderr, LOG_ERROR, "error fetching pkgbuild\n");
         continue;
       }
 

@@ -67,17 +67,14 @@ char *curl_textfile_get(const char *url) {
 
   curlstat = curl_easy_perform(curl);
   if (curlstat != CURLE_OK) {
-    fprintf(stderr, "!! curl: %s\n", curl_easy_strerror(curlstat));
+    cwr_fprintf(stderr, LOG_ERROR, "curl: %s\n", curl_easy_strerror(curlstat));
     return NULL;
   }
 
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
   if (httpcode != 200) {
-    if (config->color)
-      cfprintf(stderr, "%<::%> curl: server responded with code %l\n",
-        config->colors->error, httpcode);
-    else
-      fprintf(stderr, "!! curl: server responded with code %ld\n", httpcode);
+    cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with code %ld\n",
+        httpcode);
 
     free(curl_data.data);
     return NULL;
@@ -92,10 +89,7 @@ int curl_local_init() {
   if (! curl)
     return 1;
 
-  if (config->verbose >= 3) { /* super secret verbosity level */
-    printf("::DEBUG:: Initializing curl\n");
-    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-  }
+  cwr_fprintf(stdout, LOG_DEBUG, "Initializing curl\n");
 
   curl_easy_setopt(curl, CURLOPT_USERAGENT, COWER_USERAGENT);
   curl_easy_setopt(curl, CURLOPT_ENCODING, "deflate, gzip");

@@ -26,7 +26,7 @@ ${OBJ}: config.mk
 
 cower: ${OBJ}
 	@printf "   %-8s %s\n" LD $@
-	@${CC} -o $@ ${OBJ} ${LDFLAGS}
+	@${CC} -o $@ $(OBJ) ${LDFLAGS}
 
 doc: cower.1
 cower.1: README.pod

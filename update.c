@@ -48,15 +48,8 @@ int cower_do_update() {
   for (i = foreign_pkgs; i; i = i->next) {
     pmpkg_t *pmpkg = i->data;
 
-    if (config->verbose >= 1) {
-      if (config->color) {
-        cprintf("%<::%> Checking %<%s%> for updates...\n", 
-          config->colors->info,
-          config->colors->pkg, alpm_pkg_get_name(pmpkg));
-      } else {
-        printf(":: Checking %s for updates...\n", alpm_pkg_get_name(pmpkg));
-      }
-    }
+    cwr_printf(LOG_VERBOSE, "Checking %s%s%s for updates...\n",
+        config->strings->pkg, alpm_pkg_get_name(pmpkg), config->strings->c_off);
 
     /* Do I exist in the AUR? */
     alpm_list_t *results = query_aur_rpc(AUR_QUERY_TYPE_INFO, alpm_pkg_get_name(pmpkg));
@@ -78,13 +71,7 @@ int cower_do_update() {
       /* download if -d passed with -u but not ignored */
       if ((config->op & OP_DL)) {
         if (alpm_list_find_str(config->ignorepkgs, aurpkg->name) != NULL) {
-          if (! config->quiet) {
-            if (config->color) {
-              cfprintf(stderr, "%<::%> ignoring package %s\n", config->colors->warn, aurpkg->name);
-            } else {
-              fprintf(stderr, "^^ ignoring package %s\n", aurpkg->name);
-            }
-          }
+          cwr_fprintf(stderr, LOG_WARN, " ignoring package %s\n", aurpkg->name);
         } else {
           download_taurball(aurpkg);
         }

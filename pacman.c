@@ -29,9 +29,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "util.h"
 #include "pacman.h"
 #include "conf.h"
-#include "util.h"
 
 static int is_foreign(pmpkg_t *pkg) {
   const char *pkgname;
@@ -158,8 +158,7 @@ alpm_list_t *alpm_query_foreign() {
 }
 
 void alpm_quick_init() {
-  if (config->verbose >= 2)
-    printf("::DEBUG:: Initializing alpm\n");
+  cwr_printf(LOG_DEBUG, "Initializing alpm\n");
 
   FILE *pacfd;
   char *ptr, *section = NULL;
@@ -173,11 +172,7 @@ void alpm_quick_init() {
 
   pacfd = fopen(PACCONF, "r");
   if (! pacfd) {
-    if (config->color)
-      cfprintf(stderr, "%<::%> could not locate pacman config.\n",
-        config->colors->error);
-    else
-      fprintf(stderr, "!! could not locate pacman config.\n");
+    cwr_fprintf(stderr, LOG_ERROR, "could not locate pacman config.\n");
     return;
   }
 
@@ -253,7 +248,6 @@ pmdb_t *alpm_sync_search(alpm_list_t *target) {
 }
 
 int is_in_pacman(const char *target) {
-
   pmdb_t *found_in;
   alpm_list_t *p = NULL;
 
@@ -261,14 +255,9 @@ int is_in_pacman(const char *target) {
   found_in = alpm_sync_search(p);
 
   if (found_in) {
-    if (config->color) {
-      cprintf("%<::%> %<%s%> is available in %<%s%>\n",
-        config->colors->warn,
-        config->colors->pkg, target,
-        config->colors->warn, alpm_db_get_name(found_in));
-    } else {
-      printf("^^ %s is available in %s\n", target, alpm_db_get_name(found_in));
-    }
+    cwr_fprintf(stderr, LOG_WARN, "%s%s%s is available in %s%s%s\n",
+        config->strings->pkg, target, config->strings->c_off,
+        config->strings->repo, alpm_db_get_name(found_in), config->strings->c_off);
 
     alpm_list_free(p);
     return TRUE;

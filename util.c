@@ -47,81 +47,69 @@ static char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
                            "science", "system", "x11", "xfce", "kernels" };
 
 
-static int c_vfprintf(FILE *fd, const char* fmt, va_list args) {
-  const char *p;
-  int color, count = 0;
-  char cprefix[10] = {0};
+int cwr_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list args) {
+  int ret = 0;
 
-  int i; long l; char *s;
-
-  for (p = fmt; *p != '\0'; p++) {
-    if (*p != '%') {
-      fputc(*p, fd); count++;
-      continue;
-    }
-
-    switch (*++p) {
-    case 'c':
-      i = va_arg(args, int);
-      fputc(i, fd); count++;
-      break;
-    case 's':
-      s = va_arg(args, char*);
-      count += fputs(s, fd);
-      break;
-    case 'd':
-      i = va_arg(args, int);
-      if (i < 0) {
-        i = -i;
-        fputc('-', fd); count++;
-      }
-      count += fputs(itoa(i, 10), fd);
-      break;
-    case 'l':
-      l = va_arg(args, long);
-      if (l < 0) {
-        l = -l;
-        fputc('-', fd); count++;
-      }
-      count += fputs(itoa(l, 10), fd);
-      break;
-    case '<': /* color on */
-      color = va_arg(args, int);
-      snprintf(cprefix, 10, C_ON, color / 10, color % 10);
-      count += fputs(cprefix, fd);
-      break;
-    case '>': /* color off */
-      count += fputs(C_OFF, fd);
-      break;
-    case '%':
-      fputc('%', fd); count++;
-      break;
-    }
+  if (!(config->logmask & level)) {
+    return ret;
   }
 
-  return count;
+  switch(level) {
+    case LOG_ERROR:
+      fprintf(stream, "%s%s ", config->strings->error, config->strings->c_off);
+      break;
+    case LOG_WARN:
+      fprintf(stream, "%s%s ", config->strings->warn, config->strings->c_off);
+      break;
+    case LOG_INFO:
+    case LOG_VERBOSE:
+      fprintf(stream, "%s%s ", config->strings->info, config->strings->c_off);
+      break;
+    case LOG_DEBUG:
+      fprintf(stream, "debug: ");
+      break;
+    default:
+      break;
+  }
+
+  ret = vfprintf(stream, format, args);
+  return(ret);
 }
 
-int cfprintf(FILE *fd, const char *fmt, ...) {
+int cwr_asprintf(char **string, const char *format, ...) {
+  int ret = 0;
   va_list args;
-  int result;
 
-  va_start(args, fmt);
-  result = c_vfprintf(fd, fmt, args);
+  va_start(args, format);
+  if (vasprintf(string, format, args) == -1) {
+    cwr_fprintf(stderr, LOG_ERROR, "failed to allocate string\n");
+    ret = -1;
+  }
   va_end(args);
 
-  return result;
+  return(ret);
 }
 
-int cprintf(const char *fmt, ...) {
+int cwr_fprintf(FILE *stream, loglevel_t level, const char *format, ...) {
+  int ret;
   va_list args;
-  int result;
 
-  va_start(args, fmt);
-  result = c_vfprintf(stdout, fmt, args);
+  va_start(args, format);
+  ret = cwr_vfprintf(stream, level, format, args);
   va_end(args);
 
-  return result;
+  return(ret);
+}
+
+int cwr_printf(loglevel_t level, const char *format, ...) {
+  int ret;
+  va_list args;
+
+  va_start(args, format);
+  ret = cwr_vfprintf(stdout, level, format, args);
+  va_end(args);
+
+  return(ret);
 }
 
 int file_exists(const char *filename) {
@@ -190,25 +178,17 @@ char *itoa(unsigned int num, int base){
 void print_pkg_info(struct aur_pkg_t *pkg) {
   size_t max_line_len = get_screen_width() - INDENT - 1;
 
-  if (config->color) {
-    cprintf("Repository      : %<aur%>\n"
-            "Name            : %<%s%>\n"
-            "Version         : %<%s%>\n"
-            "URL             : %<%s%>\n"
-            "AUR Page        : %<%s%d%>\n",
-            config->colors->repo,
-            config->colors->pkg, pkg->name,
-            pkg->ood ? config->colors->outofdate : config->colors->uptodate, pkg->ver,
-            config->colors->url, pkg->url,
-            config->colors->url, AUR_PKG_URL_FORMAT, pkg->id);
-  } else {
-    printf("%-*s: aur\n%-*s: %s\n%-*s: %s\n%-*s: %s\n%-*s: %s%d\n",
-           INDENT - 2, PKG_OUT_REPO,
-           INDENT - 2, PKG_OUT_NAME, pkg->name,
-           INDENT - 2, PKG_OUT_VERSION, pkg->ver,
-           INDENT - 2, PKG_OUT_URL, pkg->url,
-           INDENT - 2, PKG_OUT_AURPAGE, AUR_PKG_URL_FORMAT, pkg->id);
-  }
+  printf("Repository      : %saur%s\n"
+         "Name            : %s%s%s\n"
+         "Version         : %s%s%s\n"
+         "URL             : %s%s%s\n"
+         "AUR Page        : %s%s%d%s\n",
+         config->strings->repo, config->strings->c_off,
+         config->strings->pkg, pkg->name, config->strings->c_off,
+         pkg->ood ? config->strings->outofdate : config->strings->uptodate,
+         pkg->ver, config->strings->c_off,
+         config->strings->url, pkg->url, config->strings->c_off,
+         config->strings->url, AUR_PKG_URL_FORMAT, pkg->id, config->strings->c_off);
 
   if (config->moreinfo) {
     print_extinfo_list(PKG_OUT_PROVIDES, pkg->provides, max_line_len, INDENT);
@@ -222,8 +202,9 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
       printf("%s\n", (const char*)pkg->optdepends->data);
 
       alpm_list_t *i;
-      for (i = pkg->optdepends->next; i; i = i->next)
+      for (i = pkg->optdepends->next; i; i = i->next) {
         printf("%*s%s\n", INDENT, "", (const char*)i->data);
+      }
     }
 
     print_extinfo_list(PKG_OUT_CONFLICTS, pkg->conflicts, max_line_len, INDENT);
@@ -231,27 +212,24 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
   }
 
   printf("%-*s: %s\n%-*s: %s\n%-*s: %d\n",
-         INDENT - 2, PKG_OUT_CAT, aur_cat[pkg->cat],
-         INDENT - 2, PKG_OUT_LICENSE, pkg->lic,
-         INDENT - 2, PKG_OUT_NUMVOTES, pkg->votes);
+      INDENT - 2, PKG_OUT_CAT, aur_cat[pkg->cat],
+      INDENT - 2, PKG_OUT_LICENSE, pkg->lic,
+      INDENT - 2, PKG_OUT_NUMVOTES, pkg->votes);
 
-  if (config->color) {
-    cprintf("Out of Date     : %<%s%>\n", pkg->ood ? 
-      config->colors->outofdate : config->colors->uptodate, pkg->ood ? "Yes" : "No");
-  } else {
-    printf("%-*s: %s\n", INDENT - 2, PKG_OUT_OOD, pkg->ood ? "Yes" : "No");
-  }
+  printf("Out of Date     : %s%s%s\n", pkg->ood ? 
+      config->strings->outofdate : config->strings->uptodate, pkg->ood ? "Yes" : "No",
+      config->strings->c_off);
 
   printf("%-*s: ", INDENT - 2, PKG_OUT_DESC);
 
   size_t desc_len = strlen(pkg->desc);
-  if (desc_len < max_line_len)
+  if (desc_len < max_line_len) {
     printf("%s\n", pkg->desc);
-  else
+  } else {
     print_wrapped(pkg->desc, max_line_len, INDENT);
+  }
 
   putchar('\n');
-
 }
 
 void print_pkg_search(alpm_list_t *search) {
@@ -262,40 +240,32 @@ void print_pkg_search(alpm_list_t *search) {
     pkg = i->data;
 
     if (config->quiet) {
-      if (config->color)
-        cprintf("%<%s%>\n", config->colors->pkg, pkg->name);
-      else
-        printf("%s\n", pkg->name);
+      printf("%s%s%s\n", config->strings->pkg, pkg->name, config->strings->c_off);
     } else {
-      if (config->color)
-        cprintf("%<aur/%>%<%s%> %<%s%>\n",
-          config->colors->repo, config->colors->pkg, pkg->name, pkg->ood ?
-            config->colors->outofdate : config->colors->uptodate, pkg->ver);
-      else
-        printf("aur/%s %s\n", pkg->name, pkg->ver);
-      printf("    %s\n", pkg->desc);
+      printf("%saur/%s%s %s%s%s\n    %s\n",
+          config->strings->repo, config->strings->pkg, pkg->name,
+          pkg->ood ? config->strings->outofdate : config->strings->uptodate,
+          pkg->ver, config->strings->c_off, pkg->desc);
     }
+
   }
 }
 
 void print_pkg_update(const char *pkg, const char *local_ver, const char *remote_ver) {
-  if (config->color) {
-    if (! config->quiet)
-      cprintf("%<%s%> %<%s%> -> %<%s%>\n", config->colors->pkg, pkg, 
-        config->colors->outofdate, local_ver, config->colors->uptodate, remote_ver);
-    else
-      cprintf("%<%s%>\n", config->colors->pkg, pkg);
+  if (config->quiet) {
+    printf("%s%s%s\n", config->strings->pkg, pkg, config->strings->c_off);
   } else {
-    if (! config->quiet)
-      printf("%s %s -> %s\n", pkg, local_ver, remote_ver);
-    else
-      printf("%s\n", pkg);
+    cwr_printf(LOG_INFO, "%s%s %s%s%s -> %s%s%s\n",
+        config->strings->pkg, pkg,
+        config->strings->outofdate, local_ver, config->strings->c_off,
+        config->strings->uptodate, remote_ver, config->strings->c_off);
   }
 }
 
 void print_extinfo_list(const char *field, alpm_list_t *list, size_t max_line_len, int indent) {
-  if (!list)
+  if (!list) {
     return;
+  }
 
   printf("%-*s: ", indent - 2, field);
 

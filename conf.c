@@ -34,10 +34,25 @@ struct config_t *config = NULL; /* global config variable */
 
 int config_free(struct config_t *oldconfig) {
 
-  if (oldconfig == NULL)
+  if (oldconfig == NULL) {
     return -1;
+  }
 
   /* free composited memory */
+  if (oldconfig->color) {
+    free(oldconfig->strings->repo);
+    free(oldconfig->strings->pkg);
+    free(oldconfig->strings->uptodate);
+    free(oldconfig->strings->outofdate);
+    free(oldconfig->strings->url);
+    free(oldconfig->strings->info);
+    free(oldconfig->strings->warn);
+    free(oldconfig->strings->error);
+    free(oldconfig->strings->c_off);
+  }
+
+  free(oldconfig->strings);
+
   free(oldconfig->colors);
   FREE(oldconfig->download_dir);
   FREELIST(oldconfig->ignorepkgs);
@@ -50,18 +65,19 @@ int config_free(struct config_t *oldconfig) {
 struct config_t *config_new(void) {
   struct config_t *newconfig = calloc(1, sizeof *newconfig);
   if(!newconfig) {
-    fprintf(stderr, "error allocating %zd bytes\n", sizeof *newconfig);
+    cwr_fprintf(stderr, LOG_ERROR, "error allocating %zd bytes\n", sizeof *newconfig);
     return(NULL);
   }
 
   newconfig->colors = calloc(1, sizeof *(newconfig->colors));
+  newconfig->strings = calloc(1, sizeof *(newconfig->strings));
 
   /* default options */
-  newconfig->op = newconfig->color = newconfig->getdeps = newconfig->force =
-                  newconfig->quiet = newconfig->verbose = newconfig->moreinfo = 0;
+  newconfig->op = newconfig->color = newconfig->getdeps = 0;
+  newconfig->force = newconfig->quiet = newconfig->moreinfo = 0;
 
+  newconfig->logmask = LOG_ERROR|LOG_WARN|LOG_INFO;
   newconfig->download_dir = NULL;
-
   newconfig->ignorepkgs = NULL;
 
   newconfig->colors->repo = BOLDMAGENTA;

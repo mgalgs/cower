@@ -46,8 +46,7 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **deparray, int 
     for (token = strtok(*deparray, "\\\'\"\n"); token; token = strtok(NULL, "\\\'\"\n")) {
       ltrim(token);
       if (strlen(token)) {
-        if (config->verbose >= 2)
-          fprintf(stderr, "::DEBUG Adding Depend: %s\n", token);
+        cwr_printf(LOG_DEBUG, "Adding Depend: %s\n", token);
         deplist = alpm_list_add(deplist, strdup(token));
       }
     }
@@ -71,11 +70,11 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **deparray, int 
     if STREQ(token, "\\")
       continue;
 
-    if (config->verbose >= 2)
-      fprintf(stderr, "::DEBUG Adding Depend: %s\n", token);
+    cwr_printf(LOG_DEBUG, "Adding Depend: %s\n", token);
 
-    if (alpm_list_find_str(deplist, token) == NULL)
+    if (alpm_list_find_str(deplist, token) == NULL) {
       deplist = alpm_list_add(deplist, strdup(token));
+    }
 
   }
 
@@ -131,15 +130,12 @@ int get_pkg_dependencies(const char *pkg) {
   else
     dir = realpath(config->download_dir, NULL);
 
-  asprintf(&pkgbuild_path, "%s/%s/PKGBUILD", dir, pkg);
+  cwr_asprintf(&pkgbuild_path, "%s/%s/PKGBUILD", dir, pkg);
 
   buffer = get_file_as_buffer(pkgbuild_path);
   if (! buffer) {
-    if (config->color)
-      cfprintf(stderr, "%<::%> Could not open PKGBUILD for dependency parsing.\n",
-        config->colors->error);
-    else
-      fprintf(stderr, "!! Could not open PKGBUILD for dependency parsing.\n");
+    cwr_fprintf(stderr, LOG_ERROR, "%s Could not open PKGBUILD for dependency parsing.\n",
+        config->strings->error);
     return 1;
   }
 
@@ -150,12 +146,9 @@ int get_pkg_dependencies(const char *pkg) {
   pkgbuild_extinfo_get(&buffer, pkg_details, TRUE);
   free(buffer);
 
-  if (!config->quiet && config->verbose >= 1) {
-    if (config->color)
-      cprintf("\n%<::%> Fetching uninstalled dependencies for %<%s%>...\n",
-        config->colors->info, config->colors->pkg, pkg);
-    else
-      printf("\n:: Fetching uninstalled dependencies for %s...\n", pkg);
+  if (!config->quiet) {
+    cwr_printf(LOG_INFO, "Fetching uninstalled dependencies for %s%s%s...\n",
+      config->strings->pkg, pkg, config->strings->c_off);
   }
 
   alpm_list_t *i = deplist;
@@ -163,27 +156,26 @@ int get_pkg_dependencies(const char *pkg) {
     char *depend = i->data;
     alpm_list_t *targ = NULL;
 
-    if (config->verbose >= 2)
-      printf("::DEBUG Attempting to find %s\n", depend);
+    cwr_printf(LOG_DEBUG, "Attempting to find %s\n", depend);
 
     targ = alpm_list_add(targ, depend);
+
+    /* XXX: use alpm_find_satisfier with pacman 3.5 */
     alpm_list_t *results = alpm_db_search(db_local, targ);
     if (results) { /* installed */
-      if (config->verbose >= 2)
-        printf("::DEBUG %s is installed\n", depend);
-
+      cwr_printf(LOG_DEBUG, "%s is installed\n", depend);
       goto finish;
     }
 
-    if (is_in_pacman(depend))
+    if (is_in_pacman(depend)) {
       goto finish;
+    }
 
     /* can't find it in pacman, check the AUR */
     results = query_aur_rpc(AUR_QUERY_TYPE_INFO, depend);
     if (results) {
 
-      if (config->verbose >= 2)
-        printf("::DEBUG %s is in the AUR\n", depend);
+      cwr_printf(LOG_DEBUG, "%s is in the AUR\n", depend);
 
       ret++;
       download_taurball(results->data);
@@ -193,12 +185,7 @@ int get_pkg_dependencies(const char *pkg) {
     }
 
     /* can't find it anywhere -- warn about this */
-    if (config->color)
-      cfprintf(stderr, "%<::%> Unresolvable dependency: '%s'\n",
-        config->colors->warn, depend);
-     else
-      fprintf(stderr, "^^ Unresolvable dependency: '%s'\n", depend);
-
+    cwr_fprintf(stderr, LOG_WARN, "Unresolvable dependency: '%s'\n", depend);
 
     finish:
       alpm_list_free(results);

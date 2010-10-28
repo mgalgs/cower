@@ -166,18 +166,11 @@ alpm_list_t *aur_fetch_json(const char *url) {
 
   curlstat = curl_easy_perform(curl);
   if (curlstat != CURLE_OK) {
-    if (config->color)
-      cfprintf(stderr, "%<::%> curl: %s\n", config->colors->error, curl_easy_strerror(curlstat));
-    else
-      fprintf(stderr, "!! curl: %s\n", curl_easy_strerror(curlstat));
+    cwr_fprintf(stderr, LOG_ERROR, "curl: %s\n", curl_easy_strerror(curlstat));
   } else {
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
     if (httpcode != 200) {
-      if (config->color)
-        cfprintf(stderr, "%<::%> curl: server responded with code %l\n",
-          config->colors->error, httpcode); 
-      else
-        fprintf(stderr, "!! curl: server responded with code %ld\n", httpcode);
+      cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with code %ld\n", httpcode); 
     }
   }
 
