@@ -48,7 +48,7 @@ int cower_do_update() {
   for (i = foreign_pkgs; i; i = i->next) {
     pmpkg_t *pmpkg = i->data;
 
-    cwr_printf(LOG_VERBOSE, "Checking %s%s%s for updates...\n",
+    cwr_printf(LOG_DEBUG, "Checking %s%s%s for updates...\n",
         config->strings->pkg, alpm_pkg_get_name(pmpkg), config->strings->c_off);
 
     /* Do I exist in the AUR? */

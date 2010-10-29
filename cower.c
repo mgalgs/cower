@@ -80,6 +80,7 @@ static unsigned short color_is_valid(const char *colorname) {
 }
 
 static void cleanup(int ret) {
+  cwr_printf(LOG_DEBUG, "releasing handles\n");
   curl_easy_cleanup(curl);
   curl_global_cleanup();
 
@@ -110,8 +111,7 @@ printf(" General options:\n\
       --ignore <pkg>      Ignore a package upgrade (can be used more than once)\n\
   -h, --help              Display this help and exit\n\
   -q, --quiet             Output less.\n\
-  -t, --target <dir>      Specify an alternate download directory.\n\
-  -v, --verbose           Be more verbose.\n\n");
+  -t, --target <dir>      Specify an alternate download directory.\n\n");
 }
 
 static int parseargs(int argc, char **argv) {
@@ -129,14 +129,13 @@ static int parseargs(int argc, char **argv) {
     {"debug",     no_argument,        0, OP_DEBUG},
     {"help",      no_argument,        0, 'h'},
     {"ignore",    required_argument,  0, OP_IGNORE},
-    {"verbose",   no_argument,        0, 'v'},
     {"force",     no_argument,        0, 'f'},
     {"quiet",     no_argument,        0, 'q'},
     {"target",    required_argument,  0, 't'},
     {0, 0, 0, 0}
   };
 
-  while ((opt = getopt_long(argc, argv, "dhisucfqt:v", opts, &option_index))) {
+  while ((opt = getopt_long(argc, argv, "dhisucfqt:", opts, &option_index))) {
     alpm_list_t *item = NULL, *list = NULL;
     if (opt < 0)
       break;
@@ -187,9 +186,6 @@ static int parseargs(int argc, char **argv) {
         if (config->download_dir)
           FREE(config->download_dir);
         config->download_dir = relative_to_absolute_path(optarg);
-        break;
-      case 'v':
-        config->logmask |= LOG_VERBOSE;
         break;
       case OP_IGNORE:
         list = strsplit(optarg, ',');

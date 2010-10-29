@@ -33,8 +33,7 @@ typedef enum __loglevel_t {
   LOG_INFO    = 1,
   LOG_ERROR   = (1 << 1),
   LOG_WARN    = (1 << 2),
-  LOG_VERBOSE = (1 << 3),
-  LOG_DEBUG   = (1 << 4)
+  LOG_DEBUG   = (1 << 3)
 } loglevel_t;
 
 struct config_t {

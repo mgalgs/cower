@@ -62,7 +62,6 @@ int cwr_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list arg
       fprintf(stream, "%s%s ", config->strings->warn, config->strings->c_off);
       break;
     case LOG_INFO:
-    case LOG_VERBOSE:
       fprintf(stream, "%s%s ", config->strings->info, config->strings->c_off);
       break;
     case LOG_DEBUG:
