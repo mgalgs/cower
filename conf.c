@@ -35,7 +35,7 @@ struct config_t *config = NULL; /* global config variable */
 int config_free(struct config_t *oldconfig) {
 
   if (oldconfig == NULL) {
-    return -1;
+    return(-1);
   }
 
   /* free composited memory */
@@ -59,7 +59,7 @@ int config_free(struct config_t *oldconfig) {
 
   FREE(oldconfig);
 
-  return 0;
+  return(0);
 }
 
 struct config_t *config_new(void) {
@@ -89,7 +89,7 @@ struct config_t *config_new(void) {
   newconfig->colors->warn = BOLDYELLOW;
   newconfig->colors->error = BOLDRED;
 
-  return newconfig;
+  return(newconfig);
 }
 
 /* vim: set ts=2 sw=2 et: */

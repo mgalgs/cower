@@ -50,25 +50,28 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **deparray, int 
         deplist = alpm_list_add(deplist, strdup(token));
       }
     }
-    return deplist;
+    return(deplist);
   }
 
   for (token = strtok(*deparray, " \n"); token; token = strtok(NULL, " \n")) {
     ltrim(token);
-    if (strchr("\'\"", *token))
+    if (strchr("\'\"", *token)) {
       token++;
+    }
 
-    if (stripver)
+    if (stripver) {
       *(token + strcspn(token, "=<>\"\'")) = '\0';
-    else {
+    } else {
       char *ptr = token + strlen(token) - 1;
-      if (strchr("\'\"", *ptr))
+      if (strchr("\'\"", *ptr)) {
         *ptr = '\0';
+      }
     }
 
     /* some people feel compelled to escape newlines inside arrays. these people suck. */
-    if STREQ(token, "\\")
+    if STREQ(token, "\\") {
       continue;
+    }
 
     cwr_printf(LOG_DEBUG, "Adding Depend: %s\n", token);
 
@@ -78,34 +81,34 @@ static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **deparray, int 
 
   }
 
-  return deplist;
+  return(deplist);
 }
 
 void pkgbuild_extinfo_get(char **pkgbuild, alpm_list_t **details[], int stripver) {
   char *lineptr, *arrayend;
 
-  lineptr = *pkgbuild;
-
-  do {
+  for (lineptr = *pkgbuild; lineptr; lineptr = strchr(lineptr, '\n')) {
     strtrim(++lineptr);
-    if (*lineptr == '#')
+    if (*lineptr == '#') {
       continue;
+    }
 
     alpm_list_t **deplist;
-    if (STR_STARTS_WITH(lineptr, PKGBUILD_DEPENDS))
+    if (STR_STARTS_WITH(lineptr, PKGBUILD_DEPENDS)) {
       deplist = details[PKGDETAIL_DEPENDS];
-    else if (STR_STARTS_WITH(lineptr, PKGBUILD_MAKEDEPENDS))
+    } else if (STR_STARTS_WITH(lineptr, PKGBUILD_MAKEDEPENDS)) {
       deplist = details[PKGDETAIL_MAKEDEPENDS];
-    else if (STR_STARTS_WITH(lineptr, PKGBUILD_OPTDEPENDS))
+    } else if (STR_STARTS_WITH(lineptr, PKGBUILD_OPTDEPENDS)) {
       deplist = details[PKGDETAIL_OPTDEPENDS];
-    else if (STR_STARTS_WITH(lineptr, PKGBUILD_PROVIDES))
+    } else if (STR_STARTS_WITH(lineptr, PKGBUILD_PROVIDES)) {
       deplist = details[PKGDETAIL_PROVIDES];
-    else if (STR_STARTS_WITH(lineptr, PKGBUILD_REPLACES))
+    } else if (STR_STARTS_WITH(lineptr, PKGBUILD_REPLACES)) {
       deplist = details[PKGDETAIL_REPLACES];
-    else if (STR_STARTS_WITH(lineptr, PKGBUILD_CONFLICTS))
-      deplist = details[PKGDETAIL_CONFLICTS];
-    else
+    } else if (STR_STARTS_WITH(lineptr, PKGBUILD_CONFLICTS)) {
+      deplist = details[PKGDETAIL_CONFLICTS]; 
+    } else {
       continue;
+    }
 
     arrayend = strchr(lineptr, ')');
     *arrayend  = '\0';
@@ -116,7 +119,7 @@ void pkgbuild_extinfo_get(char **pkgbuild, alpm_list_t **details[], int stripver
     }
 
     lineptr = arrayend + 1;
-  } while ((lineptr = strchr(lineptr, '\n')));
+  }
 }
 
 int get_pkg_dependencies(const char *pkg) {
@@ -125,25 +128,26 @@ int get_pkg_dependencies(const char *pkg) {
   int ret = 0;
   alpm_list_t *deplist = NULL;
 
-  if (config->download_dir == NULL)
+  if (config->download_dir == NULL) {
     dir = getcwd(NULL, PATH_MAX);
-  else
+  } else {
     dir = realpath(config->download_dir, NULL);
+  }
 
   cwr_asprintf(&pkgbuild_path, "%s/%s/PKGBUILD", dir, pkg);
 
   buffer = get_file_as_buffer(pkgbuild_path);
-  if (! buffer) {
+  if (!buffer) {
     cwr_fprintf(stderr, LOG_ERROR, "%s Could not open PKGBUILD for dependency parsing.\n",
         config->strings->error);
-    return 1;
+    return(1);
   }
 
   alpm_list_t **pkg_details[PKGDETAIL_MAX] = {
     &deplist, &deplist, NULL, NULL, NULL, NULL
   };
 
-  pkgbuild_extinfo_get(&buffer, pkg_details, TRUE);
+  pkgbuild_extinfo_get(&buffer, pkg_details, 1);
   free(buffer);
 
   if (!config->quiet) {
@@ -197,7 +201,7 @@ int get_pkg_dependencies(const char *pkg) {
   FREE(dir);
   FREE(pkgbuild_path);
 
-  return ret;
+  return(ret);
 }
 
 /* vim: set ts=2 sw=2 et: */

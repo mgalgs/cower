@@ -49,7 +49,7 @@ static size_t write_callback(void *ptr, size_t size, size_t nmemb, void *data) {
     mem->data[mem->size] = '\0';
   }
 
-  return realsize;
+  return(realsize);
 }
 
 char *curl_textfile_get(const char *url) {
@@ -68,7 +68,7 @@ char *curl_textfile_get(const char *url) {
   curlstat = curl_easy_perform(curl);
   if (curlstat != CURLE_OK) {
     cwr_fprintf(stderr, LOG_ERROR, "curl: %s\n", curl_easy_strerror(curlstat));
-    return NULL;
+    return(NULL);
   }
 
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
@@ -77,24 +77,23 @@ char *curl_textfile_get(const char *url) {
         httpcode);
 
     free(curl_data.data);
-    return NULL;
+    return(NULL);
   }
 
-  return curl_data.data;
+  return(curl_data.data);
 }
 
 int curl_local_init() {
-  curl = curl_easy_init();
-
-  if (! curl)
-    return 1;
+  if (!(curl = curl_easy_init())) {
+    return(1);
+  }
 
   cwr_fprintf(stdout, LOG_DEBUG, "Initializing curl\n");
 
   curl_easy_setopt(curl, CURLOPT_USERAGENT, COWER_USERAGENT);
   curl_easy_setopt(curl, CURLOPT_ENCODING, "deflate, gzip");
 
-  return 0;
+  return(0);
 }
 
 /* vim: set ts=2 sw=2 et: */

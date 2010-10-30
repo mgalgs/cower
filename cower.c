@@ -64,7 +64,7 @@ static int fn_cmp_color(const void *c1, const void *c2) {
   struct color_t *color1 = (struct color_t*)c1;
   struct color_t *color2 = (struct color_t*)c2;
 
-  return strcmp(color1->name, color2->name);
+  return(strcmp(color1->name, color2->name));
 }
 
 static unsigned short color_is_valid(const char *colorname) {
@@ -73,10 +73,11 @@ static unsigned short color_is_valid(const char *colorname) {
 
   result = bsearch(&key, availcolors, COLOR_MAX, sizeof(struct color_t), fn_cmp_color);
 
-  if (result != NULL)
-    return ((struct color_t*)result)->val;
-  else
-    return 0;
+  if (result != NULL) {
+    return(((struct color_t*)result)->val);
+  } else {
+    return(0);
+  }
 }
 
 static void cleanup(int ret) {
@@ -137,22 +138,26 @@ static int parseargs(int argc, char **argv) {
 
   while ((opt = getopt_long(argc, argv, "dhisucfqt:", opts, &option_index))) {
     alpm_list_t *item = NULL, *list = NULL;
-    if (opt < 0)
+
+    if (opt < 0) {
       break;
+    }
 
     switch (opt) {
       /* Operations */
       case 'd':
-        if (! (config->op & OP_DL))
+        if (!(config->op & OP_DL)) {
           config->op |= OP_DL;
-        else
+        } else {
           config->getdeps = 1;
+        }
         break;
       case 'i':
-        if (! (config->op & OP_INFO))
+        if (!(config->op & OP_INFO)) {
           config->op |= OP_INFO;
-        else
+        } else {
           config->moreinfo = 1;
+        }
         break;
       case 's':
         config->op |= OP_SEARCH;
@@ -164,10 +169,11 @@ static int parseargs(int argc, char **argv) {
       /* Options */
       case 'c':
         if (!optarg || STREQ(optarg, "auto")) {
-          if (isatty(STDOUT_FILENO))
+          if (isatty(STDOUT_FILENO)) {
             config->color = 1;
-          else
+          } else {
             config->color = 0;
+          }
         } else if (STREQ(optarg, "always")) {
           config->color = 1;
         } else if (STREQ(optarg, "never")) {
@@ -178,13 +184,14 @@ static int parseargs(int argc, char **argv) {
         config->force = 1;
         break;
       case 'h':
-        return 0;
+        return(0);
       case 'q':
         config->quiet = 1;
         break;
       case 't':
-        if (config->download_dir)
+        if (config->download_dir) {
           FREE(config->download_dir);
+        }
         config->download_dir = relative_to_absolute_path(optarg);
         break;
       case OP_IGNORE:
@@ -200,20 +207,21 @@ static int parseargs(int argc, char **argv) {
         break;
 
       case '?':
-        return 1;
+        return(1);
       default:
-        return 1;
+        return(1);
     }
   }
 
   /* Feed the remaining args into a linked list */
   while (optind < argc) {
-    if (alpm_list_find_str(targets, argv[optind]) == NULL)
+    if (alpm_list_find_str(targets, argv[optind]) == NULL) {
       targets = alpm_list_add(targets, strdup(argv[optind]));
+    }
     optind++;
   }
 
-  return 0;
+  return(0);
 }
 
 static int read_config_file() {
@@ -233,18 +241,20 @@ static int read_config_file() {
      * just don't have a config file to look at.
      */
     free(config_path);
-    return ret;
+    return(ret);
   }
 
   FILE *conf_fd = fopen(config_path, "r");
   while (fgets(line, BUFSIZ, conf_fd)) {
     strtrim(line);
 
-    if (line[0] == '#' || strlen(line) == 0)
+    if (line[0] == '#' || strlen(line) == 0) {
       continue;
+    }
 
-    if ((ptr = strchr(line, '#')))
+    if ((ptr = strchr(line, '#'))) {
       *ptr = '\0';
+    }
 
     char *key;
     unsigned short color;
@@ -254,23 +264,23 @@ static int read_config_file() {
     strtrim(ptr);
 
     unsigned short *popt = NULL; /* shut up gcc */
-    if (STREQ(key, "repo"))
+    if (STREQ(key, "repo")) {
       popt = &(config->colors->repo);
-    else if (STREQ(key, "packages"))
+    } else if (STREQ(key, "packages")) {
       popt = &(config->colors->pkg);
-    else if (STREQ(key, "uptodate"))
+    } else if (STREQ(key, "uptodate")) {
       popt = &(config->colors->uptodate);
-    else if (STREQ(key, "outofdate"))
+    } else if (STREQ(key, "outofdate")) {
       popt = &(config->colors->outofdate);
-    else if (STREQ(key, "url"))
+    } else if (STREQ(key, "url")) {
       popt = &(config->colors->url);
-    else if (STREQ(key, "info"))
+    } else if (STREQ(key, "info")) {
       popt = &(config->colors->info);
-    else if (STREQ(key, "warn"))
+    } else if (STREQ(key, "warn")) {
       popt = &(config->colors->warn);
-    else if (STREQ(key, "error"))
+    } else if (STREQ(key, "error")) {
       popt = &(config->colors->error);
-    else {
+    } else {
       cwr_fprintf(stderr, LOG_ERROR, "bad option found in config: '%s'\n", key);
       ret = 1;
       break;
@@ -286,7 +296,7 @@ static int read_config_file() {
   fclose(conf_fd);
   free(config_path);
 
-  return ret;
+  return(ret);
 }
 
 static void string_setup() {
@@ -362,8 +372,9 @@ int main(int argc, char **argv) {
 
   if (config->color) {
     ret = read_config_file();
-    if (ret > 0)
+    if (ret > 0) {
       cleanup(ret);
+    }
   }
 
   string_setup();
@@ -407,7 +418,7 @@ int main(int argc, char **argv) {
 
   cleanup(ret);
   /* Never reached */
-  return 0;
+  return(0);
 }
 
 /* vim: set ts=2 sw=2 et: */

@@ -34,12 +34,13 @@ int aur_pkg_cmp(const void *p1, const void *p2) {
   struct aur_pkg_t *pkg1 = (struct aur_pkg_t*)p1;
   struct aur_pkg_t *pkg2 = (struct aur_pkg_t*)p2;
 
-  return strcmp((const char*)pkg1->name, (const char*)pkg2->name);
+  return(strcmp((const char*)pkg1->name, (const char*)pkg2->name));
 }
 
 void aur_pkg_free(void *pkg) {
-  if (!pkg)
+  if (!pkg) {
     return;
+  }
 
   struct aur_pkg_t *it = (struct aur_pkg_t*)pkg;
 
@@ -69,7 +70,7 @@ struct aur_pkg_t *aur_pkg_new() {
   pkg->depends = pkg->makedepends = pkg->optdepends = NULL;
   pkg->id = pkg->cat = pkg->ood = pkg->votes = 0;
 
-  return pkg;
+  return(pkg);
 }
 
 /* vim: set ts=2 sw=2 et: */

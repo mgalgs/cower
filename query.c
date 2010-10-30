@@ -39,22 +39,19 @@
 #include "yajl.h"
 
 alpm_list_t *query_aur_rpc(const char *query_type, const char* arg) {
-
-  char *url;
-  char *escaped;
+  char *url, *escaped;
   alpm_list_t *ret;
 
-  escaped = curl_easy_escape(curl, arg, strlen(arg));
-
   /* format URL to pass to curl */
+  escaped = curl_easy_escape(curl, arg, strlen(arg));
   cwr_asprintf(&url, AUR_RPC_URL, query_type, escaped);
+  curl_free(escaped);
 
   ret = aur_fetch_json(url);
 
-  curl_free(escaped);
   free(url);
 
-  return ret; /* needs to be freed in the calling function if not NULL */
+  return(ret); /* needs to be freed in the calling function if not NULL */
 }
 
 alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
@@ -71,7 +68,7 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
 
     alpm_list_t *search = query_aur_rpc(type, i->data);
 
-    if (! search) {
+    if (!search) {
       cwr_fprintf(stderr, LOG_ERROR, "no results for \"%s\"\n", (const char*)i->data);
       continue;
     }
@@ -98,7 +95,7 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
         &aurpkg->provides, &aurpkg->conflicts, &aurpkg->replaces
       };
 
-      pkgbuild_extinfo_get(&pkgbuild, pkg_details, FALSE);
+      pkgbuild_extinfo_get(&pkgbuild, pkg_details, 0);
 
       free(pkgbuild);
       curl_free(escaped);
@@ -108,7 +105,7 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
     resultset = alpm_list_mmerge_dedupe(resultset, search, aur_pkg_cmp, aur_pkg_free);
   }
 
-  return resultset;
+  return(resultset);
 }
 
 /* vim: set ts=2 sw=2 et: */

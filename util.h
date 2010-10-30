@@ -34,19 +34,14 @@
 #include "pacman.h"
 #include "package.h"
 
-/* constants for cfprintf */
 #define C_ON      "\033[%d;3%dm"
 #define C_OFF     "\033[1;0m"
+#define INDENT    18
 
 #define STREQ(x,y)            (strcmp((x),(y)) == 0)
+#define STR_STARTS_WITH(x,y)  (strncmp((x),(y), strlen(y)) == 0)
 #define NOOP(x)               if(x){}
 #define FREE(p)               do { free((void*)p); p = NULL; } while (0)
-#define STR_STARTS_WITH(x,y)  (strncmp((x),(y), strlen(y)) == 0)
-
-#define TRUE                  1
-#define FALSE                 0
-
-#define INDENT                18
 
 /* colors */
 enum {
@@ -71,7 +66,6 @@ int cwr_vfprintf(FILE*, loglevel_t, const char*, va_list) __attribute__((format(
 int file_exists(const char*);
 off_t filesize(const char*);
 char *get_file_as_buffer(const char*);
-char *itoa(unsigned int, int);
 void print_extinfo_list(const char*, alpm_list_t*, size_t, int);
 void print_pkg_info(struct aur_pkg_t*);
 void print_pkg_search(alpm_list_t*);

@@ -50,41 +50,34 @@ static int json_string(void *ctx, const unsigned char *data, unsigned int size) 
   struct yajl_parse_struct *parse_struct = (struct yajl_parse_struct*)ctx;
   const char *val = (const char*)data;
 
-  if(STREQ(parse_struct->curkey, AUR_QUERY_TYPE) && STR_STARTS_WITH(val, AUR_QUERY_ERROR))
-    return 0;
+  if(STREQ(parse_struct->curkey, AUR_QUERY_TYPE) &&
+      STR_STARTS_WITH(val, AUR_QUERY_ERROR)) {
+    return(0);
+  }
 
-  if (STREQ(parse_struct->curkey, AUR_ID))
+  if (STREQ(parse_struct->curkey, AUR_ID)) {
     parse_struct->aurpkg->id = atoi(val);
-
-  else if (STREQ(parse_struct->curkey, AUR_NAME))
+  } else if (STREQ(parse_struct->curkey, AUR_NAME)) {
     parse_struct->aurpkg->name = strndup(val, size);
-
-  else if (STREQ(parse_struct->curkey, AUR_VER))
+  } else if (STREQ(parse_struct->curkey, AUR_VER)) {
     parse_struct->aurpkg->ver = strndup(val, size);
-
-  else if (STREQ(parse_struct->curkey, AUR_CAT))
+  } else if (STREQ(parse_struct->curkey, AUR_CAT)) {
     parse_struct->aurpkg->cat = atoi(val);
-
-  else if (STREQ(parse_struct->curkey, AUR_DESC))
+  } else if (STREQ(parse_struct->curkey, AUR_DESC)) {
     parse_struct->aurpkg->desc = strndup(val, size);
-
-  else if (STREQ(parse_struct->curkey, AUR_URL))
+  } else if (STREQ(parse_struct->curkey, AUR_URL)) {
     parse_struct->aurpkg->url = strndup(val, size);
-
-  else if (STREQ(parse_struct->curkey, AUR_URLPATH))
+  } else if (STREQ(parse_struct->curkey, AUR_URLPATH)) {
     parse_struct->aurpkg->urlpath = strndup(val, size);
-
-  else if (STREQ(parse_struct->curkey, AUR_LICENSE))
+  } else if (STREQ(parse_struct->curkey, AUR_LICENSE)) {
     parse_struct->aurpkg->lic = strndup(val, size);
-
-  else if (STREQ(parse_struct->curkey, AUR_VOTES))
+  } else if (STREQ(parse_struct->curkey, AUR_VOTES)) {
     parse_struct->aurpkg->votes = atoi(val);
+  } else if (STREQ(parse_struct->curkey, AUR_OOD)) {
+    parse_struct->aurpkg->ood = *val == '1' ? 1 : 0;
+  }
 
-  else if (STREQ(parse_struct->curkey, AUR_OOD))
-    parse_struct->aurpkg->ood = strncmp(val, "1", 1) == 0 ? 1 : 0;
-
-
-  return 1;
+  return(1);
 }
 
 static int json_map_key(void *ctx, const unsigned char *data, unsigned int size) {
@@ -93,25 +86,26 @@ static int json_map_key(void *ctx, const unsigned char *data, unsigned int size)
   strncpy(parse_struct->curkey, (const char*)data, size);
   parse_struct->curkey[size] = '\0';
 
-  return 1;
+  return(1);
 }
 
 static int json_start_map(void *ctx) {
   struct yajl_parse_struct *parse_struct = (struct yajl_parse_struct*)ctx;
 
-  if (parse_struct->json_depth++ >= 1)
+  if (parse_struct->json_depth++ >= 1) {
     parse_struct->aurpkg = aur_pkg_new();
+  }
 
-  return 1;
+  return(1);
 }
 
 
 static int json_end_map(void *ctx) {
   struct yajl_parse_struct *parse_struct = (struct yajl_parse_struct*)ctx;
 
-  if (! --(parse_struct->json_depth)) {
+  if (!--(parse_struct->json_depth)) {
     aur_pkg_free(parse_struct->aurpkg);
-    return 0;
+    return(0);
   }
 
   *parse_struct->pkg_list = alpm_list_add_sorted(*parse_struct->pkg_list,
@@ -119,7 +113,7 @@ static int json_end_map(void *ctx) {
                                                  aur_pkg_cmp);
   parse_struct->aurpkg = NULL;
 
-  return 1;
+  return(1);
 }
 
 static yajl_callbacks callbacks = {
@@ -141,15 +135,15 @@ static size_t curl_write_yajl(void *ptr, size_t size, size_t nmemb, void *stream
 
   size_t realsize = size * nmemb;
   yajl_parse(*hand, ptr, realsize);
-  return realsize;
+  return(realsize);
 }
 
 alpm_list_t *aur_fetch_json(const char *url) {
+  alpm_list_t *results;
   CURLcode curlstat;
   long httpcode;
   struct yajl_parse_struct *parse_struct;
   yajl_handle hand;
-  alpm_list_t *results;
 
   results = NULL;
 
@@ -167,11 +161,11 @@ alpm_list_t *aur_fetch_json(const char *url) {
   curlstat = curl_easy_perform(curl);
   if (curlstat != CURLE_OK) {
     cwr_fprintf(stderr, LOG_ERROR, "curl: %s\n", curl_easy_strerror(curlstat));
-  } else {
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
-    if (httpcode != 200) {
-      cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with code %ld\n", httpcode); 
-    }
+  }
+
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
+  if (httpcode != 200) {
+    cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with code %ld\n", httpcode); 
   }
 
   aur_pkg_free(parse_struct->aurpkg);
@@ -179,7 +173,7 @@ alpm_list_t *aur_fetch_json(const char *url) {
   yajl_parse_complete(hand);
   yajl_free(hand);
 
-  return results;
+  return(results);
 }
 
 /* vim: set ts=2 sw=2 et: */

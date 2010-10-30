@@ -37,7 +37,6 @@
 
 /* local */
 #include "aur.h"
-#include "conf.h"
 #include "download.h"
 #include "util.h"
 
@@ -51,7 +50,7 @@ int cwr_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list arg
   int ret = 0;
 
   if (!(config->logmask & level)) {
-    return ret;
+    return(ret);
   }
 
   switch(level) {
@@ -114,7 +113,7 @@ int cwr_printf(loglevel_t level, const char *format, ...) {
 int file_exists(const char *filename) {
   struct stat st;
 
-  return stat(filename, &st) == 0;
+  return(stat(filename, &st) == 0);
 }
 
 off_t filesize(const char *filename) {
@@ -122,18 +121,20 @@ off_t filesize(const char *filename) {
 
   stat(filename, &st);
 
-  return st.st_size;
+  return(st.st_size);
 }
 
 static int get_screen_width(void) {
-  if(!isatty(1))
-    return 80;
+  if(!isatty(1)) {
+    return(80);
+  }
 
   struct winsize win;
-  if(ioctl(1, TIOCGWINSZ, &win) == 0)
-    return win.ws_col;
+  if(ioctl(1, TIOCGWINSZ, &win) == 0) {
+    return(win.ws_col);
+  }
 
-  return 80;
+  return(80);
 }
 
 char *get_file_as_buffer(const char *filename) {
@@ -144,8 +145,9 @@ char *get_file_as_buffer(const char *filename) {
 
   fsize = filesize(filename);
 
-  if (!fsize)
-    return NULL;
+  if (!fsize) {
+    return(NULL);
+  }
 
   buf = calloc(1, fsize + 1);
 
@@ -153,25 +155,7 @@ char *get_file_as_buffer(const char *filename) {
   nread = fread(buf, 1, fsize, fd);
   fclose(fd);
 
-  return nread == 0 ? NULL : buf;
-}
-
-char *itoa(unsigned int num, int base){
-   static char retbuf[33];
-   char *p;
-
-   if (base < 2 || base > 16)
-     return NULL;
-
-   p = &retbuf[sizeof(retbuf)-1];
-   *p = '\0';
-
-   do {
-     *--p = "0123456789abcdef"[num % base];
-     num /= base;
-   } while (num != 0);
-
-   return p;
+  return(nread == 0 ? NULL : buf);
 }
 
 void print_pkg_info(struct aur_pkg_t *pkg) {
@@ -290,26 +274,32 @@ void print_wrapped(const char* buffer, size_t maxlength, int indent) {
     int isLf = (buffer[pos] == '\n');
 
     if (isLf || pos == maxlength) {
-      if (isLf || lastSpace == 0)
+      if (isLf || lastSpace == 0) {
         lastSpace = pos;
+      }
 
-      while(*buffer != 0 && lastSpace-- > 0)
+      while(*buffer != 0 && lastSpace-- > 0) {
         putchar(*buffer++);
+      }
 
       putchar('\n');
-      if (indent)
+      if (indent) {
         printf("%*s", indent, "");
+      }
 
-      if (isLf) /* newline in the stream, skip it */
+      if (isLf) { /* newline in the stream, skip it */
         buffer++;
+      }
 
-      while (*buffer && isspace(*buffer))
+      while (*buffer && isspace(*buffer)) {
         buffer++;
+      }
 
       lastSpace = pos = 0;
     } else {
-      if (isspace(buffer[pos]))
+      if (isspace(buffer[pos])) {
         lastSpace = pos;
+      }
 
       pos++;
     }
@@ -320,41 +310,49 @@ void print_wrapped(const char* buffer, size_t maxlength, int indent) {
 char *ltrim(char *str) {
   char *pch = str;
 
-  if (str == NULL || *str == '\0')
-    return str;
+  if (str == NULL || *str == '\0') {
+    return(str);
+  }
 
-  while (isspace(*pch))
+  while (isspace(*pch)) {
     pch++;
+  }
 
-  if (pch != str)
+  if (pch != str) {
     memmove(str, pch, (strlen(pch) + 1));
+  }
 
-  return str;
+  return(str);
 }
 
 char *strtrim(char *str) {
   char *pch = str;
 
-  if (str == NULL || *str == '\0')
-    return str;
-
-  while (isspace(*pch))
-    pch++;
-
-  if (pch != str)
-    memmove(str, pch, (strlen(pch) + 1));
-
-  if (*str == '\0')
+  if (str == NULL || *str == '\0') {
     return(str);
+  }
+
+  while (isspace(*pch)) {
+    pch++;
+  }
+
+  if (pch != str) {
+    memmove(str, pch, (strlen(pch) + 1));
+  }
+
+  if (*str == '\0') {
+    return(str);
+  }
 
   pch = (str + strlen(str) - 1);
 
-  while (isspace(*pch))
+  while (isspace(*pch)) {
     pch--;
+  }
 
   *++pch = '\0';
 
-  return str;
+  return(str);
 }
 
 alpm_list_t *strsplit(const char *str, const char splitchar) {
@@ -384,7 +382,7 @@ alpm_list_t *strsplit(const char *str, const char splitchar) {
 
 char *relative_to_absolute_path(const char *relpath) {
   if (*relpath == '/') { /* already absolute */
-    return strdup(relpath);
+    return(strdup(relpath));
   }
 
   char *abspath = NULL;
@@ -393,7 +391,7 @@ char *relative_to_absolute_path(const char *relpath) {
   abspath = strncat(abspath, "/", PATH_MAX - strlen(abspath));
   abspath = strncat(abspath, relpath, PATH_MAX - strlen(abspath));
 
-  return abspath;
+  return(abspath);
 
 }
 

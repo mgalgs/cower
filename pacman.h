@@ -39,7 +39,6 @@ void alpm_quick_init(void);
 int is_in_pacman(const char*);
 
 pmdb_t *db_local;
-
 extern pmdb_t *db_local;
 
 #endif /* _COWER_PACMAN_H */

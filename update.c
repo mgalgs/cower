@@ -40,8 +40,9 @@ int cower_do_update() {
   ret = 0;
 
   alpm_list_t *foreign_pkgs = alpm_query_foreign();
-  if (!foreign_pkgs)
-    return ret;
+  if (!foreign_pkgs) {
+    return(ret);
+  }
 
   /* Iterate over targets packages */
   alpm_list_t *i;
@@ -54,8 +55,9 @@ int cower_do_update() {
     /* Do I exist in the AUR? */
     alpm_list_t *results = query_aur_rpc(AUR_QUERY_TYPE_INFO, alpm_pkg_get_name(pmpkg));
 
-    if (!results) /* Not found, next candidate */
+    if (!results) { /* Not found, next candidate */
       continue;
+    }
 
     const char *remote_ver, *local_ver;
     struct aur_pkg_t *aurpkg;
@@ -86,7 +88,7 @@ int cower_do_update() {
 
   alpm_list_free(foreign_pkgs);
 
-  return ret;
+  return(ret);
 }
 
 /* vim: set ts=2 sw=2 et: */

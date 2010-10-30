@@ -48,8 +48,9 @@ size_t archive_extract_stream(void *ptr, size_t size, size_t nmemb, void *userda
 
   const int archive_flags = ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_TIME;
 
-  if (archive_read_open_memory(archive, ptr, size *nmemb) != ARCHIVE_OK)
-    return 0;
+  if (archive_read_open_memory(archive, ptr, size *nmemb) != ARCHIVE_OK) {
+    return(0);
+  }
 
   while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
     switch (archive_read_extract(archive, entry, archive_flags)) {
@@ -57,13 +58,13 @@ size_t archive_extract_stream(void *ptr, size_t size, size_t nmemb, void *userda
       case ARCHIVE_WARN:
       case ARCHIVE_RETRY: break;
       case ARCHIVE_EOF:
-      case ARCHIVE_FATAL: return 0;
+      case ARCHIVE_FATAL: return(0);
     }
   }
 
   archive_read_close(archive);
 
-  return size * nmemb;
+  return(size * nmemb);
 }
 
 int download_taurball(struct aur_pkg_t *aurpkg) {
@@ -75,26 +76,27 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   struct archive *archive;
 
   /* establish download dir */
-  if (! config->download_dir) /* use pwd */
+  if (!config->download_dir) { /* use pwd */
     dir = getcwd(NULL, PATH_MAX);
-  else /* resolve specified dir */
+  } else { /* resolve specified dir */
     dir = realpath(config->download_dir, NULL);
+  }
 
-  if (! dir) {
+  if (!dir) {
     cwr_fprintf(stderr, LOG_ERROR, "specified path does not exist.\n");
-    return 1;
+    return(1);
   }
 
   pkgname = aurpkg->name;
 
   cwr_asprintf(&fullpath, "%s/%s", dir, pkgname);
 
-  if (file_exists(fullpath) && ! config->force) {
-    cwr_fprintf(stderr, LOG_ERROR, "%s already exists.\n"
+  if (file_exists(fullpath) && !config->force) {
+    cwr_fprintf(stderr, LOG_ERROR, "`%s' already exists.\n"
         "Use -f to force this operation.\n", fullpath);
     FREE(fullpath);
     FREE(dir);
-    return 1;
+    return(1);
   }
 
   /* all clear to download */
@@ -108,7 +110,7 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
     cwr_fprintf(stderr, LOG_ERROR, "could not write to %s\n", dir);
     FREE(dir);
     FREE(fullpath);
-    return 1;
+    return(1);
   }
 
   archive = archive_read_new();
@@ -119,36 +121,36 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, archive);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, archive_extract_stream);
 
-  if (config->download_dir)
+  if (config->download_dir) {
     chdir(dir);
+  }
 
   curlstat = curl_easy_perform(curl);
+  if (curlstat != CURLE_OK) {
+    cwr_fprintf(stderr, LOG_ERROR, "curl: %s\n", curl_easy_strerror(curlstat));
+    result = 1;
+  }
+
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
+  if (httpcode != 200) {
+    cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with code %ld\n",
+        httpcode);
+    result = 1;
+  }
 
   archive_read_finish(archive);
 
-  if (curlstat != CURLE_OK) {
-    cwr_fprintf(stderr, LOG_ERROR, "curl: %s\n", curl_easy_strerror(curlstat));
-    result = curlstat;
-
-  } else { /* curl reported no error */
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
-    if (httpcode != 200) {
-      cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with code %ld\n",
-          httpcode);
-      result = 1;
-
-    } else { /* http response is kosher */
-      cwr_printf(LOG_INFO, "%s%s%s downloaded to %s%s%s\n",
-          config->strings->pkg, pkgname, config->strings->c_off,
-          config->strings->uptodate, dir, config->strings->c_off);
-    }
+  if (result == 0) { /* still no error, we have success */
+    cwr_printf(LOG_INFO, "%s%s%s downloaded to %s%s%s\n",
+        config->strings->pkg, pkgname, config->strings->c_off,
+        config->strings->uptodate, dir, config->strings->c_off);
   }
 
   FREE(fullpath);
   FREE(url);
   FREE(dir);
 
-  return result;
+  return(result);
 }
 
 int cower_do_download(alpm_list_t *targets) {
@@ -158,15 +160,17 @@ int cower_do_download(alpm_list_t *targets) {
   alpm_quick_init();
 
   for (i = targets; i; i = i->next) {
-    if (is_in_pacman(i->data)) /* Skip it */
+    if (is_in_pacman(i->data)) { /* Skip it */
       continue;
+    }
 
     alpm_list_t *results = query_aur_rpc(AUR_QUERY_TYPE_INFO, i->data);
     if (results) { /* Found it in the AUR */
 
       /* If the download didn't go smoothly, it's not ok to get depends */
-      if (!download_taurball(results->data) && config->getdeps)
+      if (!download_taurball(results->data) && config->getdeps) {
         get_pkg_dependencies(i->data);
+      }
 
       aur_pkg_free(results->data);
       alpm_list_free(results);
@@ -177,7 +181,7 @@ int cower_do_download(alpm_list_t *targets) {
     }
   }
 
-  return ret;
+  return(ret);
 }
 
 /* vim: set ts=2 sw=2 et: */
