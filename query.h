@@ -29,7 +29,6 @@
 
 #include "pacman.h"
 
-alpm_list_t *query_aur_rpc(const char*, const char*);
 alpm_list_t *cower_do_query(alpm_list_t*, const char*);
 
 #endif /* _COWER_QUERY_H */

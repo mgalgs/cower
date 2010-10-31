@@ -35,8 +35,8 @@
 #include "conf.h"
 #include "pkgbuild.h"
 #include "download.h"
-#include "query.h"
 #include "util.h"
+#include "yajl.h"
 
 static alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **deparray, int stripver) {
   char *token;
@@ -176,7 +176,7 @@ int get_pkg_dependencies(const char *pkg) {
     }
 
     /* can't find it in pacman, check the AUR */
-    results = query_aur_rpc(AUR_QUERY_TYPE_INFO, depend);
+    results = aur_fetch_json(AUR_QUERY_TYPE_INFO, depend);
     if (results) {
 
       cwr_printf(LOG_DEBUG, "%s is in the AUR\n", depend);

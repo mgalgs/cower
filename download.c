@@ -39,8 +39,8 @@
 #include "conf.h"
 #include "pkgbuild.h"
 #include "download.h"
-#include "query.h"
 #include "util.h"
+#include "yajl.h"
 
 size_t archive_extract_stream(void *ptr, size_t size, size_t nmemb, void *userdata) {
   struct archive *archive = (struct archive*)userdata;
@@ -70,6 +70,7 @@ size_t archive_extract_stream(void *ptr, size_t size, size_t nmemb, void *userda
 int download_taurball(struct aur_pkg_t *aurpkg) {
   const char *pkgname;
   char *dir, *escaped, *fullpath, *url;
+  CURL *curl;
   CURLcode curlstat;
   long httpcode;
   int result = 0;
@@ -100,6 +101,7 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   }
 
   /* all clear to download */
+  curl = curl_local_init();
   escaped = curl_easy_escape(curl, pkgname, strlen(pkgname));
   cwr_asprintf(&url, AUR_PKG_URL, escaped, escaped);
   curl_free(escaped);
@@ -146,6 +148,7 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
         config->strings->uptodate, dir, config->strings->c_off);
   }
 
+  curl_easy_cleanup(curl);
   FREE(fullpath);
   FREE(url);
   FREE(dir);
@@ -164,7 +167,7 @@ int cower_do_download(alpm_list_t *targets) {
       continue;
     }
 
-    alpm_list_t *results = query_aur_rpc(AUR_QUERY_TYPE_INFO, i->data);
+    alpm_list_t *results = aur_fetch_json(AUR_QUERY_TYPE_INFO, i->data);
     if (results) { /* Found it in the AUR */
 
       /* If the download didn't go smoothly, it's not ok to get depends */

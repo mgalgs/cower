@@ -29,7 +29,7 @@
 
 #include "pacman.h"
 
-alpm_list_t *aur_fetch_json(const char*);
+alpm_list_t *aur_fetch_json(const char*, const char*);
 
 #endif /* _COWER_YAJL_H */
 

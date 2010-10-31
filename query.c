@@ -38,22 +38,6 @@
 #include "util.h"
 #include "yajl.h"
 
-alpm_list_t *query_aur_rpc(const char *query_type, const char* arg) {
-  char *url, *escaped;
-  alpm_list_t *ret;
-
-  /* format URL to pass to curl */
-  escaped = curl_easy_escape(curl, arg, strlen(arg));
-  cwr_asprintf(&url, AUR_RPC_URL, query_type, escaped);
-  curl_free(escaped);
-
-  ret = aur_fetch_json(url);
-
-  free(url);
-
-  return(ret); /* needs to be freed in the calling function if not NULL */
-}
-
 alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
   alpm_list_t *i, *resultset;
 
@@ -66,7 +50,7 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
       continue;
     }
 
-    alpm_list_t *search = query_aur_rpc(type, i->data);
+    alpm_list_t *search = aur_fetch_json(type, i->data);
 
     if (!search) {
       cwr_fprintf(stderr, LOG_ERROR, "no results for \"%s\"\n", (const char*)i->data);
@@ -74,16 +58,10 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
     }
 
     if (STREQ(type, AUR_QUERY_TYPE_INFO) && config->moreinfo) {
-      char *url;
-      char *escaped, *pkgbuild;
+      char *pkgbuild;
       struct aur_pkg_t *aurpkg = (struct aur_pkg_t*)search->data;
 
-      escaped = curl_easy_escape(curl, aurpkg->name, strlen(aurpkg->name));
-
-      cwr_asprintf(&url, AUR_PKGBUILD_PATH, escaped, escaped);
-
-      pkgbuild = curl_textfile_get(url);
-      free(url);
+      pkgbuild = curl_textfile_get(aurpkg->name);
 
       if (pkgbuild == NULL) {
         cwr_fprintf(stderr, LOG_ERROR, "error fetching pkgbuild\n");
@@ -98,7 +76,6 @@ alpm_list_t *cower_do_query(alpm_list_t *targets, const char *type) {
       pkgbuild_extinfo_get(&pkgbuild, pkg_details, 0);
 
       free(pkgbuild);
-      curl_free(escaped);
     }
 
     /* Aggregate searches into a single list and remove dupes */

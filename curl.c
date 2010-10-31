@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "aur.h"
 #include "conf.h"
 #include "curl.h"
 #include "util.h"
@@ -52,14 +53,22 @@ static size_t write_callback(void *ptr, size_t size, size_t nmemb, void *data) {
   return(realsize);
 }
 
-char *curl_textfile_get(const char *url) {
+char *curl_textfile_get(const char *arg) {
   long httpcode;
   CURLcode curlstat;
+  CURL *curl;
+  char *escaped, *url;
 
   struct response curl_data = {
     .size = 0,
     .data = NULL
   };
+
+  curl = curl_local_init();
+
+  escaped = curl_easy_escape(curl, arg, strlen(arg));
+  cwr_asprintf(&url, AUR_PKGBUILD_PATH, escaped, escaped);
+  curl_free(escaped);
 
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
@@ -80,20 +89,24 @@ char *curl_textfile_get(const char *url) {
     return(NULL);
   }
 
+  curl_easy_cleanup(curl);
+  free(url);
   return(curl_data.data);
 }
 
-int curl_local_init() {
+CURL *curl_local_init() {
+  CURL *curl;
+
   if (!(curl = curl_easy_init())) {
-    return(1);
+    return(NULL);
   }
 
-  cwr_fprintf(stdout, LOG_DEBUG, "Initializing curl\n");
+  cwr_fprintf(stdout, LOG_DEBUG, "Initializing curl handle\n");
 
   curl_easy_setopt(curl, CURLOPT_USERAGENT, COWER_USERAGENT);
   curl_easy_setopt(curl, CURLOPT_ENCODING, "deflate, gzip");
 
-  return(0);
+  return(curl);
 }
 
 /* vim: set ts=2 sw=2 et: */

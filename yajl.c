@@ -138,12 +138,14 @@ static size_t curl_write_yajl(void *ptr, size_t size, size_t nmemb, void *stream
   return(realsize);
 }
 
-alpm_list_t *aur_fetch_json(const char *url) {
+alpm_list_t *aur_fetch_json(const char *query_type, const char *arg) {
   alpm_list_t *results;
+  CURL *curl;
   CURLcode curlstat;
   long httpcode;
   struct yajl_parse_struct *parse_struct;
   yajl_handle hand;
+  char *escaped, *url;
 
   results = NULL;
 
@@ -151,6 +153,14 @@ alpm_list_t *aur_fetch_json(const char *url) {
   parse_struct->pkg_list = &results;
   parse_struct->aurpkg = NULL;
   parse_struct->json_depth = 0;
+
+  curl = curl_easy_init();
+  escaped = curl_easy_escape(curl, arg, strlen(arg));
+  cwr_asprintf(&url, AUR_RPC_URL, query_type, escaped);
+  curl_free(escaped);
+
+  curl_easy_setopt(curl, CURLOPT_USERAGENT, COWER_USERAGENT);
+  curl_easy_setopt(curl, CURLOPT_ENCODING, "deflate, gzip");
 
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_yajl);
@@ -172,6 +182,8 @@ alpm_list_t *aur_fetch_json(const char *url) {
   free(parse_struct);
   yajl_parse_complete(hand);
   yajl_free(hand);
+  curl_easy_cleanup(curl);
+  free(url);
 
   return(results);
 }

@@ -82,9 +82,8 @@ static unsigned short color_is_valid(const char *colorname) {
 
 static void cleanup(int ret) {
   cwr_printf(LOG_DEBUG, "releasing handles\n");
-  curl_easy_cleanup(curl);
-  curl_global_cleanup();
 
+  curl_global_cleanup();
   FREELIST(targets);
   alpm_release();
   config_free(config);
@@ -380,10 +379,12 @@ int main(int argc, char **argv) {
   string_setup();
 
   curl_global_init(CURL_GLOBAL_SSL);
+  /*
   if (curl_local_init() != 0) {
     cwr_fprintf(stderr, LOG_ERROR, "curl initialization failed. Please check your configuration.\n");
     cleanup(1);
   }
+  */
 
   /* Order matters somewhat. Update must come before download
    * to ensure that we catch the possibility of a download flag
