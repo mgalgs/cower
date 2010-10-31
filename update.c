@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 #include "aur.h"
 #include "conf.h"
@@ -34,15 +35,19 @@
 #include "yajl.h"
 #include "util.h"
 
+sem_t mutex;
+
 void *thread_main(void *arg) {
 
   pmpkg_t *pmpkg = arg;
 
+  /* Do I exist in the AUR? */
+  sem_wait(&mutex);
   cwr_printf(LOG_DEBUG, "Checking %s%s%s for updates...\n",
       config->strings->pkg, alpm_pkg_get_name(pmpkg), config->strings->c_off);
 
-  /* Do I exist in the AUR? */
   alpm_list_t *results = aur_fetch_json(AUR_QUERY_TYPE_INFO, alpm_pkg_get_name(pmpkg));
+  sem_post(&mutex);
 
   if (!results) { /* Not found, next candidate */
     return(NULL);
@@ -63,7 +68,10 @@ void *thread_main(void *arg) {
       if (alpm_list_find_str(config->ignorepkgs, aurpkg->name) != NULL) {
         cwr_fprintf(stderr, LOG_WARN, " ignoring package %s\n", aurpkg->name);
       } else {
+        sem_wait(&mutex);
+        cwr_printf(LOG_DEBUG, "download requested: %s\n", aurpkg->name);
         download_taurball(aurpkg);
+        sem_post(&mutex);
       }
     } else {
       print_pkg_update(aurpkg->name, local_ver, remote_ver);
@@ -95,6 +103,9 @@ int cower_do_update() {
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
+  /* limit concurrent connections */
+  sem_init(&mutex, 0, AUR_MAX_CONNECTIONS);
+
   /* Iterate over targets packages */
   alpm_list_t *i;
   for (i = foreign_pkgs, n = 0; i; i = i->next, n++) {
@@ -104,6 +115,8 @@ int cower_do_update() {
   for (n = 0; n < thread_count; n++) {
     pthread_join(threads[n], NULL);
   }
+
+  sem_destroy(&mutex);
 
   alpm_list_free(foreign_pkgs);
   free(threads);

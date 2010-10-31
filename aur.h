@@ -51,6 +51,8 @@
 #define AUR_VOTES             "NumVotes"
 #define AUR_OOD               "OutOfDate"
 
+#define AUR_MAX_CONNECTIONS   10
+
 #endif /* _COWER_AUR_H */
 
 /* vim: set ts=2 sw=2 et: */
