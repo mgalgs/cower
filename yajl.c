@@ -83,10 +83,7 @@ static int json_string(void *ctx, const unsigned char *data, unsigned int size) 
 static int json_map_key(void *ctx, const unsigned char *data, unsigned int size) {
   struct yajl_parse_struct *parse_struct = (struct yajl_parse_struct*)ctx;
 
-  strncpy(parse_struct->curkey, (const char*)data, size);
-  parse_struct->curkey[size] = '\0';
-
-  return(1);
+  return(snprintf(parse_struct->curkey, size + 1, "%s", data));
 }
 
 static int json_start_map(void *ctx) {
