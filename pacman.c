@@ -233,46 +233,21 @@ void alpm_quick_init() {
   fclose(fd);
 }
 
-pmdb_t *alpm_sync_search(alpm_list_t *target) {
-  pmdb_t *db = NULL;
-  alpm_list_t *syncs, *i, *j;
+int alpm_provides_pkg(const char *pkgname) {
+  pmdb_t *db;
+  alpm_list_t *i;
 
-  syncs = alpm_option_get_syncdbs();
-
-  /* Iterating over each sync */
-  for (i = syncs; i; i = i->next) {
-    db = i->data;
-
-    /* Iterating over each package in sync */
-    for (j = alpm_db_get_pkgcache(db); j; j = j->next) {
-      pmpkg_t *pkg = j->data;
-      if (strcmp(alpm_pkg_get_name(pkg), alpm_list_getdata(target)) == 0) {
-        return(db);
-      }
+  for (i = alpm_option_get_syncdbs(); i; i = alpm_list_next(i)) {
+    db = alpm_list_getdata(i);
+    if (alpm_db_get_pkg(db, pkgname)) {
+      cwr_fprintf(stderr, LOG_WARN, "%s%s%s is available in %s%s%s\n",
+          config->strings->pkg, pkgname, config->strings->c_off,
+          config->strings->repo, alpm_db_get_name(db), config->strings->c_off);
+      return(1);
     }
   }
 
-  return(NULL); /* Not found */
-}
-
-int is_in_pacman(const char *target) {
-  int found = 0;
-  pmdb_t *found_in;
-  alpm_list_t *p = NULL;
-
-  p = alpm_list_add(p, (void*)target);
-  found_in = alpm_sync_search(p);
-
-  if (found_in) {
-    cwr_fprintf(stderr, LOG_WARN, "%s%s%s is available in %s%s%s\n",
-        config->strings->pkg, target, config->strings->c_off,
-        config->strings->repo, alpm_db_get_name(found_in), config->strings->c_off);
-
-    found = 1;
-  }
-
-  alpm_list_free(p);
-  return(found);
+  return(0);
 }
 
 /* vim: set ts=2 sw=2 et: */

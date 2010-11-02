@@ -171,7 +171,7 @@ int get_pkg_dependencies(const char *pkg) {
       goto finish;
     }
 
-    if (is_in_pacman(depend)) {
+    if (alpm_provides_pkg(depend)) {
       goto finish;
     }
 
