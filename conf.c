@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "aur.h"
 #include "conf.h"
 #include "util.h"
 
@@ -79,6 +80,7 @@ struct config_t *config_new(void) {
   newconfig->logmask = LOG_ERROR|LOG_WARN|LOG_INFO;
   newconfig->download_dir = NULL;
   newconfig->ignorepkgs = NULL;
+  newconfig->proto = HTTP;
 
   newconfig->colors->repo = BOLDMAGENTA;
   newconfig->colors->pkg = BOLDWHITE;

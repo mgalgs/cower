@@ -103,7 +103,7 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   /* all clear to download */
   curl = curl_local_init();
   escaped = curl_easy_escape(curl, pkgname, strlen(pkgname));
-  cwr_asprintf(&url, AUR_PKG_URL, escaped, escaped);
+  cwr_asprintf(&url, AUR_PKG_URL, config->proto, escaped, escaped);
   curl_free(escaped);
 
   cwr_printf(LOG_DEBUG, "Fetching URL %s\n", url);

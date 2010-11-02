@@ -153,7 +153,7 @@ alpm_list_t *aur_fetch_json(const char *query_type, const char *arg) {
 
   curl = curl_easy_init();
   escaped = curl_easy_escape(curl, arg, strlen(arg));
-  cwr_asprintf(&url, AUR_RPC_URL, query_type, escaped);
+  cwr_asprintf(&url, AUR_RPC_URL, config->proto, query_type, escaped);
   curl_free(escaped);
 
   curl_easy_setopt(curl, CURLOPT_USERAGENT, COWER_USERAGENT);

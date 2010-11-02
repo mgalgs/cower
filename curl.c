@@ -67,7 +67,7 @@ char *curl_textfile_get(const char *arg) {
   curl = curl_local_init();
 
   escaped = curl_easy_escape(curl, arg, strlen(arg));
-  cwr_asprintf(&url, AUR_PKGBUILD_PATH, escaped, escaped);
+  cwr_asprintf(&url, AUR_PKGBUILD_PATH, config->proto, escaped, escaped);
   curl_free(escaped);
 
   curl_easy_setopt(curl, CURLOPT_URL, url);

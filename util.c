@@ -165,13 +165,13 @@ void print_pkg_info(struct aur_pkg_t *pkg) {
          "Name            : %s%s%s\n"
          "Version         : %s%s%s\n"
          "URL             : %s%s%s\n"
-         "AUR Page        : %s%s%d%s\n",
+         "AUR Page        : %s" AUR_PKG_URL_FORMAT "%d%s\n",
          config->strings->repo, config->strings->c_off,
          config->strings->pkg, pkg->name, config->strings->c_off,
          pkg->ood ? config->strings->outofdate : config->strings->uptodate,
          pkg->ver, config->strings->c_off,
          config->strings->url, pkg->url, config->strings->c_off,
-         config->strings->url, AUR_PKG_URL_FORMAT, pkg->id, config->strings->c_off);
+         config->strings->url, config->proto, pkg->id, config->strings->c_off);
 
   if (config->moreinfo) {
     print_extinfo_list(PKG_OUT_PROVIDES, pkg->provides, max_line_len, INDENT);

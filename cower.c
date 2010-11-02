@@ -111,6 +111,7 @@ printf(" General options:\n\
       --ignore <pkg>      Ignore a package upgrade (can be used more than once)\n\
   -h, --help              Display this help and exit\n\
   -q, --quiet             Output less.\n\
+      --ssl               Use https to connect\n\
   -t, --target <dir>      Specify an alternate download directory.\n\n");
 }
 
@@ -132,6 +133,7 @@ static int parseargs(int argc, char **argv) {
     {"force",     no_argument,        0, 'f'},
     {"quiet",     no_argument,        0, 'q'},
     {"target",    required_argument,  0, 't'},
+    {"ssl",       no_argument,        0, OP_SSL},
     {0, 0, 0, 0}
   };
 
@@ -203,6 +205,9 @@ static int parseargs(int argc, char **argv) {
         break;
       case OP_DEBUG:
         config->logmask |= LOG_DEBUG;
+        break;
+      case OP_SSL:
+        config->proto = HTTPS;
         break;
 
       case '?':
@@ -378,13 +383,11 @@ int main(int argc, char **argv) {
 
   string_setup();
 
-  curl_global_init(CURL_GLOBAL_SSL);
-  /*
-  if (curl_local_init() != 0) {
-    cwr_fprintf(stderr, LOG_ERROR, "curl initialization failed. Please check your configuration.\n");
-    cleanup(1);
+  if (strcmp(config->proto, HTTPS) == 0) {
+    curl_global_init(CURL_GLOBAL_SSL);
+  } else {
+    curl_global_init(CURL_GLOBAL_NOTHING);
   }
-  */
 
   /* Order matters somewhat. Update must come before download
    * to ensure that we catch the possibility of a download flag

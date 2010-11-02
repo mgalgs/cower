@@ -28,10 +28,13 @@
 #define _COWER_AUR_H
 
 /* Various URLs used to interact with the AUR */
-#define AUR_PKGBUILD_PATH     "https://aur.archlinux.org/packages/%s/%s/PKGBUILD"
-#define AUR_PKG_URL           "https://aur.archlinux.org/packages/%s/%s.tar.gz"
-#define AUR_RPC_URL           "https://aur.archlinux.org/rpc.php?type=%s&arg=%s"
-#define AUR_PKG_URL_FORMAT    "https://aur.archlinux.org/packages.php?ID="
+#define AUR_PKGBUILD_PATH     "%s://aur.archlinux.org/packages/%s/%s/PKGBUILD"
+#define AUR_PKG_URL           "%s://aur.archlinux.org/packages/%s/%s.tar.gz"
+#define AUR_RPC_URL           "%s://aur.archlinux.org/rpc.php?type=%s&arg=%s"
+#define AUR_PKG_URL_FORMAT    "%s://aur.archlinux.org/packages.php?ID="
+
+#define HTTP                  "http"
+#define HTTPS                 "https"
 
 #define AUR_QUERY_TYPE        "type"
 #define AUR_QUERY_TYPE_INFO   "info"

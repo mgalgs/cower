@@ -48,6 +48,7 @@ struct config_t {
   unsigned short moreinfo;
   loglevel_t logmask;
   const char *download_dir;
+  char *proto;
 
   alpm_list_t *ignorepkgs;
 
@@ -85,6 +86,7 @@ enum {
 enum {
   OP_IGNORE = 1000,
   OP_DEBUG = 1001,
+  OP_SSL
 };
 
 int config_free(struct config_t *oldconfig);
