@@ -42,60 +42,64 @@
 #include "util.h"
 #include "yajl.h"
 
-size_t archive_extract_stream(void *ptr, size_t size, size_t nmemb, void *userdata) {
-  struct archive *archive = (struct archive*)userdata;
+static int archive_extract_file(const char *file) {
+  struct archive *archive;
   struct archive_entry *entry;
-
   const int archive_flags = ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_TIME;
+  int ret = ARCHIVE_OK;
 
-  if (archive_read_open_memory(archive, ptr, size *nmemb) != ARCHIVE_OK) {
-    return(0);
+  archive = archive_read_new();
+  archive_read_support_compression_all(archive);
+  archive_read_support_format_all(archive);
+
+  ret = archive_read_open_filename(archive, file, ARCHIVE_DEFAULT_BYTES_PER_BLOCK);
+  if (ret != ARCHIVE_OK) {
+    goto finish;
   }
 
   while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
     switch (archive_read_extract(archive, entry, archive_flags)) {
       case ARCHIVE_OK:
       case ARCHIVE_WARN:
-      case ARCHIVE_RETRY: break;
+      case ARCHIVE_RETRY:
+        break;
+      case ARCHIVE_FATAL:
+        ret = ARCHIVE_FATAL;
+        break;
       case ARCHIVE_EOF:
-      case ARCHIVE_FATAL: return(0);
+        ret = ARCHIVE_EOF;
+        break;
     }
   }
 
   archive_read_close(archive);
 
-  return(size * nmemb);
+finish:
+  archive_read_finish(archive);
+
+  return(ret);
 }
+
 
 int download_taurball(struct aur_pkg_t *aurpkg) {
   const char *pkgname;
-  char *dir, *escaped, *fullpath, *url;
+  char *dir, *escaped, *url, *tarball;
   CURL *curl;
   CURLcode curlstat;
   long httpcode;
   int result = 0;
-  struct archive *archive;
+  FILE *fp;
 
   /* establish download dir */
-  if (!config->download_dir) { /* use pwd */
-    dir = getcwd(NULL, PATH_MAX);
-  } else { /* resolve specified dir */
-    dir = realpath(config->download_dir, NULL);
-  }
-
-  if (!dir) {
-    cwr_fprintf(stderr, LOG_ERROR, "specified path does not exist.\n");
-    return(1);
-  }
+  dir = getcwd(NULL, PATH_MAX);
 
   pkgname = aurpkg->name;
 
-  cwr_asprintf(&fullpath, "%s/%s", dir, pkgname);
+  cwr_asprintf(&tarball, "%s.tar.gz", pkgname);
 
-  if (file_exists(fullpath) && !config->force) {
+  if (file_exists(pkgname) && !config->force) {
     cwr_fprintf(stderr, LOG_ERROR, "`%s' already exists.\n"
-        "Use -f to force this operation.\n", fullpath);
-    FREE(fullpath);
+        "Use -f to force this operation.\n", pkgname);
     FREE(dir);
     return(1);
   }
@@ -111,27 +115,21 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   if (access(dir, W_OK)) {
     cwr_fprintf(stderr, LOG_ERROR, "could not write to %s\n", dir);
     FREE(dir);
-    FREE(fullpath);
     return(1);
   }
 
-  archive = archive_read_new();
-  archive_read_support_compression_all(archive);
-  archive_read_support_format_all(archive);
+  fp = fopen(tarball, "wb");
 
   curl_easy_setopt(curl, CURLOPT_URL, url);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, archive);
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, archive_extract_stream);
-
-  if (config->download_dir) {
-    chdir(dir);
-  }
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
 
   curlstat = curl_easy_perform(curl);
   if (curlstat != CURLE_OK) {
     cwr_fprintf(stderr, LOG_ERROR, "curl: %s\n", curl_easy_strerror(curlstat));
     result = 1;
   }
+
+  fclose(fp);
 
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
   if (httpcode != 200) {
@@ -140,18 +138,22 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
     result = 1;
   }
 
-  archive_read_finish(archive);
+  result = archive_extract_file(tarball);
 
-  if (result == 0) { /* still no error, we have success */
+  if (result != ARCHIVE_EOF) { /* still no error, we have success */
     cwr_printf(LOG_INFO, "%s%s%s downloaded to %s%s%s\n",
         config->strings->pkg, pkgname, config->strings->c_off,
         config->strings->uptodate, dir, config->strings->c_off);
+    unlink(tarball);
+  } else {
+    cwr_fprintf(stderr, LOG_ERROR, "error downloading stuff\n");
   }
 
+
   curl_easy_cleanup(curl);
-  FREE(fullpath);
   FREE(url);
   FREE(dir);
+  FREE(tarball);
 
   return(result);
 }
@@ -161,6 +163,10 @@ int cower_do_download(alpm_list_t *targets) {
   int ret = 0;
 
   alpm_quick_init();
+
+  if (config->download_dir) {
+    chdir(config->download_dir);
+  }
 
   for (i = targets; i; i = i->next) {
     if (alpm_provides_pkg(i->data)) { /* Skip it */
