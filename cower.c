@@ -78,6 +78,13 @@
 #define AUR_VOTES             "NumVotes"
 #define AUR_OOD               "OutOfDate"
 
+#define PKGBUILD_DEPENDS      "depends=("
+#define PKGBUILD_MAKEDEPENDS  "makedepends=("
+#define PKGBUILD_OPTDEPENDS   "optdepends=("
+#define PKGBUILD_PROVIDES     "provides=("
+#define PKGBUILD_CONFLICTS    "conflicts=("
+#define PKGBUILD_REPLACES     "replaces=("
+
 #define PKG_REPO              "Repository"
 #define PKG_NAME              "Name"
 #define PKG_VERSION           "Version"
@@ -118,12 +125,13 @@ enum {
 };
 
 enum {
-  EXTINFO_DEPENDS = 0,
-  EXTINFO_MAKEDEPENDS,
-  EXTINFO_OPTDEPENDS,
-  EXTINFO_PROVIDES,
-  EXTINFO_CONFLICTS,
-  EXTINFO_REPLACES
+  PKGDETAIL_DEPENDS = 0,
+  PKGDETAIL_MAKEDEPENDS,
+  PKGDETAIL_OPTDEPENDS,
+  PKGDETAIL_PROVIDES,
+  PKGDETAIL_CONFLICTS,
+  PKGDETAIL_REPLACES,
+  PKGDETAIL_MAX
 };
 
 struct aurpkg_t {
@@ -162,7 +170,6 @@ struct response_t {
 static alpm_list_t *alpm_find_foreign_pkgs(void);
 static alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t*, alpm_list_t*, alpm_list_fn_cmp, alpm_list_fn_free);
 static alpm_list_t *alpm_list_remove_item(alpm_list_t*, alpm_list_t*, alpm_list_fn_free);
-static pmdb_t *alpm_provides_explicit_pkg(const char*);
 static pmdb_t *alpm_provides_pkg(const char*);
 static int alpm_init(void);
 static int alpm_pkg_is_foreign(pmpkg_t*);
@@ -186,10 +193,12 @@ static int json_map_key(void*, const unsigned char*, unsigned int);
 static int json_start_map(void*);
 static int json_string(void*, const unsigned char*, unsigned int);
 static int parse_options(int, char*[]);
+static alpm_list_t *parse_bash_array(alpm_list_t*, char**);
+static void pkgbuild_get_extinfo(char*, alpm_list_t**[]);
 static void print_pkg_info(alpm_list_t*);
 static void print_pkg_search(alpm_list_t*);
 static void print_results(alpm_list_t*);
-static int resolve_dependencies(struct aurpkg_t**);
+static int resolve_dependencies(const char*);
 static char *strtrim(char*);
 static void *thread_download(void*);
 static void *thread_query(void*);
@@ -433,41 +442,13 @@ int alpm_pkg_is_foreign(pmpkg_t *pkg) {
   return(1);
 }
 
-pmdb_t *alpm_provides_explicit_pkg(const char *pkgname) {
+pmdb_t *alpm_provides_pkg(const char *pkgname) {
   alpm_list_t *i;
   pmdb_t *db;
 
   for (i = alpm_option_get_syncdbs(); i; i = alpm_list_next(i)) {
     db = alpm_list_getdata(i);
     if (alpm_db_get_pkg(db, pkgname) != NULL) {
-      return(db);
-    }
-  }
-
-  return(NULL);
-}
-
-pmdb_t *alpm_provides_pkg(const char *depstring) {
-  alpm_list_t *i;
-  pmdb_t *db;
-
-  for (i = alpm_option_get_syncdbs(); i; i = alpm_list_next(i)) {
-    db = alpm_list_getdata(i);
-    if (alpm_find_satisfier(alpm_db_get_pkgcache(db), depstring) != NULL) {
-      return(db);
-    }
-  }
-
-  return(NULL);
-}
-
-pmdb_t *alpm_provides_package(const char *depstring) {
-  alpm_list_t *i;
-  pmdb_t *db;
-
-  for (i = alpm_option_get_syncdbs(); i; i = alpm_list_next(i)) {
-    db = alpm_list_getdata(i);
-    if (alpm_find_satisfier(alpm_db_get_pkgcache(db), depstring) != NULL) {
       return(db);
     }
   }
@@ -806,13 +787,12 @@ int json_string(void *ctx, const unsigned char *data, unsigned int size) {
   return(1);
 }
 
-alpm_list_t *parse_bash_array(char *array) {
+alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **array) {
   char *token;
-  alpm_list_t *deplist = NULL;
 
   /* XXX: This will fail sooner or later */
-  if (strchr(array, ':')) { /* we're dealing with optdepdends */
-    for (token = strtok(array, "\\\'\"\n"); token; token = strtok(NULL, "\\\'\"\n")) {
+  if (strchr(*array, ':')) { /* we're dealing with optdepdends */
+    for (token = strtok(*array, "\\\'\"\n"); token; token = strtok(NULL, "\\\'\"\n")) {
       strtrim(token);
       if (strlen(token)) {
         cwr_printf(LOG_DEBUG, "adding depend: %s\n", token);
@@ -822,7 +802,7 @@ alpm_list_t *parse_bash_array(char *array) {
     return(deplist);
   }
 
-  for (token = strtok(array, " \n"); token; token = strtok(NULL, " \n")) {
+  for (token = strtok(*array, " \n"); token; token = strtok(NULL, " \n")) {
     char *ptr;
 
     strtrim(token);
@@ -836,11 +816,11 @@ alpm_list_t *parse_bash_array(char *array) {
     }
 
     /* some people feel compelled to escape newlines inside arrays. these people suck. */
-    if (strcmp(token, "\\") == 0) {
+    if (strlen(token) < 2) {
       continue;
     }
 
-    cwr_printf(LOG_DEBUG, "Adding Depend: %s\n", token);
+    cwr_printf(LOG_DEBUG, "adding depend: %s\n", token);
 
     if (alpm_list_find_str(deplist, token) == NULL) {
       deplist = alpm_list_add(deplist, strdup(token));
@@ -873,7 +853,7 @@ void print_pkg_info(alpm_list_t *results) {
            pkg->ood ? "Yes" : "No");
 
     indentprint(pkg->desc, INFO_INDENT);
-    putchar('\n');
+    printf("\n\n");
   }
 }
 
@@ -1053,62 +1033,86 @@ void print_results(alpm_list_t *results) {
   }
 }
 
-int resolve_dependencies(struct aurpkg_t **aurpkg) {
-  char *filename, *pkgbuild, *ptr, *arrayend, *kind;
+void pkgbuild_get_extinfo(char *pkgbuild, alpm_list_t **details[]) {
+  char *lineptr, *arrayend;
 
-  cwr_asprintf(&filename, "%s/PKGBUILD", (*aurpkg)->name);
+  for (lineptr = pkgbuild; lineptr; lineptr = strchr(lineptr, '\n')) {
+    alpm_list_t **deplist;
 
-  pkgbuild = get_file_as_buffer(filename);
-  ptr = pkgbuild;
-
-  if (!pkgbuild || strlen(pkgbuild) == 0) {
-    cwr_fprintf(stderr, LOG_ERROR, "bad PKGBUILD\n");
-    goto finish;
-  }
-
-  for (ptr = pkgbuild; ptr; ptr = strchr(ptr, '\n')) {
-    strtrim(++ptr);
-    if (*ptr == '#') {
+    strtrim(++lineptr);
+    if (*lineptr == '#' || strlen(lineptr) == 0) {
       continue;
     }
 
-    if (STR_STARTS_WITH(ptr, "depends=")) {
-      kind = "depends";
-    } else if (STR_STARTS_WITH(ptr, "makedepends=")) {
-      kind = "makedepends";
-    } else if (STR_STARTS_WITH(ptr, "optdepends=")) {
-      kind = "optdepends";
-    } else if (STR_STARTS_WITH(ptr, "provides=")) {
-      kind = "provides";
-    } else if (STR_STARTS_WITH(ptr, "replaces=")) {
-      kind = "replaces";
-    } else if (STR_STARTS_WITH(ptr, "conflicts=")) {
-      kind = "conflicts";
+    if (STR_STARTS_WITH(lineptr, PKGBUILD_DEPENDS)) {
+      deplist = details[PKGDETAIL_DEPENDS];
+    } else if (STR_STARTS_WITH(lineptr, PKGBUILD_MAKEDEPENDS)) {
+      deplist = details[PKGDETAIL_MAKEDEPENDS];
+    } else if (STR_STARTS_WITH(lineptr, PKGBUILD_OPTDEPENDS)) {
+      deplist = details[PKGDETAIL_OPTDEPENDS];
+    } else if (STR_STARTS_WITH(lineptr, PKGBUILD_PROVIDES)) {
+      deplist = details[PKGDETAIL_PROVIDES];
+    } else if (STR_STARTS_WITH(lineptr, PKGBUILD_REPLACES)) {
+      deplist = details[PKGDETAIL_REPLACES];
+    } else if (STR_STARTS_WITH(lineptr, PKGBUILD_CONFLICTS)) {
+      deplist = details[PKGDETAIL_CONFLICTS]; 
     } else {
       continue;
     }
 
-    arrayend = strchr(ptr, ')');
-    *arrayend = '\0';
+    arrayend = strchr(lineptr, ')');
+    *arrayend  = '\0';
 
-    /* printf("%s = %s\n", kind, strchr(ptr, '(') + 1); */
-    printf("%s = ", kind);
-    alpm_list_t *i;
-    for (i = parse_bash_array(strchr(ptr, '(') + 1); i; i = alpm_list_next(i)) {
-      printf("%s .. ", alpm_list_getdata(i));
+    if (deplist) {
+      char *arrayptr = strchr(lineptr, '(') + 1;
+      *deplist = parse_bash_array(*deplist, &arrayptr);
     }
-    putchar('\n');
 
-    ptr = arrayend + 1;
+    lineptr = arrayend + 1;
+  }
+}
 
+int resolve_dependencies(const char *pkgname) {
+  int ret = 0;
+  char *filename, *pkgbuild;
+  alpm_list_t *i, *deplist = NULL;
+
+  cwr_asprintf(&filename, "%s/PKGBUILD", pkgname);
+  pkgbuild = get_file_as_buffer(filename);
+
+  if (!pkgbuild) {
+    ret = 1;
+    goto finish;
   }
 
+  alpm_list_t **pkg_details[PKGDETAIL_MAX] = {
+    &deplist, &deplist, NULL, NULL, NULL, NULL
+  };
+
+  pkgbuild_get_extinfo(pkgbuild, pkg_details);
+
+  for (i = deplist; i; i = alpm_list_next(i)) {
+    const char *depend = alpm_list_getdata(i);
+    char *sanitized = strdup(depend);
+    *(sanitized + strcspn(sanitized, "<>=")) = '\0';
+
+    if (!alpm_list_find_str(targets, sanitized)) {
+      if (alpm_find_satisfier(alpm_db_get_pkgcache(db_local), depend)) {
+        cwr_printf(LOG_WARN, "%s is already satisified\n", depend);
+      } else {
+        targets = alpm_list_add(targets, sanitized);
+        thread_download(sanitized);
+      }
+    }
+    /* free(sanitized); */
+  }
 
 finish:
+  FREELIST(deplist);
   free(filename);
   free(pkgbuild);
-  /* return something meaningful? */
-  return(0);
+
+  return(ret);
 }
 
 char *strtrim(char *str) {
@@ -1142,7 +1146,6 @@ char *strtrim(char *str) {
 
 void *thread_download(void *arg) {
   alpm_list_t *queryresult = NULL;
-  struct aurpkg_t *aurpkg;
   char *url, *escaped;
   CURL *curl;
   CURLcode curlstat;
@@ -1157,7 +1160,7 @@ void *thread_download(void *arg) {
 
   pthread_mutex_lock(&lock);
   cwr_printf(LOG_DEBUG, "thread[%p]: locking alpm mutex\n", self);
-  db = alpm_provides_explicit_pkg(arg);
+  db = alpm_provides_pkg(arg);
   cwr_printf(LOG_DEBUG, "thread[%p]: unlocking alpm mutex\n", self);
   pthread_mutex_unlock(&lock);
 
@@ -1171,11 +1174,9 @@ void *thread_download(void *arg) {
   if (queryresult == NULL) {
     cwr_fprintf(stderr, LOG_ERROR, "no results found for %s\n", (const char*)arg);
     return(NULL);
-  } else {
-    /* dig out the creamy middle, throw away the hard candy shell */
-    aurpkg = alpm_list_getdata(queryresult);
-    alpm_list_free(queryresult);
   }
+  alpm_list_free_inner(queryresult, aurpkg_free);
+  alpm_list_free(queryresult);
 
   if (file_exists(arg) == 0 && !optforce) {
     cwr_fprintf(stderr, LOG_ERROR, "`%s/%s' already exists. Use -f to overwrite.\n",
@@ -1229,7 +1230,7 @@ void *thread_download(void *arg) {
   }
 
   if (getdepends) {
-    resolve_dependencies(&aurpkg);
+    resolve_dependencies(arg);
   }
 
 finish:
