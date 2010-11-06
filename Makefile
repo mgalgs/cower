@@ -5,38 +5,33 @@ include config.mk
 SRC = cower.c
 OBJ = ${SRC:.c=.o}
 
-all: buildopts cower doc
-
-buildopts:
-	@echo build options:
-	@echo "CC        = ${CC}"
-	@echo "CFLAGS    = ${CFLAGS}"
-	@echo "LDFLAGS   = ${LDFLAGS}"
-
-installopts:
-	@echo install options:
-	@echo "PREFIX    = ${PREFIX}"
-	@echo "MANPREFIX = ${MANPREFIX}"
+all: cower doc
 
 .c.o:
 	${CC} -c ${CFLAGS} $<
 
 ${OBJ}: config.mk
-
 cower: ${OBJ}
 	${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 doc: cower.1
 cower.1: README.pod
-	pod2man --section=1 --center="Cower Manual" --name="COWER" --release="cower ${VERSION}" README.pod > cower.1
+	pod2man --section=1 --center="Cower Manual" --name="COWER" --release="cower ${VERSION}" $< > $@
 
-install: installopts cower cower.1
+install: cower cower.1
 	install -D -m755 cower ${DESTDIR}${PREFIX}/bin/cower
 	install -D -m644 cower.1 ${DESTDIR}${MANPREFIX}/man1/cower.1
 	install -D -m644 bash_completion ${DESTDIR}/etc/bash_completion.d/cower
 
-dist:
-	@git archive --prefix=cower/ ${REF} | gzip -9 > cower-${VERSION}.tar.gz
+dist: clean
+	mkdir cower-${VERSION}
+	cp Makefile README.pod bash_completion cower.c cower-${VERSION}
+	sed "s/^VERSION = .*/VERSION = ${VERSION}/" config.mk > cower-${VERSION}/config.mk
+	tar cf - cower-${VERSION} | gzip -9 > cower-${VERSION}.tar.gz
+	rm -rf cower-${VERSION}
+
+strip: cower
+	strip --strip-unneeded cower
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
@@ -53,5 +48,5 @@ cscope.out:
 clean:
 	rm -f *.o cower cower.1 cscope.out
 
-.PHONY: all clean dist doc install buildopts installopts uninstall
+.PHONY: all clean dist doc install uninstall
 
