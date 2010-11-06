@@ -168,17 +168,17 @@ struct response_t {
 
 /* function declarations */
 static alpm_list_t *alpm_find_foreign_pkgs(void);
-static alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t*, alpm_list_t*, alpm_list_fn_cmp, alpm_list_fn_free);
-static alpm_list_t *alpm_list_remove_item(alpm_list_t*, alpm_list_t*, alpm_list_fn_free);
 static pmdb_t *alpm_provides_pkg(const char*);
 static int alpm_init(void);
+static alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t*, alpm_list_t*, alpm_list_fn_cmp, alpm_list_fn_free);
+static alpm_list_t *alpm_list_remove_item(alpm_list_t*, alpm_list_t*, alpm_list_fn_free);
 static int alpm_pkg_is_foreign(pmpkg_t*);
 static int archive_extract_file(const struct response_t*);
 static int aurpkg_cmp(const void*, const void*);
 static void aurpkg_free(void*);
 static struct aurpkg_t *aurpkg_new(void);
 static CURL *curl_create_easy_handle(void);
-static char *curl_get_url_as_buffer(const char*);
+//static char *curl_get_url_as_buffer(const char*);
 static size_t curl_write_response(void*, size_t, size_t, void*);
 static int cwr_asprintf(char**, const char*, ...) __attribute__((format(printf,2,3)));
 static int cwr_fprintf(FILE*, loglevel_t, const char*, ...) __attribute__((format(printf,3,4)));
@@ -194,7 +194,7 @@ static int json_start_map(void*);
 static int json_string(void*, const unsigned char*, unsigned int);
 static int parse_options(int, char*[]);
 static alpm_list_t *parse_bash_array(alpm_list_t*, char**);
-static void pkgbuild_get_extinfo(char*, alpm_list_t**[]);
+static void pkgbuild_get_extinfo(char**, alpm_list_t**[]);
 static void print_pkg_info(alpm_list_t*);
 static void print_pkg_search(alpm_list_t*);
 static void print_results(alpm_list_t*);
@@ -207,15 +207,17 @@ static void usage(void);
 static int verify_download_path(void);
 static size_t yajl_parse_stream(void*, size_t, size_t, void*);
 
-/* variables */
-loglevel_t logmask = LOG_ERROR|LOG_WARN|LOG_INFO;
-operation_t opmask = 0;
-pmdb_t *db_local;
+/* options */
 char *download_dir = NULL;
 int optforce = 0;
 int optquiet = 0;
 char *optproto = HTTP;
 int getdepends = 0;
+
+/* variables */
+loglevel_t logmask = LOG_ERROR|LOG_WARN|LOG_INFO;
+operation_t opmask = 0;
+pmdb_t *db_local;
 sem_t sem_download;
 alpm_list_t *targets = NULL;
 
@@ -612,6 +614,7 @@ CURL *curl_create_easy_handle() {
   return(handle);
 }
 
+#if 0
 char *curl_get_url_as_buffer(const char *url) {
   CURL *curl;
   CURLcode curlstat;
@@ -649,6 +652,7 @@ finish:
   curl_easy_cleanup(curl);
   return(response.data);
 }
+#endif
 
 size_t curl_write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
   size_t realsize = size * nmemb;
@@ -684,38 +688,28 @@ int getcols() {
 }
 
 char *get_file_as_buffer(const char *path) {
-  int fd;
-  char *file;
+  FILE *fp;
+  char *buf;
+  size_t nread;
   struct stat st;
-  ssize_t bytes_r = 0;
-  off_t filesize;
 
   if (stat(path, &st) != 0) {
-    fprintf(stderr, "stat: %s\n", strerror(errno));
+    cwr_fprintf(stderr, LOG_ERROR, "stat: %s\n", strerror(errno));
     return(NULL);
   }
 
-  filesize = st.st_size;
+  buf = calloc(1, st.st_size + 1);
 
-  file = calloc(1, filesize);
-  if (!file) {
-    fprintf(stderr, "failed to allocate %ld bytes\n", filesize);
+  fp = fopen(path, "r");
+  if (!fp) {
+    cwr_fprintf(stderr, LOG_ERROR, "fopen: %s\n", strerror(errno));
     return(NULL);
   }
 
-  fd = open(path, O_RDONLY, "r");
-  if (fd < 0) {
-    fprintf(stderr, "open: %s\n", strerror(errno));
-    return(NULL);
-  }
+  nread = fread(buf, 1, st.st_size, fp);
+  fclose(fp);
 
-  while (bytes_r < filesize) {
-    bytes_r += read(fd, file + bytes_r, st.st_blksize);
-  }
-
-  close(fd);
-
-  return(file);
+  return(nread == 0 ? NULL : buf);
 }
 
 int json_end_map(void *ctx) {
@@ -790,6 +784,10 @@ int json_string(void *ctx, const unsigned char *data, unsigned int size) {
 alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **array) {
   char *token;
 
+  if (!*array) {
+    return(NULL);
+  }
+
   /* XXX: This will fail sooner or later */
   if (strchr(*array, ':')) { /* we're dealing with optdepdends */
     for (token = strtok(*array, "\\\'\"\n"); token; token = strtok(NULL, "\\\'\"\n")) {
@@ -804,6 +802,7 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **array) {
 
   for (token = strtok(*array, " \n"); token; token = strtok(NULL, " \n")) {
     char *ptr;
+    pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
     strtrim(token);
     if (strchr("\'\"", *token)) {
@@ -815,17 +814,18 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **array) {
       *ptr = '\0';
     }
 
-    /* some people feel compelled to escape newlines inside arrays. these people suck. */
-    if (strlen(token) < 2) {
+    /* some people feel compelled to do insane things in PKGBUILDs. these people suck */
+    if (!*token || strlen(token) < 2 || *token == '$') {
       continue;
     }
 
     cwr_printf(LOG_DEBUG, "adding depend: %s\n", token);
 
-    if (alpm_list_find_str(deplist, token) == NULL) {
+    pthread_mutex_lock(&lock);
+    if (!alpm_list_find_str(deplist, token)) {
       deplist = alpm_list_add(deplist, strdup(token));
     }
-
+    pthread_mutex_unlock(&lock);
   }
 
   return(deplist);
@@ -1033,10 +1033,10 @@ void print_results(alpm_list_t *results) {
   }
 }
 
-void pkgbuild_get_extinfo(char *pkgbuild, alpm_list_t **details[]) {
+void pkgbuild_get_extinfo(char **pkgbuild, alpm_list_t **details[]) {
   char *lineptr, *arrayend;
 
-  for (lineptr = pkgbuild; lineptr; lineptr = strchr(lineptr, '\n')) {
+  for (lineptr = *pkgbuild; lineptr; lineptr = strchr(lineptr, '\n')) {
     alpm_list_t **deplist;
 
     strtrim(++lineptr);
@@ -1076,10 +1076,11 @@ int resolve_dependencies(const char *pkgname) {
   int ret = 0;
   char *filename, *pkgbuild;
   alpm_list_t *i, *deplist = NULL;
+  static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
   cwr_asprintf(&filename, "%s/PKGBUILD", pkgname);
-  pkgbuild = get_file_as_buffer(filename);
 
+  pkgbuild = get_file_as_buffer(filename);
   if (!pkgbuild) {
     ret = 1;
     goto finish;
@@ -1089,22 +1090,34 @@ int resolve_dependencies(const char *pkgname) {
     &deplist, &deplist, NULL, NULL, NULL, NULL
   };
 
-  pkgbuild_get_extinfo(pkgbuild, pkg_details);
+  cwr_printf(LOG_DEBUG, "Parsing %s for extended info\n", filename);
+  pkgbuild_get_extinfo(&pkgbuild, pkg_details);
 
   for (i = deplist; i; i = alpm_list_next(i)) {
     const char *depend = alpm_list_getdata(i);
     char *sanitized = strdup(depend);
+
     *(sanitized + strcspn(sanitized, "<>=")) = '\0';
 
+    /* synchronize discovery of new dependencies */
+    pthread_mutex_lock(&lock);
     if (!alpm_list_find_str(targets, sanitized)) {
-      if (alpm_find_satisfier(alpm_db_get_pkgcache(db_local), depend)) {
-        cwr_printf(LOG_WARN, "%s is already satisified\n", depend);
-      } else {
-        targets = alpm_list_add(targets, sanitized);
-        thread_download(sanitized);
-      }
+      targets = alpm_list_add(targets, sanitized);
+    } else {
+      FREE(sanitized);
     }
-    /* free(sanitized); */
+    pthread_mutex_unlock(&lock);
+
+    /* if we freed sanitized, we didn't add a dep */
+    if (!sanitized) {
+      continue;
+    }
+
+    if (alpm_find_satisfier(alpm_db_get_pkgcache(db_local), depend)) {
+      cwr_printf(LOG_DEBUG, "%s is already satisified\n", depend);
+    } else {
+      thread_download(sanitized);
+    }
   }
 
 finish:
@@ -1115,15 +1128,16 @@ finish:
   return(ret);
 }
 
+/* borrowed from pacman */
 char *strtrim(char *str) {
   char *pch = str;
 
-  if (!str || *str == '\0') {
+  if(str == NULL || *str == '\0') {
     /* string is empty, so we're done. */
     return(str);
   }
 
-  while (isspace((unsigned char)*pch)) {
+  while(isspace((unsigned char)*pch)) {
     pch++;
   }
   if (pch != str) {
@@ -1135,8 +1149,8 @@ char *strtrim(char *str) {
     return(str);
   }
 
-  pch = str + strlen(str) - 1;
-  while (isspace((unsigned char)*pch)) {
+  pch = (str + (strlen(str) - 1));
+  while(isspace((unsigned char)*pch)) {
     pch--;
   }
   *++pch = '\0';
