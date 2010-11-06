@@ -91,17 +91,18 @@
 #define PKG_URL               "URL"
 #define PKG_AURPAGE           "AUR Page"
 #define PKG_PROVIDES          "Provides"
-#define PKG_DEPENDS           "Depends"
+#define PKG_DEPENDS           "Depends On"
 #define PKG_MAKEDEPENDS       "Makedepends"
-#define PKG_CONFLICTS         "Conflicts"
+#define PKG_OPTDEPENDS        "Optional Deps"
+#define PKG_CONFLICTS         "Conflicts With"
 #define PKG_REPLACES          "Replaces"
 #define PKG_CAT               "Category"
-#define PKG_NUMVOTES          "Number of Votes"
+#define PKG_NUMVOTES          "Votes"
 #define PKG_LICENSE           "License"
 #define PKG_OOD               "Out of Date"
 #define PKG_DESC              "Description"
 
-#define INFO_INDENT           18
+#define INFO_INDENT           17
 #define SRCH_INDENT           4
 
 /* enums */
@@ -178,7 +179,7 @@ static int aurpkg_cmp(const void*, const void*);
 static void aurpkg_free(void*);
 static struct aurpkg_t *aurpkg_new(void);
 static CURL *curl_create_easy_handle(void);
-//static char *curl_get_url_as_buffer(const char*);
+static char *curl_get_url_as_buffer(const char*);
 static size_t curl_write_response(void*, size_t, size_t, void*);
 static int cwr_asprintf(char**, const char*, ...) __attribute__((format(printf,2,3)));
 static int cwr_fprintf(FILE*, loglevel_t, const char*, ...) __attribute__((format(printf,3,4)));
@@ -195,6 +196,7 @@ static int json_string(void*, const unsigned char*, unsigned int);
 static int parse_options(int, char*[]);
 static alpm_list_t *parse_bash_array(alpm_list_t*, char**);
 static void pkgbuild_get_extinfo(char**, alpm_list_t**[]);
+static void print_extinfo_list(alpm_list_t*, const char*);
 static void print_pkg_info(alpm_list_t*);
 static void print_pkg_search(alpm_list_t*);
 static void print_results(alpm_list_t*);
@@ -213,6 +215,7 @@ int optforce = 0;
 int optquiet = 0;
 char *optproto = HTTP;
 int getdepends = 0;
+int optextinfo = 0;
 
 /* variables */
 loglevel_t logmask = LOG_ERROR|LOG_WARN|LOG_INFO;
@@ -614,7 +617,6 @@ CURL *curl_create_easy_handle() {
   return(handle);
 }
 
-#if 0
 char *curl_get_url_as_buffer(const char *url) {
   CURL *curl;
   CURLcode curlstat;
@@ -639,10 +641,8 @@ char *curl_get_url_as_buffer(const char *url) {
 
   switch (httpcode) {
     case 200:
-      break;
     case 404:
-      cwr_fprintf(stderr, LOG_ERROR, "no results found for %s\n", url);
-      goto finish;
+      break;
     default:
       cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with http%ld\n",
           httpcode);
@@ -652,7 +652,6 @@ finish:
   curl_easy_cleanup(curl);
   return(response.data);
 }
-#endif
 
 size_t curl_write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
   size_t realsize = size * nmemb;
@@ -831,24 +830,62 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **array) {
   return(deplist);
 }
 
-void print_pkg_info(alpm_list_t *results) {
+void print_extinfo_list(alpm_list_t *list, const char *fieldname) {
+  size_t cols, count = 0;
   alpm_list_t *i;
+
+  if (!list) {
+    return;
+  }
+
+  /* this is bad -- we're relying on cols underflowing when getcols() returns 0
+   * in the case of stdout not being attached to a terminal.  Unfortunately,
+   * its very convenient */
+  cols = getcols() - INFO_INDENT;
+
+  count += printf("%-*s: ", INFO_INDENT - 2, fieldname);
+  for (i = list; i; i = i->next) {
+    if (count + strlen(alpm_list_getdata(i)) >= cols) {
+      printf("%-*s", INFO_INDENT + 1, "\n");
+      count = 0;
+    }
+    count += printf("%s  ", (const char*)i->data);
+  }
+  putchar('\n');
+}
+
+void print_pkg_info(alpm_list_t *results) {
+  alpm_list_t *i, *j;
 
   for (i = results; i; i = alpm_list_next(i)) {
     struct aurpkg_t *pkg = alpm_list_getdata(i);
 
-    printf(PKG_REPO "      : aur\n"
-           PKG_NAME "            : %s\n"
-           PKG_VERSION "         : %s\n"
-           PKG_URL "             : %s\n"
-           PKG_AURPAGE "        : " AUR_PKG_URL_FORMAT "%s\n",
+    printf(PKG_REPO "     : aur\n"
+           PKG_NAME "           : %s\n"
+           PKG_VERSION "        : %s\n"
+           PKG_URL "            : %s\n"
+           PKG_AURPAGE "       : " AUR_PKG_URL_FORMAT "%s\n",
            pkg->name, pkg->ver, pkg->url, optproto, pkg->id);
 
-    printf(PKG_CAT "        : %s\n"
-           PKG_LICENSE "         : %s\n"
-           PKG_NUMVOTES " : %s\n"
-           PKG_OOD "     : %s\n"
-           PKG_DESC "     : ",
+    print_extinfo_list(pkg->depends, PKG_DEPENDS);
+    print_extinfo_list(pkg->makedepends, PKG_MAKEDEPENDS);
+    print_extinfo_list(pkg->provides, PKG_PROVIDES);
+    print_extinfo_list(pkg->conflicts, PKG_CONFLICTS);
+
+    if (pkg->optdepends) {
+      printf(PKG_OPTDEPENDS "  : %s\n", (const char*)alpm_list_getdata(pkg->optdepends));
+      for (j = pkg->optdepends->next; j; j = alpm_list_next(j)) {
+        printf("%-*s%s\n", INFO_INDENT, "", (const char*)alpm_list_getdata(j));
+      }
+    }
+
+    print_extinfo_list(pkg->replaces, PKG_REPLACES);
+
+    printf(PKG_CAT "       : %s\n"
+           PKG_LICENSE "        : %s\n"
+           PKG_NUMVOTES "          : %s\n"
+           PKG_OOD "    : %s\n"
+           PKG_DESC "    : ",
            aur_cat[pkg->cat], pkg->lic, pkg->votes,
            pkg->ood ? "Yes" : "No");
 
@@ -974,7 +1011,11 @@ int parse_options(int argc, char *argv[]) {
         opmask |= OP_UPDATE;
         break;
       case 'i':
-        opmask |= OP_INFO;
+        if (!(opmask & OP_INFO)) {
+          opmask |= OP_INFO;
+        } else {
+          optextinfo = 1;
+        }
         break;
       case 'd':
         if (!(opmask & OP_DOWNLOAD)) {
@@ -1286,7 +1327,6 @@ void *thread_query(void *arg) {
     cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_INFO, escaped);
   }
   curl_easy_setopt(curl, CURLOPT_URL, url);
-  curl_free(escaped);
 
   sem_wait(&sem_download); /* limit downloads to AUR_MAX_CONNECTIONS */
   cwr_printf(LOG_DEBUG, "performing curl operation on %s\n", url);
@@ -1312,7 +1352,31 @@ void *thread_query(void *arg) {
   /* save the embedded list before we free the carrying struct */
   pkglist = parse_struct->pkglist;
 
+  if (!pkglist) {
+    goto finish;
+  }
+
+  if (optextinfo) {
+    struct aurpkg_t *aurpkg;
+    char *pburl, *pkgbuild;
+
+    aurpkg = alpm_list_getdata(pkglist);
+
+    cwr_asprintf(&pburl, AUR_PKGBUILD_PATH, optproto, escaped, escaped);
+    pkgbuild = curl_get_url_as_buffer(pburl);
+    free(pburl);
+
+    alpm_list_t **pkg_details[PKGDETAIL_MAX] = {
+      &aurpkg->depends, &aurpkg->makedepends, &aurpkg->optdepends,
+      &aurpkg->provides, &aurpkg->conflicts, &aurpkg->replaces
+    };
+
+    pkgbuild_get_extinfo(&pkgbuild, pkg_details);
+    free(pkgbuild);
+  }
+
 finish:
+  curl_free(escaped);
   FREE(parse_struct);
   FREE(url);
 
