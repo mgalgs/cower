@@ -28,7 +28,6 @@
 #define _GNU_SOURCE
 #include <ctype.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <getopt.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -689,15 +688,7 @@ int getcols() {
 char *get_file_as_buffer(const char *path) {
   FILE *fp;
   char *buf;
-  size_t nread;
-  struct stat st;
-
-  if (stat(path, &st) != 0) {
-    cwr_fprintf(stderr, LOG_ERROR, "stat: %s\n", strerror(errno));
-    return(NULL);
-  }
-
-  buf = calloc(1, st.st_size + 1);
+  long fsize, nread;
 
   fp = fopen(path, "r");
   if (!fp) {
@@ -705,10 +696,25 @@ char *get_file_as_buffer(const char *path) {
     return(NULL);
   }
 
-  nread = fread(buf, 1, st.st_size, fp);
+  fseek(fp, 0L, SEEK_END);
+  fsize = ftell(fp);
+  fseek(fp, 0L, SEEK_SET);
+
+  buf = calloc(1, fsize + 1);
+  if (!buf) {
+    cwr_fprintf(stderr, LOG_ERROR, "Failed to allocate %ld bytes\n", fsize + 1);
+    return(NULL);
+  }
+
+  nread = fread(buf, 1, fsize, fp);
   fclose(fp);
 
-  return(nread == 0 ? NULL : buf);
+  if (nread < fsize) {
+    cwr_fprintf(stderr, LOG_ERROR, "Failed to read full PKGBUILD\n");
+    return(NULL);
+  }
+
+  return(buf);
 }
 
 int json_end_map(void *ctx) {
