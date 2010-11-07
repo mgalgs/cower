@@ -613,6 +613,10 @@ int cwr_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list arg
 
 CURL *curl_create_easy_handle() {
   CURL *handle = curl_easy_init();
+  if (!handle) {
+    cwr_fprintf(stderr, LOG_ERROR, "curl: failed to create handle\n");
+    return(NULL);
+  }
 
   curl_easy_setopt(handle, CURLOPT_USERAGENT, COWER_USERAGENT);
   curl_easy_setopt(handle, CURLOPT_ENCODING, "deflate, gzip");
@@ -630,6 +634,10 @@ char *curl_get_url_as_buffer(const char *url) {
   response.size = 0;
 
   curl = curl_create_easy_handle();
+  if (!curl) {
+    return(NULL);
+  }
+
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_response);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
@@ -1265,6 +1273,10 @@ void *thread_download(void *arg) {
   response.size = 0;
 
   curl = curl_create_easy_handle();
+  if (!curl) {
+    return(NULL);
+  }
+
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_response);
 
@@ -1338,6 +1350,10 @@ void *thread_query(void *arg) {
   yajl_hand = yajl_alloc(&callbacks, NULL, NULL, (void*)parse_struct);
 
   curl = curl_create_easy_handle();
+  if (!curl) {
+    return(NULL);
+  }
+
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, yajl_parse_stream);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &yajl_hand);
 
