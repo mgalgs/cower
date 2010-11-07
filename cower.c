@@ -194,7 +194,7 @@ static int json_map_key(void*, const unsigned char*, unsigned int);
 static int json_start_map(void*);
 static int json_string(void*, const unsigned char*, unsigned int);
 static int parse_options(int, char*[]);
-static alpm_list_t *parse_bash_array(alpm_list_t*, char**);
+static alpm_list_t *parse_bash_array(alpm_list_t*, char**, int);
 static void pkgbuild_get_extinfo(char**, alpm_list_t**[]);
 static void print_extinfo_list(alpm_list_t*, const char*);
 static void print_pkg_info(alpm_list_t*);
@@ -790,15 +790,14 @@ int json_string(void *ctx, const unsigned char *data, unsigned int size) {
   return(1);
 }
 
-alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **array) {
+alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **array, int type) {
   char *token;
 
   if (!*array) {
     return(NULL);
   }
 
-  /* XXX: This will fail sooner or later */
-  if (strchr(*array, ':')) { /* we're dealing with optdepdends */
+  if (type == PKGDETAIL_OPTDEPENDS) {
     for (token = strtok(*array, "\\\'\"\n"); token; token = strtok(NULL, "\\\'\"\n")) {
       strtrim(token);
       if (strlen(token)) {
@@ -1100,6 +1099,7 @@ void pkgbuild_get_extinfo(char **pkgbuild, alpm_list_t **details[]) {
 
   for (lineptr = *pkgbuild; lineptr; lineptr = strchr(lineptr, '\n')) {
     alpm_list_t **deplist;
+    int type = 0;
 
     strtrim(++lineptr);
     if (*lineptr == '#' || strlen(lineptr) == 0) {
@@ -1112,12 +1112,13 @@ void pkgbuild_get_extinfo(char **pkgbuild, alpm_list_t **details[]) {
       deplist = details[PKGDETAIL_MAKEDEPENDS];
     } else if (STR_STARTS_WITH(lineptr, PKGBUILD_OPTDEPENDS)) {
       deplist = details[PKGDETAIL_OPTDEPENDS];
+      type = PKGDETAIL_OPTDEPENDS;
     } else if (STR_STARTS_WITH(lineptr, PKGBUILD_PROVIDES)) {
       deplist = details[PKGDETAIL_PROVIDES];
     } else if (STR_STARTS_WITH(lineptr, PKGBUILD_REPLACES)) {
       deplist = details[PKGDETAIL_REPLACES];
     } else if (STR_STARTS_WITH(lineptr, PKGBUILD_CONFLICTS)) {
-      deplist = details[PKGDETAIL_CONFLICTS]; 
+      deplist = details[PKGDETAIL_CONFLICTS];
     } else {
       continue;
     }
@@ -1127,7 +1128,7 @@ void pkgbuild_get_extinfo(char **pkgbuild, alpm_list_t **details[]) {
 
     if (deplist) {
       char *arrayptr = strchr(lineptr, '(') + 1;
-      *deplist = parse_bash_array(*deplist, &arrayptr);
+      *deplist = parse_bash_array(*deplist, &arrayptr, type);
     }
 
     lineptr = arrayend + 1;
