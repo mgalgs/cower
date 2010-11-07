@@ -172,7 +172,7 @@ static alpm_list_t *alpm_find_foreign_pkgs(void);
 static pmdb_t *alpm_provides_pkg(const char*);
 static int alpm_init(void);
 static alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t*, alpm_list_t*, alpm_list_fn_cmp, alpm_list_fn_free);
-static alpm_list_t *alpm_list_remove_item(alpm_list_t*, alpm_list_t*, alpm_list_fn_free);
+static alpm_list_t *alpm_list_remove_item(alpm_list_t*, alpm_list_fn_free);
 static int alpm_pkg_is_foreign(pmpkg_t*);
 static int archive_extract_file(const struct response_t*);
 static int aurpkg_cmp(const void*, const void*);
@@ -373,7 +373,7 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
       newlist = left;
       left = left->next;
     } else {
-      left = alpm_list_remove_item(left, left, fnf);
+      left = alpm_list_remove_item(left, fnf);
     }
   } while (compare == 0);
 
@@ -393,7 +393,7 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
       right->prev = lp;
       right = right->next;
     } else {
-      left = alpm_list_remove_item(left, left, fnf);
+      left = alpm_list_remove_item(left, fnf);
       continue;
     }
     lp = lp->next;
@@ -416,38 +416,20 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
   return(newlist);
 }
 
-alpm_list_t *alpm_list_remove_item(alpm_list_t *listhead, alpm_list_t *target, alpm_list_fn_free fn) {
-  alpm_list_t *next = NULL;
+alpm_list_t *alpm_list_remove_item(alpm_list_t *target, alpm_list_fn_free fn) {
+  alpm_list_t *next, *listhead;
 
-  if (target == listhead) {
-    listhead = target->next;
-    if (listhead) {
-      listhead->prev = target->prev;
-    }
-
-    target->prev = NULL;
-  } else if (target == listhead->prev) {
-    if (target->prev) {
-      target->prev->next = target->next;
-      listhead->prev = target->prev;
-      target->prev = NULL;
-    }
-  } else {
-    if (target->next) {
-      target->next->prev = target->prev;
-    }
-
-    if (target->prev) {
-      target->prev->next = target->next;
-    }
+  listhead = target->next;
+  if (listhead) {
+    listhead->prev = target->prev;
   }
 
+  target->prev = NULL;
   next = target->next;
 
   if (target->data) {
     fn(target->data);
   }
-
   free(target);
 
   return(next);
