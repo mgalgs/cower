@@ -1371,21 +1371,19 @@ void *thread_query(void *arg) {
   curlstat = curl_easy_perform(curl);
   sem_post(&sem_download);
 
-  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
+  yajl_parse_complete(yajl_hand);
+  yajl_free(yajl_hand);
 
   if (curlstat != CURLE_OK) {
     cwr_fprintf(stderr, LOG_ERROR, "curl: %s\n", curl_easy_strerror(curlstat));
     goto finish;
   }
 
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
   if (httpcode != 200) {
     cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with http%ld\n", httpcode);
     goto finish;
   }
-
-  curl_easy_cleanup(curl);
-  yajl_parse_complete(yajl_hand);
-  yajl_free(yajl_hand);
 
   /* save the embedded list before we free the carrying struct */
   pkglist = parse_struct->pkglist;
@@ -1414,6 +1412,7 @@ void *thread_query(void *arg) {
   }
 
 finish:
+  curl_easy_cleanup(curl);
   curl_free(escaped);
   FREE(parse_struct);
   FREE(url);
