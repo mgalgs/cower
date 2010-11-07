@@ -261,13 +261,13 @@ int alpm_init() {
   if (ret != 0) {
     return(ret);
   }
-  cwr_printf(LOG_DEBUG, "pacman root set to %s\n", alpm_option_get_root());
+  cwr_printf(LOG_DEBUG, "setting alpm RootDir to %s\n", alpm_option_get_root());
 
   ret = alpm_option_set_dbpath("/var/lib/pacman");
   if (ret != 0) {
     return(ret);
   }
-  cwr_printf(LOG_DEBUG, "pacman dbpath set to: %s\n", alpm_option_get_dbpath());
+  cwr_printf(LOG_DEBUG, "setting alpm DBPath to: %s\n", alpm_option_get_dbpath());
 
   db_local = alpm_db_register_local();
   if (!db_local) {
@@ -306,6 +306,27 @@ int alpm_init() {
           goto finish;
         }
         cwr_printf(LOG_DEBUG, "registering alpm db: %s\n", section);
+      }
+    } else {
+      char *key, *ptr, *token;
+
+      key = ptr = line;
+      strsep(&ptr, "=");
+      strtrim(key);
+      strtrim(ptr);
+      if (STREQ(key, "RootDir")) {
+        cwr_printf(LOG_DEBUG, "setting alpm RootDir to: %s\n", ptr);
+        alpm_option_set_root(ptr);
+      } else if (STREQ(key, "DBPath")) {
+        cwr_printf(LOG_DEBUG, "setting alpm DBPath to: %s\n", ptr);
+        alpm_option_set_dbpath(ptr);
+      } else if (STREQ(key, "IgnorePkg")) {
+        for (token = strtok(ptr, " "); token; token = strtok(NULL, ",")) {
+          if (!alpm_list_find_str(ignore, token)) {
+            cwr_printf(LOG_DEBUG, "ignoring package: %s\n", token);
+            ignore = alpm_list_add(ignore, strdup(token));
+          }
+        }
       }
     }
   }
