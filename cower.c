@@ -121,7 +121,8 @@ typedef enum __operation_t {
 
 enum {
   OP_DEBUG = 1000,
-  OP_SSL
+  OP_SSL,
+  OP_IGNORE
 };
 
 enum {
@@ -221,7 +222,7 @@ loglevel_t logmask = LOG_ERROR|LOG_WARN|LOG_INFO;
 operation_t opmask = 0;
 pmdb_t *db_local;
 sem_t sem_download;
-alpm_list_t *targets = NULL;
+alpm_list_t *ignore = NULL, *targets = NULL;
 
 static yajl_callbacks callbacks = {
   NULL,
@@ -997,6 +998,7 @@ int parse_options(int argc, char *argv[]) {
     {"debug",     no_argument,        0, OP_DEBUG},
     {"force",     no_argument,        0, 'f'},
     {"help",      no_argument,        0, 'h'},
+    {"ignore",    required_argument,  0, OP_IGNORE},
     {"quiet",     no_argument,        0, 'q'},
     {"ssl",       no_argument,        0, OP_SSL},
     {"target",    required_argument,  0, 't'},
@@ -1004,6 +1006,8 @@ int parse_options(int argc, char *argv[]) {
   };
 
   while ((opt = getopt_long(argc, argv, "dfhiqst:u", opts, &option_index))) {
+    char *token;
+
     if(opt < 0) {
       break;
     }
@@ -1048,6 +1052,14 @@ int parse_options(int argc, char *argv[]) {
         break;
       case OP_SSL:
         optproto = HTTPS;
+        break;
+      case OP_IGNORE:
+        for (token = strtok(optarg, ","); token; token = strtok(NULL, ",")) {
+          if (!alpm_list_find_str(ignore, token)) {
+            cwr_printf(LOG_DEBUG, "ignoring package: %s\n", token);
+            ignore = alpm_list_add(ignore, strdup(token));
+          }
+        }
         break;
 
       case '?':
@@ -1394,6 +1406,10 @@ void *thread_update(void *arg) {
   struct aurpkg_t *aurpkg;
   void *retval;
 
+  if (alpm_list_find_str(ignore, arg)) {
+    return(NULL);
+  }
+
   retval = thread_query(arg);
   aurpkg = alpm_list_getdata(retval);
   if (aurpkg) {
@@ -1442,6 +1458,7 @@ void usage() {
       "      --debug             show debug output\n"
       "  -f, --force             overwrite existing files when downloading\n"
       "  -h, --help              display this help and exit\n"
+      "      --ignore <pkg>      ignore a package upgrade (can be used more than once)\n"
       "  -q, --quiet             output less\n"
       "      --ssl               create connections over https\n"
       "  -t, --target <dir>      specify an alternate download directory\n\n");
@@ -1619,6 +1636,7 @@ int main(int argc, char *argv[]) {
 finish:
   FREE(download_dir);
   FREELIST(targets);
+  FREELIST(ignore);
 
   cwr_printf(LOG_DEBUG, "releasing curl\n");
   curl_global_cleanup();
