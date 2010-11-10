@@ -104,6 +104,24 @@
 #define INFO_INDENT           17
 #define SRCH_INDENT           4
 
+#define NC                    "\033[0m"
+#define BLACK                 "\033[0;30m"
+#define RED                   "\033[0;31m"
+#define GREEN                 "\033[0;32m"
+#define YELLOW                "\033[0;33m"
+#define BLUE                  "\033[0;34m"
+#define MAGENTA               "\033[0;35m"
+#define CYAN                  "\033[0;36m"
+#define WHITE                 "\033[0;37m"
+#define BOLDBLACK             "\033[1;30m"
+#define BOLDRED               "\033[1;31m"
+#define BOLDGREEN             "\033[1;32m"
+#define BOLDYELLOW            "\033[1;33m"
+#define BOLDBLUE              "\033[1;34m"
+#define BOLDMAGENTA           "\033[1;35m"
+#define BOLDCYAN              "\033[1;36m"
+#define BOLDWHITE             "\033[1;37m"
+
 /* enums */
 typedef enum __loglevel_t {
   LOG_INFO    = 1,
@@ -133,6 +151,18 @@ enum {
   PKGDETAIL_CONFLICTS,
   PKGDETAIL_REPLACES,
   PKGDETAIL_MAX
+};
+
+struct strings_t {
+  const char *error;
+  const char *warn;
+  const char *info;
+  const char *pkg;
+  const char *repo;
+  const char *url;
+  const char *ood;
+  const char *utd;
+  const char *nc;
 };
 
 struct aurpkg_t {
@@ -201,6 +231,7 @@ static void print_pkg_info(alpm_list_t*);
 static void print_pkg_search(alpm_list_t*);
 static void print_results(alpm_list_t*);
 static int resolve_dependencies(const char*);
+static int strings_init(void);
 static char *strtrim(char*);
 static void *thread_download(void*);
 static void *thread_query(void*);
@@ -211,6 +242,7 @@ static size_t yajl_parse_stream(void*, size_t, size_t, void*);
 
 /* options */
 char *download_dir = NULL;
+int optcolor = 0;
 int optforce = 0;
 int optquiet = 0;
 char *optproto = HTTP;
@@ -223,6 +255,7 @@ operation_t opmask = 0;
 pmdb_t *db_local;
 sem_t sem_download;
 alpm_list_t *ignore = NULL, *targets = NULL;
+struct strings_t *colstr;
 
 static yajl_callbacks callbacks = {
   NULL,
@@ -592,13 +625,13 @@ int cwr_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list arg
 
   switch(level) {
     case LOG_INFO:
-      fprintf(stream, ":: ");
+      fprintf(stream, "%s ", colstr->info);
       break;
     case LOG_ERROR:
-      fprintf(stream, "error: ");
+      fprintf(stream, "%s ", colstr->error);
       break;
     case LOG_WARN:
-      fprintf(stream, "warning: ");
+      fprintf(stream, "%s ", colstr->warn);
       break;
     case LOG_DEBUG:
       fprintf(stream, "debug: ");
@@ -877,12 +910,13 @@ void print_pkg_info(alpm_list_t *results) {
   for (i = results; i; i = alpm_list_next(i)) {
     struct aurpkg_t *pkg = alpm_list_getdata(i);
 
-    printf(PKG_REPO "     : aur\n"
-           PKG_NAME "           : %s\n"
-           PKG_VERSION "        : %s\n"
-           PKG_URL "            : %s\n"
-           PKG_AURPAGE "       : " AUR_PKG_URL_FORMAT "%s\n",
-           pkg->name, pkg->ver, pkg->url, optproto, pkg->id);
+    printf(PKG_REPO "     : %saur%s\n", colstr->repo, colstr->nc);
+    printf(PKG_NAME "           : %s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
+    printf(PKG_VERSION "        : %s%s%s\n",
+        pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
+    printf(PKG_URL "            : %s%s%s\n", colstr->url, pkg->url, colstr->nc);
+    printf(PKG_AURPAGE "       : %s" AUR_PKG_URL_FORMAT "%s%s\n",
+        colstr->url, optproto, pkg->id, colstr->nc);
 
     print_extinfo_list(pkg->depends, PKG_DEPENDS);
     print_extinfo_list(pkg->makedepends, PKG_MAKEDEPENDS);
@@ -901,10 +935,11 @@ void print_pkg_info(alpm_list_t *results) {
     printf(PKG_CAT "       : %s\n"
            PKG_LICENSE "        : %s\n"
            PKG_NUMVOTES "          : %s\n"
-           PKG_OOD "    : %s\n"
+           PKG_OOD "    : %s%s%s\n"
            PKG_DESC "    : ",
            aur_cat[pkg->cat], pkg->lic, pkg->votes,
-           pkg->ood ? "Yes" : "No");
+           pkg->ood ? colstr->ood : colstr->utd,
+           pkg->ood ? "Yes" : "No", colstr->nc);
 
     indentprint(pkg->desc, INFO_INDENT);
     printf("\n\n");
@@ -917,12 +952,13 @@ void print_pkg_search(alpm_list_t *results) {
   if (optquiet) {
     for (i = results; i; i = alpm_list_next(i)) {
       struct aurpkg_t *pkg = alpm_list_getdata(i);
-      printf("%s\n", pkg->name);
+      printf("%s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
     }
   } else {
     for (i = results; i; i = alpm_list_next(i)) {
       struct aurpkg_t *pkg = alpm_list_getdata(i);
-      printf("aur/%s %s\n    ", pkg->name, pkg->ver);
+      printf("%saur/%s%s %s%s%s\n    ", colstr->repo, colstr->pkg, pkg->name,
+          pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
       indentprint(pkg->desc, SRCH_INDENT);
       putchar('\n');
     }
@@ -1005,6 +1041,7 @@ int parse_options(int argc, char *argv[]) {
     {"update",    no_argument,        0, 'u'},
 
     /* Options */
+    {"color",     optional_argument,  0, 'c'},
     {"debug",     no_argument,        0, OP_DEBUG},
     {"force",     no_argument,        0, 'f'},
     {"help",      no_argument,        0, 'h'},
@@ -1015,7 +1052,7 @@ int parse_options(int argc, char *argv[]) {
     {0, 0, 0, 0}
   };
 
-  while ((opt = getopt_long(argc, argv, "dfhiqst:u", opts, &option_index))) {
+  while ((opt = getopt_long(argc, argv, "cdfhiqst:u", opts, &option_index))) {
     char *token;
 
     if(opt < 0) {
@@ -1046,6 +1083,22 @@ int parse_options(int argc, char *argv[]) {
         break;
 
       /* options */
+      case 'c':
+        if (!optarg || STREQ(optarg, "auto")) {
+          if (isatty(fileno(stdout))) {
+            optcolor = 1;
+          } else {
+            optcolor = 0;
+          }
+        } else if (STREQ(optarg, "always")) {
+          optcolor = 1;
+        } else if (STREQ(optarg, "never")) {
+          optcolor = 0;
+        } else {
+          fprintf(stderr, "invalid argument to --color\n");
+          return(1);
+        }
+        break;
       case 'f':
         optforce = 1;
         break;
@@ -1199,6 +1252,38 @@ finish:
   return(ret);
 }
 
+int strings_init() {
+  colstr = malloc(sizeof *colstr);
+  if (!colstr) {
+    cwr_fprintf(stderr, LOG_ERROR, "failed to allocate %zd bytes\n", sizeof *colstr);
+    return(1);
+  }
+
+  if (optcolor) {
+    colstr->error = BOLDRED "::" NC;
+    colstr->warn = BOLDYELLOW "::" NC;
+    colstr->info = BOLDBLUE "::" NC;
+    colstr->pkg = BOLDWHITE;
+    colstr->repo = BOLDMAGENTA;
+    colstr->url = BOLDCYAN;
+    colstr->ood = BOLDRED;
+    colstr->utd = BOLDGREEN;
+    colstr->nc = NC;
+  } else {
+    colstr->error = "error:";
+    colstr->warn = "warning:";
+    colstr->info = "::";
+    colstr->pkg = "";
+    colstr->repo = "";
+    colstr->url = "";
+    colstr->ood = "";
+    colstr->utd = "";
+    colstr->nc = "";
+  }
+
+  return 0;
+}
+
 /* borrowed from pacman */
 char *strtrim(char *str) {
   char *pch = str;
@@ -1250,8 +1335,9 @@ void *thread_download(void *arg) {
   pthread_mutex_unlock(&lock);
 
   if (db) {
-    cwr_fprintf(stderr, LOG_WARN, "%s is available in %s\n", (const char*)arg,
-        alpm_db_get_name(db));
+    cwr_fprintf(stderr, LOG_WARN, "%s%s%s is available in %s%s%s\n",
+        colstr->pkg, (const char*)arg, colstr->nc,
+        colstr->repo, alpm_db_get_name(db), colstr->nc);
     return(NULL);
   }
 
@@ -1310,7 +1396,8 @@ void *thread_download(void *arg) {
       cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with http%ld\n",
           httpcode);
   }
-  cwr_printf(LOG_INFO, "%s downloaded to %s\n", (const char*)arg, download_dir);
+  cwr_printf(LOG_INFO, "%s%s%s downloaded to %s\n",
+      colstr->pkg, (const char*)arg, colstr->nc, download_dir);
 
   ret = archive_extract_file(&response);
   if (ret != ARCHIVE_EOF && ret != ARCHIVE_OK) {
@@ -1441,10 +1528,12 @@ void *thread_update(void *arg) {
 
     if (alpm_pkg_vercmp(aurpkg->ver, alpm_pkg_get_version(pmpkg)) > 0) {
       if (optquiet) {
-        printf("%s\n", (const char*)arg);
+        printf("%s%s%s\n", colstr->pkg, (const char*)arg, colstr->nc);
       } else {
-        cwr_printf(LOG_INFO, "%s %s -> %s\n", (const char*)arg,
-            alpm_pkg_get_version(pmpkg), aurpkg->ver);
+        cwr_printf(LOG_INFO, "%s%s %s%s%s -> %s%s%s\n",
+            colstr->pkg, (const char*)arg,
+            colstr->ood, alpm_pkg_get_version(pmpkg), colstr->nc,
+            colstr->utd, aurpkg->ver, colstr->nc);
       }
 
       if (opmask & OP_DOWNLOAD) {
@@ -1474,6 +1563,7 @@ void usage() {
       "  -u, --update            check for updates against AUR -- can be combined "
                                    "with the -d flag\n\n");
   fprintf(stderr, " General options:\n"
+      "  -c, --color[=WHEN]      use colored output. WHEN is `never', `always', or `auto'\n"
       "      --debug             show debug output\n"
       "  -f, --force             overwrite existing files when downloading\n"
       "  -h, --help              display this help and exit\n"
@@ -1535,6 +1625,11 @@ int main(int argc, char *argv[]) {
   ret = parse_options(argc, argv);
   if (ret != 0) {
     usage();
+    return(1);
+  }
+
+  ret = strings_init();
+  if (ret != 0) {
     return(1);
   }
 
@@ -1656,6 +1751,7 @@ finish:
   FREE(download_dir);
   FREELIST(targets);
   FREELIST(ignore);
+  FREE(colstr);
 
   cwr_printf(LOG_DEBUG, "releasing curl\n");
   curl_global_cleanup();
