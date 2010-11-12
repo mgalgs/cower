@@ -14,7 +14,7 @@ _cower() {
   [[ -z $cower_exec ]] && return 0
 
   opts="-d --download -i --info -s --search -u --update -c --color \
-        -f --force -q --quiet -t --target -v --verbose"
+        -f --force -q --quiet -t --target -v --debug --ssl -h --help"
 
   # complete options
   if [[ $cur == -* ]]; then
