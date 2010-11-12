@@ -42,7 +42,7 @@
 #include "util.h"
 #include "yajl.h"
 
-static int archive_extract_file(const char *file) {
+static int archive_extract_data(const struct response *file) {
   struct archive *archive;
   struct archive_entry *entry;
   const int archive_flags = ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_TIME;
@@ -52,7 +52,7 @@ static int archive_extract_file(const char *file) {
   archive_read_support_compression_all(archive);
   archive_read_support_format_all(archive);
 
-  ret = archive_read_open_filename(archive, file, ARCHIVE_DEFAULT_BYTES_PER_BLOCK);
+  ret = archive_read_open_memory(archive, file->data, file->size);
   if (ret != ARCHIVE_OK) {
     goto finish;
   }
@@ -88,7 +88,10 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   CURLcode curlstat;
   long httpcode;
   int result = 0;
-  FILE *fp;
+  struct response response = {
+    .size = 0,
+    .data = NULL
+  };
 
   /* establish download dir */
   dir = getcwd(NULL, PATH_MAX);
@@ -118,18 +121,15 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
     return(1);
   }
 
-  fp = fopen(tarball, "wb");
-
   curl_easy_setopt(curl, CURLOPT_URL, url);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
 
   curlstat = curl_easy_perform(curl);
   if (curlstat != CURLE_OK) {
     cwr_fprintf(stderr, LOG_ERROR, "curl: %s\n", curl_easy_strerror(curlstat));
     result = 1;
   }
-
-  fclose(fp);
 
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
   if (httpcode != 200) {
@@ -138,13 +138,12 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
     result = 1;
   }
 
-  result = archive_extract_file(tarball);
+  result = archive_extract_data(&response);
 
   if (result != ARCHIVE_EOF) { /* still no error, we have success */
     cwr_printf(LOG_INFO, "%s%s%s downloaded to %s%s%s\n",
         config->strings->pkg, pkgname, config->strings->c_off,
         config->strings->uptodate, dir, config->strings->c_off);
-    unlink(tarball);
   } else {
     cwr_fprintf(stderr, LOG_ERROR, "error downloading stuff\n");
   }
@@ -154,6 +153,7 @@ int download_taurball(struct aur_pkg_t *aurpkg) {
   FREE(url);
   FREE(dir);
   FREE(tarball);
+  FREE(response.data);
 
   return(result);
 }

@@ -33,12 +33,7 @@
 #include "curl.h"
 #include "util.h"
 
-struct response {
-  size_t size;
-  char *data;
-};
-
-static size_t write_callback(void *ptr, size_t size, size_t nmemb, void *data) {
+size_t write_callback(void *ptr, size_t size, size_t nmemb, void *data) {
   size_t realsize = size * nmemb;
   struct response *mem = (struct response*)data;
 

@@ -31,6 +31,12 @@
 
 #define COWER_USERAGENT    "cower/2.x"
 
+struct response {
+  size_t size;
+  char *data;
+};
+
+size_t write_callback(void*, size_t, size_t, void*);
 char *curl_textfile_get(const char*);
 CURL *curl_local_init(void);
 
