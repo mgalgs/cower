@@ -227,9 +227,9 @@ static int parse_options(int, char*[]);
 static alpm_list_t *parse_bash_array(alpm_list_t*, char**, int);
 static void pkgbuild_get_extinfo(char**, alpm_list_t**[]);
 static void print_extinfo_list(alpm_list_t*, const char*);
-static void print_pkg_info(alpm_list_t*);
-static void print_pkg_search(alpm_list_t*);
-static void print_results(alpm_list_t*);
+static void print_pkg_info(struct aurpkg_t*);
+static void print_pkg_search(struct aurpkg_t*);
+static void print_results(alpm_list_t*, void (*)(struct aurpkg_t*));
 static int resolve_dependencies(const char*);
 static int strings_init(void);
 static char *strtrim(char*);
@@ -904,64 +904,52 @@ void print_extinfo_list(alpm_list_t *list, const char *fieldname) {
   putchar('\n');
 }
 
-void print_pkg_info(alpm_list_t *results) {
-  alpm_list_t *i, *j;
-
-  for (i = results; i; i = alpm_list_next(i)) {
-    struct aurpkg_t *pkg = alpm_list_getdata(i);
-
-    printf(PKG_REPO "     : %saur%s\n", colstr->repo, colstr->nc);
-    printf(PKG_NAME "           : %s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
-    printf(PKG_VERSION "        : %s%s%s\n",
-        pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
-    printf(PKG_URL "            : %s%s%s\n", colstr->url, pkg->url, colstr->nc);
-    printf(PKG_AURPAGE "       : %s" AUR_PKG_URL_FORMAT "%s%s\n",
-        colstr->url, optproto, pkg->id, colstr->nc);
-
-    print_extinfo_list(pkg->depends, PKG_DEPENDS);
-    print_extinfo_list(pkg->makedepends, PKG_MAKEDEPENDS);
-    print_extinfo_list(pkg->provides, PKG_PROVIDES);
-    print_extinfo_list(pkg->conflicts, PKG_CONFLICTS);
-
-    if (pkg->optdepends) {
-      printf(PKG_OPTDEPENDS "  : %s\n", (const char*)alpm_list_getdata(pkg->optdepends));
-      for (j = pkg->optdepends->next; j; j = alpm_list_next(j)) {
-        printf("%-*s%s\n", INFO_INDENT, "", (const char*)alpm_list_getdata(j));
-      }
-    }
-
-    print_extinfo_list(pkg->replaces, PKG_REPLACES);
-
-    printf(PKG_CAT "       : %s\n"
-           PKG_LICENSE "        : %s\n"
-           PKG_NUMVOTES "          : %s\n"
-           PKG_OOD "    : %s%s%s\n"
-           PKG_DESC "    : ",
-           aur_cat[pkg->cat], pkg->lic, pkg->votes,
-           pkg->ood ? colstr->ood : colstr->utd,
-           pkg->ood ? "Yes" : "No", colstr->nc);
-
-    indentprint(pkg->desc, INFO_INDENT);
-    printf("\n\n");
-  }
-}
-
-void print_pkg_search(alpm_list_t *results) {
+void print_pkg_info(struct aurpkg_t *pkg) {
   alpm_list_t *i;
 
+  printf(PKG_REPO "     : %saur%s\n", colstr->repo, colstr->nc);
+  printf(PKG_NAME "           : %s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
+  printf(PKG_VERSION "        : %s%s%s\n",
+      pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
+  printf(PKG_URL "            : %s%s%s\n", colstr->url, pkg->url, colstr->nc);
+  printf(PKG_AURPAGE "       : %s" AUR_PKG_URL_FORMAT "%s%s\n",
+      colstr->url, optproto, pkg->id, colstr->nc);
+
+  print_extinfo_list(pkg->depends, PKG_DEPENDS);
+  print_extinfo_list(pkg->makedepends, PKG_MAKEDEPENDS);
+  print_extinfo_list(pkg->provides, PKG_PROVIDES);
+  print_extinfo_list(pkg->conflicts, PKG_CONFLICTS);
+
+  if (pkg->optdepends) {
+    printf(PKG_OPTDEPENDS "  : %s\n", (const char*)alpm_list_getdata(pkg->optdepends));
+    for (i = pkg->optdepends->next; i; i = alpm_list_next(i)) {
+      printf("%-*s%s\n", INFO_INDENT, "", (const char*)alpm_list_getdata(i));
+    }
+  }
+
+  print_extinfo_list(pkg->replaces, PKG_REPLACES);
+
+  printf(PKG_CAT "       : %s\n"
+         PKG_LICENSE "        : %s\n"
+         PKG_NUMVOTES "          : %s\n"
+         PKG_OOD "    : %s%s%s\n"
+         PKG_DESC "    : ",
+         aur_cat[pkg->cat], pkg->lic, pkg->votes,
+         pkg->ood ? colstr->ood : colstr->utd,
+         pkg->ood ? "Yes" : "No", colstr->nc);
+
+  indentprint(pkg->desc, INFO_INDENT);
+  printf("\n\n");
+}
+
+void print_pkg_search(struct aurpkg_t *pkg) {
   if (optquiet) {
-    for (i = results; i; i = alpm_list_next(i)) {
-      struct aurpkg_t *pkg = alpm_list_getdata(i);
-      printf("%s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
-    }
+    printf("%s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
   } else {
-    for (i = results; i; i = alpm_list_next(i)) {
-      struct aurpkg_t *pkg = alpm_list_getdata(i);
-      printf("%saur/%s%s %s%s%s\n    ", colstr->repo, colstr->pkg, pkg->name,
-          pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
-      indentprint(pkg->desc, SRCH_INDENT);
-      putchar('\n');
-    }
+    printf("%saur/%s%s %s%s%s\n    ", colstr->repo, colstr->pkg, pkg->name,
+        pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
+    indentprint(pkg->desc, SRCH_INDENT);
+    putchar('\n');
   }
 }
 
@@ -1143,15 +1131,15 @@ int parse_options(int argc, char *argv[]) {
   return(0);
 }
 
-void print_results(alpm_list_t *results) {
+void print_results(alpm_list_t *results, void (*fn)(struct aurpkg_t*)) {
+  alpm_list_t *i;
+
   if (!results) {
     cwr_fprintf(stderr, LOG_ERROR, "no results found\n");
   }
 
-  if (opmask & OP_SEARCH) {
-    print_pkg_search(results);
-  } else if (opmask & OP_INFO) {
-    print_pkg_info(results);
+  for (i = results; i; i = alpm_list_next(i)) {
+    fn(alpm_list_getdata(i));
   }
 }
 
@@ -1621,6 +1609,13 @@ int main(int argc, char *argv[]) {
   pthread_attr_t attr;
   pthread_t *threads;
   alpm_list_t *i, *results = NULL, *thread_return = NULL;
+  struct task_t {
+    void *(*threadfn)(void*);
+    void (*printfn)(struct aurpkg_t*);
+  } task = {
+    .printfn = NULL,
+    .threadfn = thread_query
+  };
 
   ret = parse_options(argc, argv);
   if (ret != 0) {
@@ -1711,22 +1706,26 @@ int main(int argc, char *argv[]) {
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
+  /* override task behavior */
+  if (opmask & OP_UPDATE) {
+    task.threadfn = thread_update;
+  } else if (opmask & OP_INFO) {
+    task.printfn = print_pkg_info;
+  } else if (opmask & OP_SEARCH) {
+    task.printfn = print_pkg_search;
+  } else if (opmask & OP_DOWNLOAD) {
+    task.threadfn = thread_download;
+  }
+
   for (i = targets, n = 0; i; i = alpm_list_next(i), n++) {
     void *target = alpm_list_getdata(i);
 
-    if (opmask & OP_UPDATE) {
-      ret = pthread_create(&threads[n], &attr, thread_update, target);
-    } else if (opmask & OP_DOWNLOAD) {
-      ret = pthread_create(&threads[n], &attr, thread_download, target);
-    } else if (opmask & (OP_INFO|OP_SEARCH)) {
-      ret = pthread_create(&threads[n], &attr, thread_query, target);
-    }
+    ret = pthread_create(&threads[n], &attr, task.threadfn, target);
     if (ret != 0) {
       cwr_fprintf(stderr, LOG_ERROR, "failed to spawn new thread: %s\n",
           strerror(ret));
       break;
     }
-
     cwr_printf(LOG_DEBUG, "thread[%p]: spawned with arg: %s\n",
         (void*)threads[n], (const char*)target);
   }
@@ -1741,8 +1740,8 @@ int main(int argc, char *argv[]) {
   pthread_attr_destroy(&attr);
   sem_destroy(&sem_download);
 
-  if (opmask & (OP_INFO|OP_SEARCH)) {
-    print_results(results);
+  if (task.printfn) {
+    print_results(results, task.printfn);
     alpm_list_free_inner(results, aurpkg_free);
     alpm_list_free(results);
   }
