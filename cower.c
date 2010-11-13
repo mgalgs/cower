@@ -385,6 +385,27 @@ alpm_list_t *alpm_find_foreign_pkgs() {
   return(ret);
 }
 
+#ifndef _HAVE_ALPM_FIND_SATISFIER
+/* this is a half assed version of the real thing */
+char *alpm_find_satisfier(alpm_list_t *pkgs, const char *depstring) {
+  char *pkgname;
+  alpm_list_t *target = NULL, *results;
+
+  (void)pkgs; /* NOOP for compatibility */
+
+  pkgname = strdup(depstring);
+  *(pkgname + strcspn(depstring, "<>=")) = '\0';
+
+  target = alpm_list_add(target, pkgname);
+
+  if ((results = alpm_db_search(db_local, target))) {
+    return(alpm_list_getdata(results));
+  }
+
+  return(NULL);
+}
+#endif
+
 alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm_list_fn_cmp fn, alpm_list_fn_free fnf) {
   alpm_list_t *lp, *newlist;
   int compare;
