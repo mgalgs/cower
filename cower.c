@@ -1654,38 +1654,6 @@ int main(int argc, char *argv[]) {
     return(1);
   }
 
-  /* we also read package arguments from stdin */
-  if(!isatty(fileno(stdin))) {
-    char line[BUFSIZ];
-    int i = 0;
-    while (i < BUFSIZ && (line[i] = fgetc(stdin)) != EOF) {
-      if (isspace((unsigned char)line[i])) {
-        /* avoid adding zero length arg, if multiple spaces separate args */
-        if (i > 0) {
-          line[i] = '\0';
-          targets = alpm_list_add(targets, strdup(line));
-          i = 0;
-        }
-      } else {
-        ++i;
-      }
-
-      if (i >= BUFSIZ) {
-        cwr_fprintf(stderr, LOG_ERROR, "buffer overflow detected in stdin\n");
-        goto finish;
-      }
-    }
-    /* end of stream -- check for data still in line buffer */
-    if (i > 0) {
-      line[i] = '\0';
-      targets = alpm_list_add(targets, strdup(line));
-    }
-    if (!freopen(ctermid(NULL), "r", stdin)) {
-      cwr_fprintf(stderr, LOG_ERROR, "failed to reopen stdin for reading\n");
-      goto finish;
-    }
-  }
-
   cwr_printf(LOG_DEBUG, "initializing curl\n");
   if (strcmp(optproto, HTTPS) == 0) {
     curl_global_init(CURL_GLOBAL_SSL);
