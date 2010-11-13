@@ -66,12 +66,13 @@
 #define AUR_QUERY_TYPE_SEARCH "search"
 #define AUR_QUERY_ERROR       "error"
 
+#define NAME                  "Name"
+#define VERSION               "Version"
+#define URL                   "URL"
+
 #define AUR_ID                "ID"
-#define AUR_NAME              "Name"
-#define AUR_VER               "Version"
 #define AUR_CAT               "CategoryID"
 #define AUR_DESC              "Description"
-#define AUR_URL               "URL"
 #define AUR_URLPATH           "URLPath"
 #define AUR_LICENSE           "License"
 #define AUR_VOTES             "NumVotes"
@@ -85,9 +86,6 @@
 #define PKGBUILD_REPLACES     "replaces=("
 
 #define PKG_REPO              "Repository"
-#define PKG_NAME              "Name"
-#define PKG_VERSION           "Version"
-#define PKG_URL               "URL"
 #define PKG_AURPAGE           "AUR Page"
 #define PKG_PROVIDES          "Provides"
 #define PKG_DEPENDS           "Depends On"
@@ -893,15 +891,15 @@ int json_string(void *ctx, const unsigned char *data, unsigned int size) {
 
   if (STREQ(parse_struct->curkey, AUR_ID)) {
     parse_struct->aurpkg->id = strndup(val, size);
-  } else if (STREQ(parse_struct->curkey, AUR_NAME)) {
+  } else if (STREQ(parse_struct->curkey, NAME)) {
     parse_struct->aurpkg->name = strndup(val, size);
-  } else if (STREQ(parse_struct->curkey, AUR_VER)) {
+  } else if (STREQ(parse_struct->curkey, VERSION)) {
     parse_struct->aurpkg->ver = strndup(val, size);
   } else if (STREQ(parse_struct->curkey, AUR_CAT)) {
     parse_struct->aurpkg->cat = atoi(val);
   } else if (STREQ(parse_struct->curkey, AUR_DESC)) {
     parse_struct->aurpkg->desc = strndup(val, size);
-  } else if (STREQ(parse_struct->curkey, AUR_URL)) {
+  } else if (STREQ(parse_struct->curkey, URL)) {
     parse_struct->aurpkg->url = strndup(val, size);
   } else if (STREQ(parse_struct->curkey, AUR_URLPATH)) {
     parse_struct->aurpkg->urlpath = strndup(val, size);
@@ -1148,10 +1146,10 @@ void print_pkg_info(struct aurpkg_t *pkg) {
   alpm_list_t *i;
 
   printf(PKG_REPO "     : %saur%s\n", colstr->repo, colstr->nc);
-  printf(PKG_NAME "           : %s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
-  printf(PKG_VERSION "        : %s%s%s\n",
+  printf(NAME "           : %s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
+  printf(VERSION "        : %s%s%s\n",
       pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
-  printf(PKG_URL "            : %s%s%s\n", colstr->url, pkg->url, colstr->nc);
+  printf(URL "            : %s%s%s\n", colstr->url, pkg->url, colstr->nc);
   printf(PKG_AURPAGE "       : %s" AUR_PKG_URL_FORMAT "%s%s\n",
       colstr->url, optproto, pkg->id, colstr->nc);
 
