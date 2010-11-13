@@ -1741,6 +1741,7 @@ int main(int argc, char *argv[]) {
   sem_destroy(&sem_download);
 
   if (task.printfn) {
+    ret = (results == NULL);
     print_results(results, task.printfn);
     alpm_list_free_inner(results, aurpkg_free);
     alpm_list_free(results);
