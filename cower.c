@@ -1561,14 +1561,14 @@ finish:
 
 void usage() {
   fprintf(stderr, "cower %s\n"
-      "Usage: cower <operations> [options] PACKAGE...\n\n", COWER_VERSION);
+      "Usage: cower <operations> [options] target...\n\n", COWER_VERSION);
   fprintf(stderr,
       " Operations:\n"
-      "  -d, --download          download PACKAGE(s) -- pass twice to "
+      "  -d, --download          download target(s) -- pass twice to "
                                    "download AUR dependencies\n"
-      "  -i, --info              show info for PACKAGE(s) -- pass twice for "
+      "  -i, --info              show info for target(s) -- pass twice for "
                                    "more detail\n"
-      "  -s, --search            search for PACKAGE(s)\n"
+      "  -s, --search            search for target(s)\n"
       "  -u, --update            check for updates against AUR -- can be combined "
                                    "with the -d flag\n\n");
   fprintf(stderr, " General options:\n"
