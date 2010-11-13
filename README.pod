@@ -9,7 +9,7 @@ Usage: I<cower> [options] E<lt>operationE<gt> [ targets... ]
 =head1 DESCRIPTION
 
 cower is a simple tool to get information and download packages from the Arch
-User Repository (AUR). Invoking cower consists of supplyying an operation, any
+User Repository (AUR). Invoking cower consists of supplying an operation, any
 applicable options, and usually one or more targets. Targets can be supplied
 either on the command line or read from standard input.
 
