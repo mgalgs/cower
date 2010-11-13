@@ -199,11 +199,11 @@ struct response_t {
 
 /* function declarations */
 static alpm_list_t *alpm_find_foreign_pkgs(void);
-static pmdb_t *alpm_provides_pkg(const char*);
 static int alpm_init(void);
 static alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t*, alpm_list_t*, alpm_list_fn_cmp, alpm_list_fn_free);
 static alpm_list_t *alpm_list_remove_item(alpm_list_t*, alpm_list_fn_free);
 static int alpm_pkg_is_foreign(pmpkg_t*);
+static pmdb_t *alpm_provides_pkg(const char*);
 static int archive_extract_file(const struct response_t*);
 static int aurpkg_cmp(const void*, const void*);
 static void aurpkg_free(void*);
@@ -223,8 +223,8 @@ static int json_end_map(void*);
 static int json_map_key(void*, const unsigned char*, unsigned int);
 static int json_start_map(void*);
 static int json_string(void*, const unsigned char*, unsigned int);
-static int parse_options(int, char*[]);
 static alpm_list_t *parse_bash_array(alpm_list_t*, char**, int);
+static int parse_options(int, char*[]);
 static void pkgbuild_get_extinfo(char**, alpm_list_t**[]);
 static void print_extinfo_list(alpm_list_t*, const char*);
 static void print_pkg_info(struct aurpkg_t*);
@@ -497,13 +497,6 @@ pmdb_t *alpm_provides_pkg(const char *pkgname) {
   return(NULL);
 }
 
-int aurpkg_cmp(const void *p1, const void *p2) {
-  struct aurpkg_t *pkg1 = (struct aurpkg_t*)p1;
-  struct aurpkg_t *pkg2 = (struct aurpkg_t*)p2;
-
-  return(strcmp((const char*)pkg1->name, (const char*)pkg2->name));
-}
-
 int archive_extract_file(const struct response_t *file) {
   struct archive *archive;
   struct archive_entry *entry;
@@ -536,6 +529,13 @@ int archive_extract_file(const struct response_t *file) {
   archive_read_finish(archive);
 
   return(ret);
+}
+
+int aurpkg_cmp(const void *p1, const void *p2) {
+  struct aurpkg_t *pkg1 = (struct aurpkg_t*)p1;
+  struct aurpkg_t *pkg2 = (struct aurpkg_t*)p2;
+
+  return(strcmp((const char*)pkg1->name, (const char*)pkg2->name));
 }
 
 void aurpkg_free(void *pkg) {
@@ -762,6 +762,70 @@ char *get_file_as_buffer(const char *path) {
   return(buf);
 }
 
+void indentprint(const char *str, int indent) {
+  wchar_t *wcstr;
+  const wchar_t *p;
+  int len, cidx, cols;
+
+  if(!str) {
+    return;
+  }
+
+  cols = getcols();
+
+  /* if we're not a tty, print without indenting */
+  if(cols == 0) {
+    printf("%s", str);
+    return;
+  }
+
+  len = strlen(str) + 1;
+  wcstr = calloc(len, sizeof *wcstr);
+  len = mbstowcs(wcstr, str, len);
+  p = wcstr;
+  cidx = indent;
+
+  if(!p || !len) {
+    return;
+  }
+
+  while(*p) {
+    if(*p == L' ') {
+      const wchar_t *q, *next;
+      p++;
+      if (p == NULL || *p == L' ') {
+        continue;
+      }
+      next = wcschr(p, L' ');
+      if (next == NULL) {
+        next = p + wcslen(p);
+      }
+
+      /* len captures # cols */
+      len = 0;
+      q = p;
+
+      while (q < next) {
+        len += wcwidth(*q++);
+      }
+
+      if(len > (cols - cidx - 1)) {
+        /* wrap to a newline and reindent */
+        printf("\n%-*s", indent, "");
+        cidx = indent;
+      } else {
+        printf(" ");
+        cidx++;
+      }
+      continue;
+    }
+    printf("%lc", (wint_t)*p);
+    cidx += wcwidth(*p);
+    p++;
+  }
+  free(wcstr);
+}
+
 int json_end_map(void *ctx) {
   struct yajl_parser_t *parse_struct = (struct yajl_parser_t*)ctx;
 
@@ -880,143 +944,6 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **array, int type) {
   return(deplist);
 }
 
-void print_extinfo_list(alpm_list_t *list, const char *fieldname) {
-  size_t cols, count = 0;
-  alpm_list_t *i;
-
-  if (!list) {
-    return;
-  }
-
-  /* this is bad -- we're relying on cols underflowing when getcols() returns 0
-   * in the case of stdout not being attached to a terminal.  Unfortunately,
-   * its very convenient */
-  cols = getcols() - INFO_INDENT;
-
-  count += printf("%-*s: ", INFO_INDENT - 2, fieldname);
-  for (i = list; i; i = i->next) {
-    if (count + strlen(alpm_list_getdata(i)) >= cols) {
-      printf("%-*s", INFO_INDENT + 1, "\n");
-      count = 0;
-    }
-    count += printf("%s  ", (const char*)i->data);
-  }
-  putchar('\n');
-}
-
-void print_pkg_info(struct aurpkg_t *pkg) {
-  alpm_list_t *i;
-
-  printf(PKG_REPO "     : %saur%s\n", colstr->repo, colstr->nc);
-  printf(PKG_NAME "           : %s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
-  printf(PKG_VERSION "        : %s%s%s\n",
-      pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
-  printf(PKG_URL "            : %s%s%s\n", colstr->url, pkg->url, colstr->nc);
-  printf(PKG_AURPAGE "       : %s" AUR_PKG_URL_FORMAT "%s%s\n",
-      colstr->url, optproto, pkg->id, colstr->nc);
-
-  print_extinfo_list(pkg->depends, PKG_DEPENDS);
-  print_extinfo_list(pkg->makedepends, PKG_MAKEDEPENDS);
-  print_extinfo_list(pkg->provides, PKG_PROVIDES);
-  print_extinfo_list(pkg->conflicts, PKG_CONFLICTS);
-
-  if (pkg->optdepends) {
-    printf(PKG_OPTDEPENDS "  : %s\n", (const char*)alpm_list_getdata(pkg->optdepends));
-    for (i = pkg->optdepends->next; i; i = alpm_list_next(i)) {
-      printf("%-*s%s\n", INFO_INDENT, "", (const char*)alpm_list_getdata(i));
-    }
-  }
-
-  print_extinfo_list(pkg->replaces, PKG_REPLACES);
-
-  printf(PKG_CAT "       : %s\n"
-         PKG_LICENSE "        : %s\n"
-         PKG_NUMVOTES "          : %s\n"
-         PKG_OOD "    : %s%s%s\n"
-         PKG_DESC "    : ",
-         aur_cat[pkg->cat], pkg->lic, pkg->votes,
-         pkg->ood ? colstr->ood : colstr->utd,
-         pkg->ood ? "Yes" : "No", colstr->nc);
-
-  indentprint(pkg->desc, INFO_INDENT);
-  printf("\n\n");
-}
-
-void print_pkg_search(struct aurpkg_t *pkg) {
-  if (optquiet) {
-    printf("%s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
-  } else {
-    printf("%saur/%s%s %s%s%s\n    ", colstr->repo, colstr->pkg, pkg->name,
-        pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
-    indentprint(pkg->desc, SRCH_INDENT);
-    putchar('\n');
-  }
-}
-
-void indentprint(const char *str, int indent) {
-  wchar_t *wcstr;
-  const wchar_t *p;
-  int len, cidx, cols;
-
-  if(!str) {
-    return;
-  }
-
-  cols = getcols();
-
-  /* if we're not a tty, print without indenting */
-  if(cols == 0) {
-    printf("%s", str);
-    return;
-  }
-
-  len = strlen(str) + 1;
-  wcstr = calloc(len, sizeof *wcstr);
-  len = mbstowcs(wcstr, str, len);
-  p = wcstr;
-  cidx = indent;
-
-  if(!p || !len) {
-    return;
-  }
-
-  while(*p) {
-    if(*p == L' ') {
-      const wchar_t *q, *next;
-      p++;
-      if (p == NULL || *p == L' ') {
-        continue;
-      }
-      next = wcschr(p, L' ');
-      if (next == NULL) {
-        next = p + wcslen(p);
-      }
-
-      /* len captures # cols */
-      len = 0;
-      q = p;
-
-      while (q < next) {
-        len += wcwidth(*q++);
-      }
-
-      if(len > (cols - cidx - 1)) {
-        /* wrap to a newline and reindent */
-        printf("\n%-*s", indent, "");
-        cidx = indent;
-      } else {
-        printf(" ");
-        cidx++;
-      }
-      continue;
-    }
-    printf("%lc", (wint_t)*p);
-    cidx += wcwidth(*p);
-    p++;
-  }
-  free(wcstr);
-}
-
 int parse_options(int argc, char *argv[]) {
   int opt;
   int option_index = 0;
@@ -1131,18 +1058,6 @@ int parse_options(int argc, char *argv[]) {
   return(0);
 }
 
-void print_results(alpm_list_t *results, void (*fn)(struct aurpkg_t*)) {
-  alpm_list_t *i;
-
-  if (!results) {
-    cwr_fprintf(stderr, LOG_ERROR, "no results found\n");
-  }
-
-  for (i = results; i; i = alpm_list_next(i)) {
-    fn(alpm_list_getdata(i));
-  }
-}
-
 void pkgbuild_get_extinfo(char **pkgbuild, alpm_list_t **details[]) {
   char *lineptr, *arrayend;
 
@@ -1181,6 +1096,91 @@ void pkgbuild_get_extinfo(char **pkgbuild, alpm_list_t **details[]) {
     }
 
     lineptr = arrayend + 1;
+  }
+}
+
+void print_extinfo_list(alpm_list_t *list, const char *fieldname) {
+  size_t cols, count = 0;
+  alpm_list_t *i;
+
+  if (!list) {
+    return;
+  }
+
+  /* this is bad -- we're relying on cols underflowing when getcols() returns 0
+   * in the case of stdout not being attached to a terminal.  Unfortunately,
+   * its very convenient */
+  cols = getcols() - INFO_INDENT;
+
+  count += printf("%-*s: ", INFO_INDENT - 2, fieldname);
+  for (i = list; i; i = i->next) {
+    if (count + strlen(alpm_list_getdata(i)) >= cols) {
+      printf("%-*s", INFO_INDENT + 1, "\n");
+      count = 0;
+    }
+    count += printf("%s  ", (const char*)i->data);
+  }
+  putchar('\n');
+}
+
+void print_pkg_info(struct aurpkg_t *pkg) {
+  alpm_list_t *i;
+
+  printf(PKG_REPO "     : %saur%s\n", colstr->repo, colstr->nc);
+  printf(PKG_NAME "           : %s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
+  printf(PKG_VERSION "        : %s%s%s\n",
+      pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
+  printf(PKG_URL "            : %s%s%s\n", colstr->url, pkg->url, colstr->nc);
+  printf(PKG_AURPAGE "       : %s" AUR_PKG_URL_FORMAT "%s%s\n",
+      colstr->url, optproto, pkg->id, colstr->nc);
+
+  print_extinfo_list(pkg->depends, PKG_DEPENDS);
+  print_extinfo_list(pkg->makedepends, PKG_MAKEDEPENDS);
+  print_extinfo_list(pkg->provides, PKG_PROVIDES);
+  print_extinfo_list(pkg->conflicts, PKG_CONFLICTS);
+
+  if (pkg->optdepends) {
+    printf(PKG_OPTDEPENDS "  : %s\n", (const char*)alpm_list_getdata(pkg->optdepends));
+    for (i = pkg->optdepends->next; i; i = alpm_list_next(i)) {
+      printf("%-*s%s\n", INFO_INDENT, "", (const char*)alpm_list_getdata(i));
+    }
+  }
+
+  print_extinfo_list(pkg->replaces, PKG_REPLACES);
+
+  printf(PKG_CAT "       : %s\n"
+         PKG_LICENSE "        : %s\n"
+         PKG_NUMVOTES "          : %s\n"
+         PKG_OOD "    : %s%s%s\n"
+         PKG_DESC "    : ",
+         aur_cat[pkg->cat], pkg->lic, pkg->votes,
+         pkg->ood ? colstr->ood : colstr->utd,
+         pkg->ood ? "Yes" : "No", colstr->nc);
+
+  indentprint(pkg->desc, INFO_INDENT);
+  printf("\n\n");
+}
+
+void print_pkg_search(struct aurpkg_t *pkg) {
+  if (optquiet) {
+    printf("%s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
+  } else {
+    printf("%saur/%s%s %s%s%s\n    ", colstr->repo, colstr->pkg, pkg->name,
+        pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
+    indentprint(pkg->desc, SRCH_INDENT);
+    putchar('\n');
+  }
+}
+
+void print_results(alpm_list_t *results, void (*fn)(struct aurpkg_t*)) {
+  alpm_list_t *i;
+
+  if (!results) {
+    cwr_fprintf(stderr, LOG_ERROR, "no results found\n");
+  }
+
+  for (i = results; i; i = alpm_list_next(i)) {
+    fn(alpm_list_getdata(i));
   }
 }
 
