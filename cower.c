@@ -1534,6 +1534,11 @@ void *thread_update(void *arg) {
     }
 
     if (alpm_pkg_vercmp(aurpkg->ver, alpm_pkg_get_version(pmpkg)) > 0) {
+      if (opmask & OP_DOWNLOAD) {
+        thread_download((void*)aurpkg->name);
+        goto finish;
+      }
+
       if (optquiet) {
         printf("%s%s%s\n", colstr->pkg, (const char*)arg, colstr->nc);
       } else {
@@ -1542,12 +1547,7 @@ void *thread_update(void *arg) {
             colstr->ood, alpm_pkg_get_version(pmpkg), colstr->nc,
             colstr->utd, aurpkg->ver, colstr->nc);
       }
-
-      if (opmask & OP_DOWNLOAD) {
-        thread_download((void*)aurpkg->name);
-      }
     }
-
   }
 
 finish:
