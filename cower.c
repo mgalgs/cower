@@ -1208,6 +1208,7 @@ int resolve_dependencies(const char *pkgname) {
   char *filename, *pkgbuild;
   alpm_list_t *i, *deplist = NULL;
   static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+  void *retval;
 
   cwr_asprintf(&filename, "%s/PKGBUILD", pkgname);
 
@@ -1247,7 +1248,9 @@ int resolve_dependencies(const char *pkgname) {
     if (alpm_find_satisfier(alpm_db_get_pkgcache(db_local), depend)) {
       cwr_printf(LOG_DEBUG, "%s is already satisified\n", depend);
     } else {
-      thread_download(sanitized);
+      retval = thread_download(sanitized);
+      alpm_list_free_inner(retval, aurpkg_free);
+      alpm_list_free(retval);
     }
   }
 
@@ -1353,8 +1356,6 @@ void *thread_download(void *arg) {
     cwr_fprintf(stderr, LOG_ERROR, "no results found for %s\n", (const char*)arg);
     return(NULL);
   }
-  alpm_list_free_inner(queryresult, aurpkg_free);
-  alpm_list_free(queryresult);
 
   if (file_exists(arg) == 0 && !optforce) {
     cwr_fprintf(stderr, LOG_ERROR, "`%s/%s' already exists. Use -f to overwrite.\n",
@@ -1421,7 +1422,7 @@ finish:
   FREE(url);
   FREE(response.data);
 
-  return(NULL);
+  return(queryresult);
 }
 
 void *thread_query(void *arg) {
@@ -1517,14 +1518,14 @@ finish:
 void *thread_update(void *arg) {
   pmpkg_t *pmpkg;
   struct aurpkg_t *aurpkg;
-  void *retval;
+  void *dlretval, *qretval;
 
   if (alpm_list_find_str(ignore, arg)) {
     return(NULL);
   }
 
-  retval = thread_query(arg);
-  aurpkg = alpm_list_getdata(retval);
+  qretval = thread_query(arg);
+  aurpkg = alpm_list_getdata(qretval);
   if (aurpkg) {
     pmpkg = alpm_db_get_pkg(db_local, arg);
     if (!pmpkg) {
@@ -1535,25 +1536,28 @@ void *thread_update(void *arg) {
 
     if (alpm_pkg_vercmp(aurpkg->ver, alpm_pkg_get_version(pmpkg)) > 0) {
       if (opmask & OP_DOWNLOAD) {
-        thread_download((void*)aurpkg->name);
-        goto finish;
+        /* we don't care about this return val, but it needs to be dealt with */
+        dlretval = thread_download((void*)aurpkg->name);
+        alpm_list_free_inner(dlretval, aurpkg_free);
+        alpm_list_free(dlretval);
+      } else {
+        if (optquiet) {
+          printf("%s%s%s\n", colstr->pkg, (const char*)arg, colstr->nc);
+        } else {
+          cwr_printf(LOG_INFO, "%s%s %s%s%s -> %s%s%s\n",
+              colstr->pkg, (const char*)arg,
+              colstr->ood, alpm_pkg_get_version(pmpkg), colstr->nc,
+              colstr->utd, aurpkg->ver, colstr->nc);
+        }
       }
 
-      if (optquiet) {
-        printf("%s%s%s\n", colstr->pkg, (const char*)arg, colstr->nc);
-      } else {
-        cwr_printf(LOG_INFO, "%s%s %s%s%s -> %s%s%s\n",
-            colstr->pkg, (const char*)arg,
-            colstr->ood, alpm_pkg_get_version(pmpkg), colstr->nc,
-            colstr->utd, aurpkg->ver, colstr->nc);
-      }
+      return(qretval);
     }
   }
 
 finish:
-  alpm_list_free_inner(retval, aurpkg_free);
-  alpm_list_free(retval);
-
+  alpm_list_free_inner(qretval, aurpkg_free);
+  alpm_list_free(qretval);
   return(NULL);
 }
 
@@ -1728,11 +1732,12 @@ int main(int argc, char *argv[]) {
   sem_destroy(&sem_download);
 
   if (task.printfn) {
-    ret = (results == NULL);
     print_results(results, task.printfn);
-    alpm_list_free_inner(results, aurpkg_free);
-    alpm_list_free(results);
   }
+
+  ret = (results == NULL);
+  alpm_list_free_inner(results, aurpkg_free);
+  alpm_list_free(results);
 
 finish:
   FREE(download_dir);
