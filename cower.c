@@ -103,6 +103,8 @@
 #define SRCH_INDENT           4
 
 #define NC                    "\033[0m"
+#define BOLD                  "\033[1m"
+
 #define BLACK                 "\033[0;30m"
 #define RED                   "\033[0;31m"
 #define GREEN                 "\033[0;32m"
@@ -1184,7 +1186,8 @@ void print_pkg_search(struct aurpkg_t *pkg) {
   if (optquiet) {
     printf("%s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
   } else {
-    printf("%saur/%s%s %s%s%s\n    ", colstr->repo, colstr->pkg, pkg->name,
+    printf("%saur/%s%s%s %s%s%s\n    ", colstr->repo, colstr->nc,
+        colstr->pkg, pkg->name,
         pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
     indentprint(pkg->desc, SRCH_INDENT);
     putchar('\n');
@@ -1273,7 +1276,7 @@ int strings_init() {
     colstr->error = BOLDRED "::" NC;
     colstr->warn = BOLDYELLOW "::" NC;
     colstr->info = BOLDBLUE "::" NC;
-    colstr->pkg = BOLDWHITE;
+    colstr->pkg = BOLD;
     colstr->repo = BOLDMAGENTA;
     colstr->url = BOLDCYAN;
     colstr->ood = BOLDRED;
