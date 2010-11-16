@@ -1128,14 +1128,11 @@ void print_extinfo_list(alpm_list_t *list, const char *fieldname) {
     return;
   }
 
-  /* this is bad -- we're relying on cols underflowing when getcols() returns 0
-   * in the case of stdout not being attached to a terminal.  Unfortunately,
-   * its very convenient */
-  cols = getcols() - INFO_INDENT;
+  cols = getcols();
 
   count += printf("%-*s: ", INFO_INDENT - 2, fieldname);
   for (i = list; i; i = i->next) {
-    if (count + strlen(alpm_list_getdata(i)) >= cols) {
+    if (cols > 0 && count + strlen(alpm_list_getdata(i)) >= cols) {
       printf("%-*s", INFO_INDENT + 1, "\n");
       count = 0;
     }
