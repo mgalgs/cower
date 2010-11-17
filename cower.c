@@ -242,20 +242,20 @@ static size_t yajl_parse_stream(void*, size_t, size_t, void*);
 
 /* options */
 char *download_dir = NULL;
-int optcolor = 0;
-int optforce = 0;
-int optquiet = 0;
 char *optproto = HTTP;
-int getdepends = 0;
+int optcolor = 0;
 int optextinfo = 0;
+int optforce = 0;
+int optgetdeps = 0;
+int optquiet = 0;
 
 /* variables */
+struct strings_t *colstr;
+pmdb_t *db_local;
+alpm_list_t *ignore = NULL, *targets = NULL;
 loglevel_t logmask = LOG_ERROR|LOG_WARN|LOG_INFO;
 operation_t opmask = 0;
-pmdb_t *db_local;
 sem_t sem_download;
-alpm_list_t *ignore = NULL, *targets = NULL;
-struct strings_t *colstr;
 
 static yajl_callbacks callbacks = {
   NULL,
@@ -388,8 +388,8 @@ alpm_list_t *alpm_find_foreign_pkgs() {
 #ifndef _HAVE_ALPM_FIND_SATISFIER
 /* this is a half assed version of the real thing */
 char *alpm_find_satisfier(alpm_list_t *pkgs, const char *depstring) {
+  alpm_list_t *results, *target = NULL;
   char *pkgname;
-  alpm_list_t *target = NULL, *results;
 
   (void)pkgs; /* NOOP for compatibility */
 
@@ -410,11 +410,11 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
   alpm_list_t *lp, *newlist;
   int compare;
 
-  if (left == NULL) {
+  if (!left) {
     return(right);
   }
 
-  if (right == NULL) {
+  if (!right) {
     return(left);
   }
 
@@ -490,8 +490,8 @@ alpm_list_t *alpm_list_remove_item(alpm_list_t *target, alpm_list_fn_free fn) {
 }
 
 int alpm_pkg_is_foreign(pmpkg_t *pkg) {
-  const char *pkgname;
   alpm_list_t *i;
+  const char *pkgname;
 
   pkgname = alpm_pkg_get_name(pkg);
 
@@ -814,11 +814,11 @@ void indentprint(const char *str, int indent) {
     if(*p == L' ') {
       const wchar_t *q, *next;
       p++;
-      if (p == NULL || *p == L' ') {
+      if (!p || *p == L' ') {
         continue;
       }
       next = wcschr(p, L' ');
-      if (next == NULL) {
+      if (!next) {
         next = p + wcslen(p);
       }
 
@@ -1014,7 +1014,7 @@ int parse_options(int argc, char *argv[]) {
         if (!(opmask & OP_DOWNLOAD)) {
           opmask |= OP_DOWNLOAD;
         } else {
-          getdepends = 1;
+          optgetdeps = 1;
         }
         break;
 
@@ -1121,8 +1121,8 @@ void pkgbuild_get_extinfo(char **pkgbuild, alpm_list_t **details[]) {
 }
 
 void print_extinfo_list(alpm_list_t *list, const char *fieldname) {
-  size_t cols, count = 0;
   alpm_list_t *i;
+  size_t cols, count = 0;
 
   if (!list) {
     return;
@@ -1204,9 +1204,9 @@ void print_results(alpm_list_t *results, void (*fn)(struct aurpkg_t*)) {
 }
 
 int resolve_dependencies(const char *pkgname) {
-  int ret = 0;
-  char *filename, *pkgbuild;
   alpm_list_t *i, *deplist = NULL;
+  char *filename, *pkgbuild;
+  int ret = 0;
   static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
   void *retval;
 
@@ -1298,7 +1298,7 @@ int strings_init() {
 char *strtrim(char *str) {
   char *pch = str;
 
-  if(str == NULL || *str == '\0') {
+  if (!str || *str == '\0') {
     /* string is empty, so we're done. */
     return(str);
   }
@@ -1326,14 +1326,14 @@ char *strtrim(char *str) {
 
 void *thread_download(void *arg) {
   alpm_list_t *queryresult = NULL;
-  char *url, *escaped;
+  pmdb_t *db;
   CURL *curl;
   CURLcode curlstat;
-  long httpcode;
+  char *url, *escaped;
   const void *self;
-  pmdb_t *db;
-  struct response_t response;
   int ret;
+  long httpcode;
+  struct response_t response;
   static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
   self = (const void*)pthread_self();
@@ -1352,7 +1352,7 @@ void *thread_download(void *arg) {
   }
 
   queryresult = thread_query(arg);
-  if (queryresult == NULL) {
+  if (!queryresult) {
     cwr_fprintf(stderr, LOG_ERROR, "no results found for %s\n", (const char*)arg);
     return(NULL);
   }
@@ -1413,7 +1413,7 @@ void *thread_download(void *arg) {
     goto finish;
   }
 
-  if (getdepends) {
+  if (optgetdeps) {
     resolve_dependencies(arg);
   }
 
@@ -1426,13 +1426,13 @@ finish:
 }
 
 void *thread_query(void *arg) {
-  char *escaped, *url;
+  alpm_list_t *pkglist = NULL;
   CURL *curl;
   CURLcode curlstat;
-  long httpcode;
   yajl_handle yajl_hand = NULL;
+  char *escaped, *url;
+  long httpcode;
   struct yajl_parser_t *parse_struct;
-  alpm_list_t *pkglist = NULL;
 
   if ((opmask & OP_SEARCH) && strlen(arg) < 2) {
     cwr_fprintf(stderr, LOG_ERROR, "search string '%s' too short\n", (const char*)arg);
@@ -1628,10 +1628,10 @@ size_t yajl_parse_stream(void *ptr, size_t size, size_t nmemb, void *stream) {
 }
 
 int main(int argc, char *argv[]) {
+  alpm_list_t *i, *results = NULL, *thread_return = NULL;
   int ret, n, req_count;
   pthread_attr_t attr;
   pthread_t *threads;
-  alpm_list_t *i, *results = NULL, *thread_return = NULL;
   struct task_t {
     void *(*threadfn)(void*);
     void (*printfn)(struct aurpkg_t*);
