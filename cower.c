@@ -127,7 +127,8 @@ typedef enum __loglevel_t {
   LOG_INFO    = 1,
   LOG_ERROR   = (1 << 1),
   LOG_WARN    = (1 << 2),
-  LOG_DEBUG   = (1 << 3)
+  LOG_DEBUG   = (1 << 3),
+  LOG_VERBOSE = (1 << 4),
 } loglevel_t;
 
 typedef enum __operation_t {
@@ -645,6 +646,7 @@ int cwr_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list arg
   }
 
   switch(level) {
+    case LOG_VERBOSE:
     case LOG_INFO:
       fprintf(stream, "%s ", colstr->info);
       break;
@@ -985,10 +987,11 @@ int parse_options(int argc, char *argv[]) {
     {"quiet",     no_argument,        0, 'q'},
     {"ssl",       no_argument,        0, OP_SSL},
     {"target",    required_argument,  0, 't'},
+    {"verbose",   no_argument,        0, 'v'},
     {0, 0, 0, 0}
   };
 
-  while ((opt = getopt_long(argc, argv, "cdfhiqst:u", opts, &option_index))) {
+  while ((opt = getopt_long(argc, argv, "cdfhiqst:uv", opts, &option_index))) {
     char *token;
 
     if(opt < 0) {
@@ -1045,6 +1048,9 @@ int parse_options(int argc, char *argv[]) {
         break;
       case 't':
         download_dir = strndup(optarg, PATH_MAX);
+        break;
+      case 'v':
+        logmask |= LOG_VERBOSE;
         break;
       case OP_DEBUG:
         logmask |= LOG_DEBUG;
@@ -1582,8 +1588,8 @@ void usage() {
   fprintf(stderr, " Output options:\n"
       "  -c, --color[=WHEN]      use colored output. WHEN is `never', `always', or `auto'\n"
       "      --debug             show debug output\n"
-      "  -q, --quiet             output less\n\n");
-
+      "  -q, --quiet             output less\n"
+      "  -v, --verbose           output more\n\n");
 }
 
 int verify_download_path() {

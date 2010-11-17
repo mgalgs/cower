@@ -77,6 +77,10 @@ Establish secure connections over https.
 Download taurballs to alternate directory, specified by I<DIR>. Either a relative or absolute
 path can be specified, but all components of the path must exist.
 
+=item B<-v, --verbose>
+
+Output more. This primarily affects the update operation.
+
 =back
 
 =head1 AUTHOR
