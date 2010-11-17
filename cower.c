@@ -1530,6 +1530,9 @@ void *thread_update(void *arg) {
     return(NULL);
   }
 
+  cwr_printf(LOG_VERBOSE, "Checking %s%s%s for updates...\n",
+      colstr->pkg, (const char*)arg, colstr->nc);
+
   qretval = thread_query(arg);
   aurpkg = alpm_list_getdata(qretval);
   if (aurpkg) {
