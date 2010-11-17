@@ -1574,14 +1574,16 @@ void usage() {
       "  -u, --update            check for updates against AUR -- can be combined "
                                    "with the -d flag\n\n");
   fprintf(stderr, " General options:\n"
-      "  -c, --color[=WHEN]      use colored output. WHEN is `never', `always', or `auto'\n"
-      "      --debug             show debug output\n"
       "  -f, --force             overwrite existing files when downloading\n"
       "  -h, --help              display this help and exit\n"
       "      --ignore <pkg>      ignore a package upgrade (can be used more than once)\n"
-      "  -q, --quiet             output less\n"
       "      --ssl               create connections over https\n"
       "  -t, --target <dir>      specify an alternate download directory\n\n");
+  fprintf(stderr, " Output options:\n"
+      "  -c, --color[=WHEN]      use colored output. WHEN is `never', `always', or `auto'\n"
+      "      --debug             show debug output\n"
+      "  -q, --quiet             output less\n\n");
+
 }
 
 int verify_download_path() {
