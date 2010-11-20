@@ -216,7 +216,6 @@ static int cwr_asprintf(char**, const char*, ...) __attribute__((format(printf,2
 static int cwr_fprintf(FILE*, loglevel_t, const char*, ...) __attribute__((format(printf,3,4)));
 static int cwr_printf(loglevel_t, const char*, ...) __attribute__((format(printf,2,3)));
 static int cwr_vfprintf(FILE*, loglevel_t, const char*, va_list) __attribute__((format(printf,3,0)));
-static int file_exists(const char*);
 static char *get_file_as_buffer(const char*);
 static int getcols(void);
 static void indentprint(const char*, int);
@@ -732,11 +731,6 @@ size_t curl_write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
   }
 
   return(realsize);
-}
-
-int file_exists(const char *path) {
-  struct stat st;
-  return(stat(path, &st));
 }
 
 int getcols() {
@@ -1340,6 +1334,7 @@ void *thread_download(void *arg) {
   int ret;
   long httpcode;
   struct response_t response;
+  struct stat st;
   static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
   self = (const void*)pthread_self();
@@ -1363,7 +1358,7 @@ void *thread_download(void *arg) {
     return(NULL);
   }
 
-  if (file_exists(arg) == 0 && !optforce) {
+  if (stat(arg, &st) == 0 && !optforce) {
     cwr_fprintf(stderr, LOG_ERROR, "`%s/%s' already exists. Use -f to overwrite.\n",
         download_dir, (const char*)arg);
     return(NULL);
