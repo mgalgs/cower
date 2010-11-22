@@ -962,8 +962,7 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **array, int type) {
 }
 
 int parse_options(int argc, char *argv[]) {
-  int opt;
-  int option_index = 0;
+  int opt, option_index = 0, ret = 0;
 
   static struct option opts[] = {
     /* Operations */
@@ -1069,6 +1068,25 @@ int parse_options(int argc, char *argv[]) {
     }
   }
 
+  /* check for invalid operation combos */
+  if (opmask & OP_INFO) {
+    if (opmask != (opmask & OP_INFO)) {
+      ret = 2;
+    }
+  } else if (opmask & OP_SEARCH) {
+    if (opmask != (opmask & OP_SEARCH)) {
+      ret = 2;
+    }
+  } else if (opmask & (OP_UPDATE|OP_DOWNLOAD)) {
+    if (opmask != (opmask & (OP_UPDATE|OP_DOWNLOAD))) {
+      ret = 2;
+    }
+  }
+  if (ret == 2) {
+    fprintf(stderr, "error: invalid operation\n");
+    return(ret);
+  }
+
   while (optind < argc) {
     cwr_fprintf(stderr, LOG_DEBUG, "adding %s to targets\n", argv[optind]);
     if (!alpm_list_find_str(targets, argv[optind])) {
@@ -1077,7 +1095,7 @@ int parse_options(int argc, char *argv[]) {
     optind++;
   }
 
-  return(0);
+  return(ret);
 }
 
 void pkgbuild_get_extinfo(char **pkgbuild, alpm_list_t **details[]) {
@@ -1679,11 +1697,9 @@ int main(int argc, char *argv[]) {
     goto finish;
   }
 
-  if (opmask & OP_UPDATE) {
-    opmask &= ~OP_SEARCH; /* hackity hack */
-    if (!targets) { /* allow specifying updates */
-      targets = alpm_find_foreign_pkgs();
-    }
+  /* get all foreign pkgs if user didn't request specific updates */
+  if ((opmask & OP_UPDATE) && !targets) {
+    targets = alpm_find_foreign_pkgs();
   }
 
   req_count = alpm_list_count(targets);
