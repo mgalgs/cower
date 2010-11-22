@@ -1036,6 +1036,7 @@ int parse_options(int argc, char *argv[]) {
         optforce = 1;
         break;
       case 'h':
+        usage();
         return(1);
       case 'q':
         optquiet = 1;
@@ -1648,8 +1649,7 @@ int main(int argc, char *argv[]) {
 
   ret = parse_options(argc, argv);
   if (ret != 0) {
-    usage();
-    return(1);
+    return(ret);
   }
 
   ret = strings_init();
