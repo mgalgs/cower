@@ -1757,7 +1757,12 @@ int main(int argc, char *argv[]) {
     print_results(results, task.printfn);
   }
 
-  ret = (results == NULL);
+  /* we need to exit with a non-zero value when:
+   * a) search/info/download returns nothing
+   * b) update (without download) returns something
+   * this is opposing behavior, so just XOR the result on a pure update
+   */
+  ret = !!((results == NULL) ^ (opmask == (opmask & OP_UPDATE)));
   alpm_list_free_inner(results, aurpkg_free);
   alpm_list_free(results);
 
