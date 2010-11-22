@@ -231,13 +231,13 @@ static void print_pkg_info(struct aurpkg_t*);
 static void print_pkg_search(struct aurpkg_t*);
 static void print_results(alpm_list_t*, void (*)(struct aurpkg_t*));
 static int resolve_dependencies(const char*);
+static int set_download_path(void);
 static int strings_init(void);
 static char *strtrim(char*);
 static void *thread_download(void*);
 static void *thread_query(void*);
 static void *thread_update(void*);
 static void usage(void);
-static int verify_download_path(void);
 static size_t yajl_parse_stream(void*, size_t, size_t, void*);
 
 /* options */
@@ -1281,6 +1281,41 @@ finish:
   return(ret);
 }
 
+int set_download_path() {
+  char *real_download_dir;
+
+  if (!(opmask & OP_DOWNLOAD)) {
+    return(0);
+  }
+
+  if (!download_dir) {
+    download_dir = getcwd(NULL, PATH_MAX);
+  }
+
+  real_download_dir = realpath(download_dir, NULL);
+  if (!real_download_dir) {
+    cwr_fprintf(stderr, LOG_ERROR, "%s: %s\n", download_dir, strerror(errno));
+    return(1);
+  }
+
+  if (access(real_download_dir, W_OK) != 0) {
+    cwr_fprintf(stderr, LOG_ERROR, "Cannot write to %s: %s\n",
+        real_download_dir, strerror(errno));
+    return(1);
+  }
+
+  if (chdir(real_download_dir) != 0) {
+    cwr_fprintf(stderr, LOG_ERROR, "%s: %s\n", real_download_dir, strerror(errno));
+    return(1);
+  }
+  cwr_printf(LOG_DEBUG, "working directory set to: %s\n", real_download_dir);
+
+  FREE(download_dir);
+  download_dir = real_download_dir;
+
+  return(0);
+}
+
 int strings_init() {
   colstr = malloc(sizeof *colstr);
   if (!colstr) {
@@ -1609,41 +1644,6 @@ void usage() {
       "  -v, --verbose           output more\n\n");
 }
 
-int verify_download_path() {
-  char *real_download_dir;
-
-  if (!(opmask & OP_DOWNLOAD)) {
-    return(0);
-  }
-
-  if (!download_dir) {
-    download_dir = getcwd(NULL, PATH_MAX);
-  }
-
-  real_download_dir = realpath(download_dir, NULL);
-  if (!real_download_dir) {
-    cwr_fprintf(stderr, LOG_ERROR, "%s: %s\n", download_dir, strerror(errno));
-    return(1);
-  }
-
-  if (access(real_download_dir, W_OK) != 0) {
-    cwr_fprintf(stderr, LOG_ERROR, "Cannot write to %s: %s\n",
-        real_download_dir, strerror(errno));
-    return(1);
-  }
-
-  if (chdir(real_download_dir) != 0) {
-    cwr_fprintf(stderr, LOG_ERROR, "%s: %s\n", real_download_dir, strerror(errno));
-    return(1);
-  }
-  cwr_printf(LOG_DEBUG, "working directory set to: %s\n", real_download_dir);
-
-  FREE(download_dir);
-  download_dir = real_download_dir;
-
-  return(0);
-}
-
 size_t yajl_parse_stream(void *ptr, size_t size, size_t nmemb, void *stream) {
   size_t realsize = size * nmemb;
 
@@ -1693,7 +1693,7 @@ int main(int argc, char *argv[]) {
     goto finish;
   }
 
-  if (verify_download_path() != 0) {
+  if (set_download_path() != 0) {
     goto finish;
   }
 
