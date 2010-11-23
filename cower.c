@@ -284,7 +284,6 @@ int alpm_init() {
   char *ptr, *section = NULL;
 
   cwr_printf(LOG_DEBUG, "initializing alpm\n");
-
   ret = alpm_initialize();
   if (ret != 0) {
     return(ret);
@@ -1218,6 +1217,10 @@ void print_pkg_search(struct aurpkg_t *pkg) {
 void print_results(alpm_list_t *results, void (*fn)(struct aurpkg_t*)) {
   alpm_list_t *i;
 
+  if (!fn) {
+    return;
+  }
+
   if (!results) {
     cwr_fprintf(stderr, LOG_ERROR, "no results found\n");
   }
@@ -1668,51 +1671,50 @@ int main(int argc, char *argv[]) {
     .threadfn = thread_query
   };
 
-  ret = parse_options(argc, argv);
-  if (ret != 0) {
+  if ((ret = parse_options(argc, argv)) != 0) {
     return(ret);
   }
 
-  ret = strings_init();
-  if (ret != 0) {
-    return(1);
+  if (!opmask) {
+    fprintf(stderr, "error: no operation specified (use -h for help)\n");
+    return(ret);
   }
 
-  if (!opmask) {
-    cwr_fprintf(stderr, LOG_ERROR, "no operation specified (use -h for help)\n");
-    return(1);
+  if ((ret = strings_init()) != 0) {
+    return(ret);
+  }
+
+  if ((ret = set_download_path()) != 0) {
+    goto finish;
   }
 
   cwr_printf(LOG_DEBUG, "initializing curl\n");
-  if (strcmp(optproto, HTTPS) == 0) {
-    curl_global_init(CURL_GLOBAL_SSL);
+  if (STREQ(optproto, HTTPS)) {
+    ret = curl_global_init(CURL_GLOBAL_SSL);
   } else {
-    curl_global_init(CURL_GLOBAL_NOTHING);
+    ret = curl_global_init(CURL_GLOBAL_NOTHING);
+  }
+  if (ret != 0) {
+    cwr_fprintf(stderr, LOG_ERROR, "failed to initialize curl\n");
+    goto finish;
   }
 
-  ret = alpm_init();
-  if (ret != 0) {
+  if ((ret = alpm_init()) != 0) {
     cwr_fprintf(stderr, LOG_ERROR, "failed to initialize alpm library\n");
     goto finish;
   }
 
-  if (set_download_path() != 0) {
-    goto finish;
-  }
-
-  /* get all foreign pkgs if user didn't request specific updates */
+  /* allow specific updates to be provided instead of examining all foreign pkgs */
   if ((opmask & OP_UPDATE) && !targets) {
     targets = alpm_find_foreign_pkgs();
   }
 
-  req_count = alpm_list_count(targets);
-  if (req_count == 0) {
-    cwr_fprintf(stderr, LOG_ERROR, "no targets specified (use -h for help)\n");
+  if ((req_count = alpm_list_count(targets)) == 0) {
+    fprintf(stderr, "error: no targets specified (use -h for help)\n");
     goto finish;
   }
 
-  threads = calloc(req_count, sizeof *threads);
-  if (!threads) {
+  if (!(threads = calloc(req_count, sizeof *threads))) {
     cwr_fprintf(stderr, LOG_ERROR, "failed to allocate memory: %s\n",
         strerror(errno));
     goto finish;
@@ -1752,22 +1754,19 @@ int main(int argc, char *argv[]) {
     results = alpm_list_mmerge_dedupe(results, thread_return, aurpkg_cmp, aurpkg_free);
   }
 
-  free(threads);
-  pthread_attr_destroy(&attr);
-  sem_destroy(&sem_download);
-
-  if (task.printfn) {
-    print_results(results, task.printfn);
-  }
-
   /* we need to exit with a non-zero value when:
    * a) search/info/download returns nothing
    * b) update (without download) returns something
    * this is opposing behavior, so just XOR the result on a pure update
    */
   ret = !!((results == NULL) ^ (opmask == (opmask & OP_UPDATE)));
+  print_results(results, task.printfn);
   alpm_list_free_inner(results, aurpkg_free);
   alpm_list_free(results);
+
+  free(threads);
+  pthread_attr_destroy(&attr);
+  sem_destroy(&sem_download);
 
 finish:
   FREE(download_dir);
