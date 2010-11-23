@@ -430,11 +430,10 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
     }
   } while (compare == 0);
 
-  newlist->prev = NULL;
-  newlist->next = NULL;
+  newlist->prev = newlist->next = NULL;
   lp = newlist;
 
-  while ((left != NULL) && (right != NULL)) {
+  while (left && right) {
     compare = fn(left->data, right->data);
     if (compare < 0) {
       lp->next = left;
@@ -452,16 +451,15 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
     lp = lp->next;
     lp->next = NULL;
   }
-  if (left != NULL) {
+  if (left) {
     lp->next = left;
     left->prev = lp;
-  }
-  else if (right != NULL) {
+  } else if (right) {
     lp->next = right;
     right->prev = lp;
   }
 
-  while(lp && lp->next) {
+  while (lp && lp->next) {
     lp = lp->next;
   }
   newlist->prev = lp;
@@ -470,11 +468,11 @@ alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm
 }
 
 alpm_list_t *alpm_list_remove_item(alpm_list_t *target, alpm_list_fn_free fn) {
-  alpm_list_t *next, *listhead;
+  alpm_list_t *next, *list;
 
-  listhead = target->next;
-  if (listhead) {
-    listhead->prev = target->prev;
+  list = target->next;
+  if (list) {
+    list->prev = target->prev;
   }
 
   target->prev = NULL;
@@ -509,7 +507,7 @@ pmdb_t *alpm_provides_pkg(const char *pkgname) {
 
   for (i = alpm_option_get_syncdbs(); i; i = alpm_list_next(i)) {
     db = alpm_list_getdata(i);
-    if (alpm_db_get_pkg(db, pkgname) != NULL) {
+    if (alpm_db_get_pkg(db, pkgname)) {
       return(db);
     }
   }
@@ -783,14 +781,14 @@ void indentprint(const char *str, int indent) {
   const wchar_t *p;
   int len, cidx, cols;
 
-  if(!str) {
+  if (!str) {
     return;
   }
 
   cols = getcols();
 
   /* if we're not a tty, print without indenting */
-  if(cols == 0) {
+  if (cols == 0) {
     printf("%s", str);
     return;
   }
@@ -801,12 +799,12 @@ void indentprint(const char *str, int indent) {
   p = wcstr;
   cidx = indent;
 
-  if(!p || !len) {
+  if (!p || !len) {
     return;
   }
 
-  while(*p) {
-    if(*p == L' ') {
+  while (*p) {
+    if (*p == L' ') {
       const wchar_t *q, *next;
       p++;
       if (!p || *p == L' ') {
@@ -825,7 +823,7 @@ void indentprint(const char *str, int indent) {
         len += wcwidth(*q++);
       }
 
-      if(len > (cols - cidx - 1)) {
+      if (len > (cols - cidx - 1)) {
         /* wrap to a newline and reindent */
         printf("\n%-*s", indent, "");
         cidx = indent;
@@ -845,7 +843,7 @@ void indentprint(const char *str, int indent) {
 int json_end_map(void *ctx) {
   struct yajl_parser_t *parse_struct = (struct yajl_parser_t*)ctx;
 
-  if (!--(parse_struct->json_depth)) {
+  if (--parse_struct->json_depth == 0) {
     return(0);
   }
 
@@ -1223,6 +1221,7 @@ void print_results(alpm_list_t *results, void (*fn)(struct aurpkg_t*)) {
 
   if (!results) {
     cwr_fprintf(stderr, LOG_ERROR, "no results found\n");
+    return;
   }
 
   for (i = results; i; i = alpm_list_next(i)) {
