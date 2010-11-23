@@ -1038,7 +1038,7 @@ int parse_options(int argc, char *argv[]) {
         optquiet = 1;
         break;
       case 't':
-        download_dir = strndup(optarg, PATH_MAX);
+        download_dir = optarg;
         break;
       case 'v':
         logmask |= LOG_VERBOSE;
@@ -1287,36 +1287,34 @@ finish:
 }
 
 int set_download_path() {
-  char *real_download_dir;
+  char *resolved;
 
   if (!(opmask & OP_DOWNLOAD)) {
+    download_dir = NULL;
     return(0);
   }
 
-  if (!download_dir) {
-    download_dir = getcwd(NULL, PATH_MAX);
+  resolved = download_dir ? realpath(download_dir, NULL) : getcwd(NULL, 0);
+  if (!resolved) {
+    cwr_fprintf(stderr, LOG_ERROR, "%s: %s\n", download_dir, strerror(errno));
+    download_dir = NULL;
+    return(1);
   }
 
-  real_download_dir = realpath(download_dir, NULL);
-  if (!real_download_dir) {
+  download_dir = resolved;
+
+  if (access(download_dir, W_OK) != 0) {
+    cwr_fprintf(stderr, LOG_ERROR, "Cannot write to %s: %s\n",
+        download_dir, strerror(errno));
+    return(1);
+  }
+
+  if (chdir(download_dir) != 0) {
     cwr_fprintf(stderr, LOG_ERROR, "%s: %s\n", download_dir, strerror(errno));
     return(1);
   }
 
-  if (access(real_download_dir, W_OK) != 0) {
-    cwr_fprintf(stderr, LOG_ERROR, "Cannot write to %s: %s\n",
-        real_download_dir, strerror(errno));
-    return(1);
-  }
-
-  if (chdir(real_download_dir) != 0) {
-    cwr_fprintf(stderr, LOG_ERROR, "%s: %s\n", real_download_dir, strerror(errno));
-    return(1);
-  }
-  cwr_printf(LOG_DEBUG, "working directory set to: %s\n", real_download_dir);
-
-  FREE(download_dir);
-  download_dir = real_download_dir;
+  cwr_printf(LOG_DEBUG, "working directory set to: %s\n", download_dir);
 
   return(0);
 }
