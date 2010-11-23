@@ -847,14 +847,11 @@ int json_end_map(void *ctx) {
   struct yajl_parser_t *parse_struct = (struct yajl_parser_t*)ctx;
 
   if (!--(parse_struct->json_depth)) {
-    aurpkg_free(parse_struct->aurpkg);
     return(0);
   }
 
   parse_struct->pkglist = alpm_list_add_sorted(parse_struct->pkglist,
       parse_struct->aurpkg, aurpkg_cmp);
-
-  parse_struct->aurpkg = NULL;
 
   return(1);
 }
