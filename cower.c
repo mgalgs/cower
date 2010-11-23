@@ -1096,11 +1096,12 @@ int parse_options(int argc, char *argv[]) {
 }
 
 void pkgbuild_get_extinfo(char **pkgbuild, alpm_list_t **details[]) {
-  char *lineptr, *arrayend;
+  char *lineptr;
 
   for (lineptr = *pkgbuild; lineptr; lineptr = strchr(lineptr, '\n')) {
+    char *arrayend;
     alpm_list_t **deplist;
-    int type = 0;
+    int depth = 1, type = 0;
 
     strtrim(++lineptr);
     if (*lineptr == '#' || strlen(lineptr) == 0) {
@@ -1124,15 +1125,22 @@ void pkgbuild_get_extinfo(char **pkgbuild, alpm_list_t **details[]) {
       continue;
     }
 
-    arrayend = strchr(lineptr, ')');
-    *arrayend  = '\0';
-
     if (deplist) {
       char *arrayptr = strchr(lineptr, '(') + 1;
+      for (arrayend = arrayptr; depth; arrayend++) {
+        switch (*arrayend) {
+          case ')':
+            depth--;
+            break;
+          case '(':
+            depth++;
+            break;
+        }
+      }
+      *(arrayend - 1) = '\0';
       *deplist = parse_bash_array(*deplist, &arrayptr, type);
+      lineptr = arrayend;
     }
-
-    lineptr = arrayend + 1;
   }
 }
 
