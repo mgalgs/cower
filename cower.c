@@ -1155,7 +1155,7 @@ void print_extinfo_list(alpm_list_t *list, const char *fieldname) {
   for (i = list; i; i = i->next) {
     if (cols > 0 && count + strlen(alpm_list_getdata(i)) >= cols) {
       printf("%-*s", INFO_INDENT + 1, "\n");
-      count = 0;
+      count = INFO_INDENT;
     }
     count += printf("%s  ", (const char*)i->data);
   }
