@@ -201,8 +201,6 @@ struct response_t {
 /* function declarations */
 static alpm_list_t *alpm_find_foreign_pkgs(void);
 static int alpm_init(void);
-static alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t*, alpm_list_t*, alpm_list_fn_cmp, alpm_list_fn_free);
-static alpm_list_t *alpm_list_remove_item(alpm_list_t*, alpm_list_fn_free);
 static int alpm_pkg_is_foreign(pmpkg_t*);
 static pmdb_t *alpm_provides_pkg(const char*);
 static int archive_extract_file(const struct response_t*);
@@ -404,87 +402,6 @@ char *alpm_find_satisfier(alpm_list_t *pkgs, const char *depstring) {
   return(NULL);
 }
 #endif
-
-alpm_list_t *alpm_list_mmerge_dedupe(alpm_list_t *left, alpm_list_t *right, alpm_list_fn_cmp fn, alpm_list_fn_free fnf) {
-  alpm_list_t *lp, *newlist;
-  int compare;
-
-  if (!left) {
-    return(right);
-  }
-
-  if (!right) {
-    return(left);
-  }
-
-  do {
-    compare = fn(left->data, right->data);
-    if (compare > 0) {
-      newlist = right;
-      right = right->next;
-    } else if (compare < 0) {
-      newlist = left;
-      left = left->next;
-    } else {
-      left = alpm_list_remove_item(left, fnf);
-    }
-  } while (compare == 0);
-
-  newlist->prev = newlist->next = NULL;
-  lp = newlist;
-
-  while (left && right) {
-    compare = fn(left->data, right->data);
-    if (compare < 0) {
-      lp->next = left;
-      left->prev = lp;
-      left = left->next;
-    }
-    else if (compare > 0) {
-      lp->next = right;
-      right->prev = lp;
-      right = right->next;
-    } else {
-      left = alpm_list_remove_item(left, fnf);
-      continue;
-    }
-    lp = lp->next;
-    lp->next = NULL;
-  }
-  if (left) {
-    lp->next = left;
-    left->prev = lp;
-  } else if (right) {
-    lp->next = right;
-    right->prev = lp;
-  }
-
-  while (lp && lp->next) {
-    lp = lp->next;
-  }
-  newlist->prev = lp;
-
-  return(newlist);
-}
-
-alpm_list_t *alpm_list_remove_item(alpm_list_t *target, alpm_list_fn_free fn) {
-  alpm_list_t *next, *list;
-
-  list = target->next;
-  if (list) {
-    list->prev = target->prev;
-  }
-
-  target->prev = NULL;
-  next = target->next;
-
-  if (target->data) {
-    fn(target->data);
-  }
-  free(target);
-
-  return(next);
-}
 
 int alpm_pkg_is_foreign(pmpkg_t *pkg) {
   alpm_list_t *i;
@@ -1212,10 +1129,11 @@ void print_pkg_search(struct aurpkg_t *pkg) {
   }
 }
 
-void print_results(alpm_list_t *results, void (*fn)(struct aurpkg_t*)) {
+void print_results(alpm_list_t *results, void (*printfn)(struct aurpkg_t*)) {
   alpm_list_t *i;
+  struct aurpkg_t *prev = NULL;
 
-  if (!fn) {
+  if (!printfn) {
     return;
   }
 
@@ -1225,7 +1143,13 @@ void print_results(alpm_list_t *results, void (*fn)(struct aurpkg_t*)) {
   }
 
   for (i = results; i; i = alpm_list_next(i)) {
-    fn(alpm_list_getdata(i));
+    struct aurpkg_t *pkg = alpm_list_getdata(i);
+
+    /* don't print duplicates */
+    if (!prev || aurpkg_cmp(pkg, prev) != 0) {
+      printfn(pkg);
+    }
+    prev = pkg;
   }
 }
 
@@ -1750,7 +1674,7 @@ int main(int argc, char *argv[]) {
   for (n = 0; n < req_count; n++) {
     pthread_join(threads[n], (void**)&thread_return);
     cwr_printf(LOG_DEBUG, "thread[%p]: joined\n", (void*)threads[n]);
-    results = alpm_list_mmerge_dedupe(results, thread_return, aurpkg_cmp, aurpkg_free);
+    results = alpm_list_mmerge(results, thread_return, aurpkg_cmp);
   }
 
   /* we need to exit with a non-zero value when:
