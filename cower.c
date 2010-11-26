@@ -1344,6 +1344,8 @@ void *thread_download(void *arg) {
   if (stat(arg, &st) == 0 && !optforce) {
     cwr_fprintf(stderr, LOG_ERROR, "`%s/%s' already exists. Use -f to overwrite.\n",
         download_dir, (const char*)arg);
+    alpm_list_free_inner(queryresult, aurpkg_free);
+    alpm_list_free(queryresult);
     return(NULL);
   }
 
