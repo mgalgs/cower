@@ -40,9 +40,7 @@
 
 /* external libs */
 #include <alpm.h>
-#include <alpm_list.h>
 #include <archive.h>
-#include <archive_entry.h>
 #include <curl/curl.h>
 #include <yajl/yajl_parse.h>
 
