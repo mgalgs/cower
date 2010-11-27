@@ -1077,9 +1077,21 @@ void print_extinfo_list(alpm_list_t *list, const char *fieldname) {
 
 void print_pkg_info(struct aurpkg_t *pkg) {
   alpm_list_t *i;
+  pmpkg_t *ipkg;
 
   printf(PKG_REPO "     : %saur%s\n", colstr->repo, colstr->nc);
-  printf(NAME "           : %s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
+  printf(NAME "           : %s%s%s", colstr->pkg, pkg->name, colstr->nc);
+  if ((ipkg = alpm_db_get_pkg(db_local, pkg->name))) {
+    const char *instcolor;
+    if (alpm_pkg_vercmp(pkg->ver, alpm_pkg_get_version(ipkg)) > 0) {
+      instcolor = colstr->ood;
+    } else {
+      instcolor = colstr->utd;
+    }
+    printf(" [%sinstalled%s]", instcolor, colstr->nc);
+  }
+  putchar('\n');
+
   printf(VERSION "        : %s%s%s\n",
       pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
   printf(URL "            : %s%s%s\n", colstr->url, pkg->url, colstr->nc);
@@ -1117,8 +1129,19 @@ void print_pkg_search(struct aurpkg_t *pkg) {
   if (optquiet) {
     printf("%s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
   } else {
-    printf("%saur/%s%s%s %s%s%s\n    ", colstr->repo, colstr->nc, colstr->pkg, pkg->name,
+    pmpkg_t *ipkg;
+    printf("%saur/%s%s%s %s%s%s", colstr->repo, colstr->nc, colstr->pkg, pkg->name,
         pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
+    if ((ipkg = alpm_db_get_pkg(db_local, pkg->name))) {
+      const char *instcolor;
+      if (alpm_pkg_vercmp(pkg->ver, alpm_pkg_get_version(ipkg)) > 0) {
+        instcolor = colstr->ood;
+      } else {
+        instcolor = colstr->utd;
+      }
+      printf(" [%sinstalled%s]", instcolor, colstr->nc);
+    }
+    printf("\n    ");
     indentprint(pkg->desc, SRCH_INDENT);
     putchar('\n');
   }
