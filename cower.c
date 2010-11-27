@@ -1155,7 +1155,7 @@ void print_results(alpm_list_t *results, void (*printfn)(struct aurpkg_t*)) {
     return;
   }
 
-  if (!results) {
+  if (!results && (opmask & OP_INFO)) {
     cwr_fprintf(stderr, LOG_ERROR, "no results found\n");
     return;
   }
