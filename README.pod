@@ -25,6 +25,10 @@ recursively).
 
 Show info for I<targets>. Pass this option twice to fetch more detailed info.
 
+=item B<-m, --msearch>
+
+Search for packages maintained by target(s).
+
 =item B<-s, --search>
 
 Search for packages with the I<target>(s) as the search term(s).

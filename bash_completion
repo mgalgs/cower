@@ -11,7 +11,7 @@ _cower() {
   # nullglob avoids problems when no results are found
   [[ -o nullglob ]] || { shopt -s nullglob; ng=1; }
 
-  opts="-d --download -i --info -s --search -u --update -c --color \
+  opts="-d --download -i --info -m --msearch -s --search -u --update -c --color
         -f --force -q --quiet -t --target -v --debug --ssl -h --help"
 
   # complete options

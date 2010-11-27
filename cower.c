@@ -62,6 +62,7 @@
 #define AUR_QUERY_TYPE        "type"
 #define AUR_QUERY_TYPE_INFO   "info"
 #define AUR_QUERY_TYPE_SEARCH "search"
+#define AUR_QUERY_TYPE_MSRCH  "msearch"
 #define AUR_QUERY_ERROR       "error"
 
 #define NAME                  "Name"
@@ -133,7 +134,8 @@ typedef enum __operation_t {
   OP_SEARCH   = 1,
   OP_INFO     = (1 << 1),
   OP_DOWNLOAD = (1 << 2),
-  OP_UPDATE   = (1 << 3)
+  OP_UPDATE   = (1 << 3),
+  OP_MSEARCH  = (1 << 4)
 } operation_t;
 
 enum {
@@ -505,7 +507,7 @@ struct aurpkg_t *aurpkg_new() {
   pkg = calloc(1, sizeof *pkg);
 
   pkg->cat = pkg->ood = 0;
-  pkg->name = pkg->id = pkg->ver = pkg->desc = pkg->lic = pkg->url =  NULL;
+  pkg->name = pkg->id = pkg->ver = pkg->desc = pkg->lic = pkg->url = NULL;
 
   pkg->depends = pkg->makedepends = pkg->optdepends = NULL;
   pkg->provides = pkg->conflicts = pkg->replaces = NULL;
@@ -878,6 +880,7 @@ int parse_options(int argc, char *argv[]) {
     /* Operations */
     {"download",  no_argument,        0, 'd'},
     {"info",      no_argument,        0, 'i'},
+    {"msearch",   no_argument,        0, 'm'},
     {"search",    no_argument,        0, 's'},
     {"update",    no_argument,        0, 'u'},
 
@@ -894,7 +897,7 @@ int parse_options(int argc, char *argv[]) {
     {0, 0, 0, 0}
   };
 
-  while ((opt = getopt_long(argc, argv, "cdfhiqst:uv", opts, &option_index))) {
+  while ((opt = getopt_long(argc, argv, "cdfhimqst:uv", opts, &option_index))) {
     char *token;
 
     if (opt < 0) {
@@ -922,6 +925,9 @@ int parse_options(int argc, char *argv[]) {
         } else {
           optgetdeps = 1;
         }
+        break;
+      case 'm':
+        opmask |= OP_MSEARCH;
         break;
 
       /* options */
@@ -981,6 +987,7 @@ int parse_options(int argc, char *argv[]) {
   /* check for invalid operation combos */
   if (((opmask & OP_INFO) && (opmask & ~OP_INFO)) ||
      ((opmask & OP_SEARCH) && (opmask & ~OP_SEARCH)) ||
+     ((opmask & OP_MSEARCH) && (opmask & ~OP_MSEARCH)) ||
      ((opmask & (OP_UPDATE|OP_DOWNLOAD)) && (opmask & ~(OP_UPDATE|OP_DOWNLOAD)))) {
 
     fprintf(stderr, "error: invalid operation\n");
@@ -1110,8 +1117,7 @@ void print_pkg_search(struct aurpkg_t *pkg) {
   if (optquiet) {
     printf("%s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
   } else {
-    printf("%saur/%s%s%s %s%s%s\n    ", colstr->repo, colstr->nc,
-        colstr->pkg, pkg->name,
+    printf("%saur/%s%s%s %s%s%s\n    ", colstr->repo, colstr->nc, colstr->pkg, pkg->name,
         pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
     indentprint(pkg->desc, SRCH_INDENT);
     putchar('\n');
@@ -1420,6 +1426,8 @@ void *thread_query(void *arg) {
   escaped = curl_easy_escape(curl, arg, strlen(arg));
   if (opmask & OP_SEARCH) {
     cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_SEARCH, escaped);
+  } else if (opmask & OP_MSEARCH) {
+    cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_MSRCH, escaped);
   } else {
     cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_INFO, escaped);
   }
@@ -1531,6 +1539,7 @@ void usage() {
       " Operations:\n"
       "  -d, --download          download target(s) -- pass twice to "
                                    "download AUR dependencies\n"
+      "  -m, --msearch           show packages maintained by target(s)\n"
       "  -i, --info              show info for target(s) -- pass twice for "
                                    "more detail\n"
       "  -s, --search            search for target(s)\n"
@@ -1628,7 +1637,7 @@ int main(int argc, char *argv[]) {
     task.threadfn = thread_update;
   } else if (opmask & OP_INFO) {
     task.printfn = print_pkg_info;
-  } else if (opmask & OP_SEARCH) {
+  } else if (opmask & (OP_SEARCH|OP_MSEARCH)) {
     task.printfn = print_pkg_search;
   } else if (opmask & OP_DOWNLOAD) {
     task.threadfn = thread_download;
