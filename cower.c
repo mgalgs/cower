@@ -1650,7 +1650,7 @@ int main(int argc, char *argv[]) {
     if (ret != 0) {
       cwr_fprintf(stderr, LOG_ERROR, "failed to spawn new thread: %s\n",
           strerror(ret));
-      break;
+      return(ret); /* we don't want to recover from this */
     }
     cwr_printf(LOG_DEBUG, "thread[%p]: spawned with arg: %s\n",
         (void*)threads[n], (const char*)target);
