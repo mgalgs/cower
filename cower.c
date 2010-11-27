@@ -1154,16 +1154,16 @@ void print_results(alpm_list_t *results, void (*printfn)(struct aurpkg_t*)) {
 int resolve_dependencies(const char *pkgname) {
   alpm_list_t *i, *deplist = NULL;
   char *filename, *pkgbuild;
-  int ret = 0;
   static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
   void *retval;
 
   cwr_asprintf(&filename, "%s/PKGBUILD", pkgname);
 
   pkgbuild = get_file_as_buffer(filename);
+  free(filename);
+
   if (!pkgbuild) {
-    ret = 1;
-    goto finish;
+    return(1);
   }
 
   alpm_list_t **pkg_details[PKGDETAIL_MAX] = {
@@ -1172,6 +1172,7 @@ int resolve_dependencies(const char *pkgname) {
 
   cwr_printf(LOG_DEBUG, "Parsing %s for extended info\n", filename);
   pkgbuild_get_extinfo(&pkgbuild, pkg_details);
+  free(pkgbuild);
 
   for (i = deplist; i; i = alpm_list_next(i)) {
     const char *depend = alpm_list_getdata(i);
@@ -1188,26 +1189,20 @@ int resolve_dependencies(const char *pkgname) {
     }
     pthread_mutex_unlock(&lock);
 
-    /* if we freed sanitized, we didn't add a dep */
-    if (!sanitized) {
-      continue;
-    }
-
-    if (alpm_find_satisfier(alpm_db_get_pkgcache(db_local), depend)) {
-      cwr_printf(LOG_DEBUG, "%s is already satisified\n", depend);
-    } else {
-      retval = thread_download(sanitized);
-      alpm_list_free_inner(retval, aurpkg_free);
-      alpm_list_free(retval);
+    if (sanitized) {
+      if (alpm_find_satisfier(alpm_db_get_pkgcache(db_local), depend)) {
+        cwr_printf(LOG_DEBUG, "%s is already satisified\n", depend);
+      } else {
+        retval = thread_download(sanitized);
+        alpm_list_free_inner(retval, aurpkg_free);
+        alpm_list_free(retval);
+      }
     }
   }
 
-finish:
   FREELIST(deplist);
-  free(filename);
-  free(pkgbuild);
 
-  return(ret);
+  return(0);
 }
 
 int set_download_path() {
