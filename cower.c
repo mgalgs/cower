@@ -1088,7 +1088,7 @@ void print_pkg_info(struct aurpkg_t *pkg) {
     } else {
       instcolor = colstr->utd;
     }
-    printf(" [%sinstalled%s]", instcolor, colstr->nc);
+    printf(" %s[%sinstalled%s]%s", colstr->url, instcolor, colstr->url, colstr->nc);
   }
   putchar('\n');
 
@@ -1139,7 +1139,7 @@ void print_pkg_search(struct aurpkg_t *pkg) {
       } else {
         instcolor = colstr->utd;
       }
-      printf(" [%sinstalled%s]", instcolor, colstr->nc);
+      printf(" %s[%sinstalled%s]%s", colstr->url, instcolor, colstr->url, colstr->nc);
     }
     printf("\n    ");
     indentprint(pkg->desc, SRCH_INDENT);
