@@ -336,7 +336,7 @@ int alpm_init() {
         cwr_printf(LOG_DEBUG, "registering alpm db: %s\n", section);
       }
     } else {
-      char *key, *ptr, *token;
+      char *key, *token;
 
       key = ptr = line;
       strsep(&ptr, "=");
@@ -369,7 +369,7 @@ finish:
 alpm_list_t *alpm_find_foreign_pkgs() {
   alpm_list_t *i, *ret = NULL;
 
-  for(i = alpm_db_get_pkgcache(db_local); i; i = alpm_list_next(i)) {
+  for (i = alpm_db_get_pkgcache(db_local); i; i = alpm_list_next(i)) {
     pmpkg_t *pkg = alpm_list_getdata(i);
 
     if (alpm_pkg_is_foreign(pkg)) {
@@ -556,7 +556,7 @@ int cwr_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list arg
     return(ret);
   }
 
-  switch(level) {
+  switch (level) {
     case LOG_VERBOSE:
     case LOG_INFO:
       fprintf(stream, "%s ", colstr->info);
@@ -592,18 +592,18 @@ CURL *curl_create_easy_handle() {
 }
 
 char *curl_get_url_as_buffer(const char *url) {
+  long httpcode;
+  struct response_t response;
   CURL *curl;
   CURLcode curlstat;
-  long httpcode;
-
-  struct response_t response;
-  response.data = NULL;
-  response.size = 0;
 
   curl = curl_create_easy_handle();
   if (!curl) {
     return(NULL);
   }
+
+  response.data = NULL;
+  response.size = 0;
 
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_response);
@@ -648,11 +648,11 @@ size_t curl_write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
 int getcols() {
   struct winsize win;
 
-  if(!isatty(fileno(stdin))) {
+  if (!isatty(fileno(stdin))) {
     return(80);
   }
 
-  if(ioctl(1, TIOCGWINSZ, &win) == 0) {
+  if (ioctl(1, TIOCGWINSZ, &win) == 0) {
     return(win.ws_col);
   }
 
@@ -691,6 +691,7 @@ char *get_file_as_buffer(const char *path) {
   return(buf);
 }
 
+/* borrowed from pacman */
 void indentprint(const char *str, int indent) {
   wchar_t *wcstr;
   const wchar_t *p;
@@ -791,7 +792,7 @@ int json_string(void *ctx, const unsigned char *data, unsigned int size) {
   struct yajl_parser_t *parse_struct = (struct yajl_parser_t*)ctx;
   const char *val = (const char*)data;
 
-  if(STREQ(parse_struct->curkey, AUR_QUERY_TYPE) &&
+  if (STREQ(parse_struct->curkey, AUR_QUERY_TYPE) &&
       STR_STARTS_WITH(val, AUR_QUERY_ERROR)) {
     return(0);
   }
@@ -896,7 +897,7 @@ int parse_options(int argc, char *argv[]) {
   while ((opt = getopt_long(argc, argv, "cdfhiqst:uv", opts, &option_index))) {
     char *token;
 
-    if(opt < 0) {
+    if (opt < 0) {
       break;
     }
 
@@ -987,8 +988,8 @@ int parse_options(int argc, char *argv[]) {
   }
 
   while (optind < argc) {
-    cwr_fprintf(stderr, LOG_DEBUG, "adding %s to targets\n", argv[optind]);
     if (!alpm_list_find_str(targets, argv[optind])) {
+      cwr_fprintf(stderr, LOG_DEBUG, "adding target: %s\n", argv[optind]);
       targets = alpm_list_add(targets, strdup(argv[optind]));
     }
     optind++;
@@ -1002,8 +1003,8 @@ void pkgbuild_get_extinfo(char **pkgbuild, alpm_list_t **details[]) {
 
   for (lineptr = *pkgbuild; lineptr; lineptr = strchr(lineptr, '\n')) {
     char *arrayend;
-    alpm_list_t **deplist;
     int depth = 1, type = 0;
+    alpm_list_t **deplist;
 
     strtrim(++lineptr);
     if (*lineptr == '#' || strlen(lineptr) == 0) {
@@ -1170,7 +1171,6 @@ int resolve_dependencies(const char *pkgname) {
 
     *(sanitized + strcspn(sanitized, "<>=")) = '\0';
 
-    /* synchronize discovery of new dependencies */
     pthread_mutex_lock(&lock);
     if (!alpm_list_find_str(targets, sanitized)) {
       targets = alpm_list_add(targets, sanitized);
@@ -1213,7 +1213,7 @@ int set_download_path() {
   download_dir = resolved;
 
   if (access(download_dir, W_OK) != 0) {
-    cwr_fprintf(stderr, LOG_ERROR, "Cannot write to %s: %s\n",
+    cwr_fprintf(stderr, LOG_ERROR, "cannot write to %s: %s\n",
         download_dir, strerror(errno));
     return(1);
   }
@@ -1265,24 +1265,22 @@ char *strtrim(char *str) {
   char *pch = str;
 
   if (!str || *str == '\0') {
-    /* string is empty, so we're done. */
     return(str);
   }
 
-  while(isspace((unsigned char)*pch)) {
+  while (isspace((unsigned char)*pch)) {
     pch++;
   }
   if (pch != str) {
     memmove(str, pch, (strlen(pch) + 1));
   }
 
-  /* check if there wasn't anything but whitespace in the string. */
   if (*str == '\0') {
     return(str);
   }
 
   pch = (str + (strlen(str) - 1));
-  while(isspace((unsigned char)*pch)) {
+  while (isspace((unsigned char)*pch)) {
     pch--;
   }
   *++pch = '\0';
@@ -1332,18 +1330,17 @@ void *thread_download(void *arg) {
     return(NULL);
   }
 
-  response.data = NULL;
-  response.size = 0;
-
   curl = curl_create_easy_handle();
   if (!curl) {
     return(NULL);
   }
 
+  response.data = NULL;
+  response.size = 0;
+
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_response);
 
-  /* sanitize URL */
   escaped = curl_easy_escape(curl, arg, strlen(arg));
   cwr_asprintf(&url, AUR_PKG_URL, optproto, escaped, escaped);
   curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -1366,8 +1363,7 @@ void *thread_download(void *arg) {
     case 200:
       break;
     case 404:
-      cwr_fprintf(stderr, LOG_ERROR, "no results found for %s\n",
-          (const char*)arg);
+      cwr_fprintf(stderr, LOG_ERROR, "bad URL for package download: `%s'\n", url);
       goto finish;
     default:
       cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with http%ld\n",
@@ -1421,7 +1417,6 @@ void *thread_query(void *arg) {
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, yajl_parse_stream);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &yajl_hand);
 
-  /* sanitize URL */
   escaped = curl_easy_escape(curl, arg, strlen(arg));
   if (opmask & OP_SEARCH) {
     cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_SEARCH, escaped);
@@ -1430,7 +1425,7 @@ void *thread_query(void *arg) {
   }
   curl_easy_setopt(curl, CURLOPT_URL, url);
 
-  sem_wait(&sem_download); /* limit downloads to AUR_MAX_CONNECTIONS */
+  sem_wait(&sem_download); /* limit concurrent downloads to AUR_MAX_CONNECTIONS */
   cwr_printf(LOG_DEBUG, "performing curl operation on %s\n", url);
   curlstat = curl_easy_perform(curl);
   sem_post(&sem_download);
@@ -1452,11 +1447,7 @@ void *thread_query(void *arg) {
   /* save the embedded list before we free the carrying struct */
   pkglist = parse_struct->pkglist;
 
-  if (!pkglist) {
-    goto finish;
-  }
-
-  if (optextinfo) {
+  if (pkglist && optextinfo) {
     struct aurpkg_t *aurpkg;
     char *pburl, *pkgbuild;
 
@@ -1508,7 +1499,7 @@ void *thread_update(void *arg) {
 
     if (alpm_pkg_vercmp(aurpkg->ver, alpm_pkg_get_version(pmpkg)) > 0) {
       if (opmask & OP_DOWNLOAD) {
-        /* we don't care about this return val, but it needs to be dealt with */
+        /* we don't care about the return, but we do care about leaks */
         dlretval = thread_download((void*)aurpkg->name);
         alpm_list_free_inner(dlretval, aurpkg_free);
         alpm_list_free(dlretval);
