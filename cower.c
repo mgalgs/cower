@@ -871,7 +871,7 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **array, int type) {
 }
 
 int parse_options(int argc, char *argv[]) {
-  int opt, option_index = 0, ret = 0;
+  int opt, option_index = 0;
 
   static struct option opts[] = {
     /* Operations */
@@ -978,22 +978,12 @@ int parse_options(int argc, char *argv[]) {
   }
 
   /* check for invalid operation combos */
-  if (opmask & OP_INFO) {
-    if (opmask != (opmask & OP_INFO)) {
-      ret = 2;
-    }
-  } else if (opmask & OP_SEARCH) {
-    if (opmask != (opmask & OP_SEARCH)) {
-      ret = 2;
-    }
-  } else if (opmask & (OP_UPDATE|OP_DOWNLOAD)) {
-    if (opmask != (opmask & (OP_UPDATE|OP_DOWNLOAD))) {
-      ret = 2;
-    }
-  }
-  if (ret == 2) {
+  if (((opmask & OP_INFO) && (opmask & ~OP_INFO)) ||
+     ((opmask & OP_SEARCH) && (opmask & ~OP_SEARCH)) ||
+     ((opmask & (OP_UPDATE|OP_DOWNLOAD)) && (opmask & ~(OP_UPDATE|OP_DOWNLOAD)))) {
+
     fprintf(stderr, "error: invalid operation\n");
-    return(ret);
+    return(2);
   }
 
   while (optind < argc) {
@@ -1004,7 +994,7 @@ int parse_options(int argc, char *argv[]) {
     optind++;
   }
 
-  return(ret);
+  return(0);
 }
 
 void pkgbuild_get_extinfo(char **pkgbuild, alpm_list_t **details[]) {
@@ -1677,7 +1667,7 @@ int main(int argc, char *argv[]) {
    * b) update (without download) returns something
    * this is opposing behavior, so just XOR the result on a pure update
    */
-  ret = !!((results == NULL) ^ (opmask == (opmask & OP_UPDATE)));
+  ret = ((results == NULL) ^ !(opmask & ~OP_UPDATE));
   print_results(results, task.printfn);
   alpm_list_free_inner(results, aurpkg_free);
   alpm_list_free(results);
