@@ -1608,7 +1608,7 @@ int main(int argc, char *argv[]) {
 
   if (!opmask) {
     fprintf(stderr, "error: no operation specified (use -h for help)\n");
-    return(ret);
+    return(1);
   }
 
   if ((ret = strings_init()) != 0) {
