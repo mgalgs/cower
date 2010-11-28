@@ -1130,8 +1130,8 @@ void print_pkg_search(struct aurpkg_t *pkg) {
     printf("%s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
   } else {
     pmpkg_t *ipkg;
-    printf("%saur/%s%s%s %s%s%s", colstr->repo, colstr->nc, colstr->pkg, pkg->name,
-        pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
+    printf("%saur/%s%s%s %s%s%s (%s)", colstr->repo, colstr->nc, colstr->pkg, pkg->name,
+        pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc, pkg->votes);
     if ((ipkg = alpm_db_get_pkg(db_local, pkg->name))) {
       const char *instcolor;
       if (alpm_pkg_vercmp(pkg->ver, alpm_pkg_get_version(ipkg)) > 0) {
