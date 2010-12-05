@@ -35,9 +35,10 @@ Search for packages with the I<target>(s) as the search term(s).
 
 =item B<-u, --update>
 
-Check foreign packages for updates in the AUR. Without any arguments, all manually
-installed packages will be checked. If targets are supplied, only those targets
-will be checked. This operation can be combined with the --download operation.
+Check foreign packages for updates in the AUR. Without any arguments, all
+manually installed packages will be checked. If targets are supplied, only
+those targets will be checked. This operation can be combined with the
+--download operation.
 
 =back
 
@@ -48,8 +49,8 @@ will be checked. This operation can be combined with the --download operation.
 
 =item B<-c, --color[=WHEN]>
 
-Use colored output. WHEN is `always' or `auto'. Color will be disabled in a pipe unless WHEN
-is set to always.
+Use colored output. WHEN is `always' or `auto'. Color will be disabled in a
+pipe unless WHEN is set to always.
 
 =item B<-v, --debug>
 
@@ -65,8 +66,9 @@ Display the help message and quit.
 
 =item B<--ignore> <'pkg'>
 
-Ignore a package upgrade. Can be used more than once. Also accepts a comma delimited list as
-a single argument. Packages listed in pacman's IgnorePkg directive are honored.
+Ignore a package upgrade. Can be used more than once. Also accepts a comma
+delimited list as a single argument. Packages listed in pacman's IgnorePkg
+directive are honored.
 
 =item B<-q, --quiet>
 
@@ -78,8 +80,9 @@ Establish secure connections over https.
 
 =item B<-t, --target> <'dir'>
 
-Download taurballs to alternate directory, specified by I<DIR>. Either a relative or absolute
-path can be specified, but all components of the path must exist.
+Download taurballs to alternate directory, specified by I<DIR>. Either a
+relative or absolute path can be specified, but all components of the path must
+exist.
 
 =item B<-v, --verbose>
 
