@@ -232,9 +232,9 @@ static int resolve_dependencies(const char*);
 static int set_download_path(void);
 static int strings_init(void);
 static char *strtrim(char*);
-static void *thread_download(void*);
-static void *thread_query(void*);
-static void *thread_update(void*);
+static void *task_download(void*);
+static void *task_query(void*);
+static void *task_update(void*);
 static void usage(void);
 static size_t yajl_parse_stream(void*, size_t, size_t, void*);
 
@@ -1212,7 +1212,7 @@ int resolve_dependencies(const char *pkgname) {
       if (alpm_find_satisfier(alpm_db_get_pkgcache(db_local), depend)) {
         cwr_printf(LOG_DEBUG, "%s is already satisified\n", depend);
       } else {
-        retval = thread_download(sanitized);
+        retval = task_download(sanitized);
         alpm_list_free_inner(retval, aurpkg_free);
         alpm_list_free(retval);
       }
@@ -1317,7 +1317,7 @@ char *strtrim(char *str) {
   return(str);
 }
 
-void *thread_download(void *arg) {
+void *task_download(void *arg) {
   alpm_list_t *queryresult = NULL;
   pmdb_t *db;
   CURL *curl;
@@ -1345,7 +1345,7 @@ void *thread_download(void *arg) {
     return(NULL);
   }
 
-  queryresult = thread_query(arg);
+  queryresult = task_query(arg);
   if (!queryresult) {
     cwr_fprintf(stderr, LOG_ERROR, "no results found for %s\n", (const char*)arg);
     return(NULL);
@@ -1419,7 +1419,7 @@ finish:
   return(queryresult);
 }
 
-void *thread_query(void *arg) {
+void *task_query(void *arg) {
   alpm_list_t *pkglist = NULL;
   CURL *curl;
   CURLcode curlstat;
@@ -1506,7 +1506,7 @@ finish:
   return(pkglist);
 }
 
-void *thread_update(void *arg) {
+void *task_update(void *arg) {
   pmpkg_t *pmpkg;
   struct aurpkg_t *aurpkg;
   void *dlretval, *qretval;
@@ -1518,7 +1518,7 @@ void *thread_update(void *arg) {
   cwr_printf(LOG_VERBOSE, "Checking %s%s%s for updates...\n",
       colstr->pkg, (const char*)arg, colstr->nc);
 
-  qretval = thread_query(arg);
+  qretval = task_query(arg);
   aurpkg = alpm_list_getdata(qretval);
   if (aurpkg) {
     pmpkg = alpm_db_get_pkg(db_local, arg);
@@ -1531,7 +1531,7 @@ void *thread_update(void *arg) {
     if (alpm_pkg_vercmp(aurpkg->ver, alpm_pkg_get_version(pmpkg)) > 0) {
       if (opmask & OP_DOWNLOAD) {
         /* we don't care about the return, but we do care about leaks */
-        dlretval = thread_download((void*)aurpkg->name);
+        dlretval = task_download((void*)aurpkg->name);
         alpm_list_free_inner(dlretval, aurpkg_free);
         alpm_list_free(dlretval);
       } else {
@@ -1599,7 +1599,7 @@ int main(int argc, char *argv[]) {
     void (*printfn)(struct aurpkg_t*);
   } task = {
     .printfn = NULL,
-    .threadfn = thread_query
+    .threadfn = task_query
   };
 
   if ((ret = parse_options(argc, argv)) != 0) {
@@ -1657,13 +1657,13 @@ int main(int argc, char *argv[]) {
 
   /* override task behavior */
   if (opmask & OP_UPDATE) {
-    task.threadfn = thread_update;
+    task.threadfn = task_update;
   } else if (opmask & OP_INFO) {
     task.printfn = print_pkg_info;
   } else if (opmask & (OP_SEARCH|OP_MSEARCH)) {
     task.printfn = print_pkg_search;
   } else if (opmask & OP_DOWNLOAD) {
-    task.threadfn = thread_download;
+    task.threadfn = task_download;
   }
 
   for (i = targets, n = 0; i; i = alpm_list_next(i), n++) {
