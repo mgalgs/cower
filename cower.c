@@ -198,6 +198,11 @@ struct response_t {
   size_t size;
 };
 
+struct task_t {
+  void *(*threadfn)(void*);
+  void (*printfn)(struct aurpkg_t*);
+};
+
 /* function declarations */
 static alpm_list_t *alpm_find_foreign_pkgs(void);
 static int alpm_init(void);
@@ -1594,10 +1599,7 @@ int main(int argc, char *argv[]) {
   int ret, n, req_count;
   pthread_attr_t attr;
   pthread_t *threads;
-  struct task_t {
-    void *(*threadfn)(void*);
-    void (*printfn)(struct aurpkg_t*);
-  } task = {
+  struct task_t task = {
     .printfn = NULL,
     .threadfn = task_query
   };
