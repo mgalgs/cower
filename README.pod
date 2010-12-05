@@ -84,6 +84,14 @@ Download taurballs to alternate directory, specified by I<DIR>. Either a
 relative or absolute path can be specified, but all components of the path must
 exist.
 
+=item B<--threads> <'num'>
+
+Limit the number of threads created, with a default of 20. In practice, you
+should never need to bother with this setting. Other than the case of an
+--update operation with no targets specified, a thread is created for each
+target provided to cower. If cower has fewer targets than threads specified,
+the number of threads created will instead be the number of targets.
+
 =item B<-v, --verbose>
 
 Output more. This primarily affects the update operation.

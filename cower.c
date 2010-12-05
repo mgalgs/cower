@@ -58,6 +58,7 @@
 #define AUR_PKG_URL_FORMAT    "%s://aur.archlinux.org/packages.php?ID="
 #define AUR_RPC_URL           "%s://aur.archlinux.org/rpc.php?type=%s&arg=%s"
 #define AUR_MAX_CONNECTIONS   10
+#define THREAD_MAX            20
 
 #define AUR_QUERY_TYPE        "type"
 #define AUR_QUERY_TYPE_INFO   "info"
@@ -141,7 +142,8 @@ typedef enum __operation_t {
 enum {
   OP_DEBUG = 1000,
   OP_SSL,
-  OP_IGNORE
+  OP_IGNORE,
+  OP_THREADS
 };
 
 enum {
@@ -250,12 +252,13 @@ int optcolor = 0;
 int optextinfo = 0;
 int optforce = 0;
 int optgetdeps = 0;
+int optmaxthreads = THREAD_MAX;
 int optquiet = 0;
 
 /* variables */
 struct strings_t *colstr;
 pmdb_t *db_local;
-alpm_list_t *ignore = NULL, *targets = NULL;
+alpm_list_t *targs, *ignore = NULL, *targets = NULL;
 loglevel_t logmask = LOG_ERROR|LOG_WARN|LOG_INFO;
 operation_t opmask = 0;
 sem_t sem_download;
@@ -898,6 +901,7 @@ int parse_options(int argc, char *argv[]) {
     {"quiet",     no_argument,        0, 'q'},
     {"ssl",       no_argument,        0, OP_SSL},
     {"target",    required_argument,  0, 't'},
+    {"threads",   required_argument,  0, OP_THREADS},
     {"verbose",   no_argument,        0, 'v'},
     {0, 0, 0, 0}
   };
@@ -981,6 +985,13 @@ int parse_options(int argc, char *argv[]) {
           }
         }
         break;
+      case OP_THREADS:
+        optmaxthreads = strtol(optarg, &token, 10);
+        if (*token != '\0') {
+          fprintf(stderr, "error: invalid argument to --threads\n");
+          return(1);
+        }
+        break;
 
       case '?':
         return(1);
@@ -1006,6 +1017,7 @@ int parse_options(int argc, char *argv[]) {
     }
     optind++;
   }
+  targs = targets;
 
   return(0);
 }
@@ -1560,6 +1572,32 @@ finish:
   return(NULL);
 }
 
+void *thread_pool(void *arg) {
+  alpm_list_t *ret = NULL;
+  void *job;
+  struct task_t *task;
+  static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+  task = (struct task_t*)arg;
+
+  while (1) {
+    /* try to pop off the targets list */
+    pthread_mutex_lock(&lock);
+    job = alpm_list_getdata(targs);
+    targs = alpm_list_next(targs);
+    pthread_mutex_unlock(&lock);
+
+    /* make sure we hooked a new job */
+    if (!job) {
+      break;
+    }
+
+    ret = alpm_list_mmerge(ret, task->threadfn(job), aurpkg_cmp);
+  }
+
+  return(ret);
+}
+
 void usage() {
   fprintf(stderr, "cower %s\n"
       "Usage: cower <operations> [options] target...\n\n", COWER_VERSION);
@@ -1578,7 +1616,8 @@ void usage() {
       "  -h, --help              display this help and exit\n"
       "      --ignore <pkg>      ignore a package upgrade (can be used more than once)\n"
       "      --ssl               create connections over https\n"
-      "  -t, --target <dir>      specify an alternate download directory\n\n");
+      "  -t, --target <dir>      specify an alternate download directory\n"
+      "      --threads <num>     limit number of threads created\n\n");
   fprintf(stderr, " Output options:\n"
       "  -c, --color[=WHEN]      use colored output. WHEN is `never', `always', or `auto'\n"
       "      --debug             show debug output\n"
@@ -1595,8 +1634,8 @@ size_t yajl_parse_stream(void *ptr, size_t size, size_t nmemb, void *stream) {
 }
 
 int main(int argc, char *argv[]) {
-  alpm_list_t *i, *results = NULL, *thread_return = NULL;
-  int ret, n, req_count;
+  alpm_list_t *results = NULL, *thread_return = NULL;
+  int ret, n, num_threads;
   pthread_attr_t attr;
   pthread_t *threads;
   struct task_t task = {
@@ -1642,12 +1681,15 @@ int main(int argc, char *argv[]) {
     targets = alpm_find_foreign_pkgs();
   }
 
-  if ((req_count = alpm_list_count(targets)) == 0) {
+  num_threads = alpm_list_count(targets);
+  if (num_threads == 0) {
     fprintf(stderr, "error: no targets specified (use -h for help)\n");
     goto finish;
+  } else if (num_threads > optmaxthreads) {
+    num_threads = optmaxthreads;
   }
 
-  if (!(threads = calloc(req_count, sizeof *threads))) {
+  if (!(threads = calloc(num_threads, sizeof *threads))) {
     cwr_fprintf(stderr, LOG_ERROR, "failed to allocate memory: %s\n",
         strerror(errno));
     goto finish;
@@ -1668,20 +1710,17 @@ int main(int argc, char *argv[]) {
     task.threadfn = task_download;
   }
 
-  for (i = targets, n = 0; i; i = alpm_list_next(i), n++) {
-    void *target = alpm_list_getdata(i);
-
-    ret = pthread_create(&threads[n], &attr, task.threadfn, target);
+  for (n = 0; n < num_threads; n++) {
+    ret = pthread_create(&threads[n], &attr, thread_pool, &task);
     if (ret != 0) {
       cwr_fprintf(stderr, LOG_ERROR, "failed to spawn new thread: %s\n",
           strerror(ret));
       return(ret); /* we don't want to recover from this */
     }
-    cwr_printf(LOG_DEBUG, "thread[%p]: spawned with arg: %s\n",
-        (void*)threads[n], (const char*)target);
+    cwr_printf(LOG_DEBUG, "thread[%p]: spawned\n", (void*)threads[n]);
   }
 
-  for (n = 0; n < req_count; n++) {
+  for (n = 0; n < num_threads; n++) {
     pthread_join(threads[n], (void**)&thread_return);
     cwr_printf(LOG_DEBUG, "thread[%p]: joined\n", (void*)threads[n]);
     results = alpm_list_mmerge(results, thread_return, aurpkg_cmp);
