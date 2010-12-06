@@ -769,12 +769,10 @@ void indentprint(const char *str, int indent) {
 int json_end_map(void *ctx) {
   struct yajl_parser_t *parse_struct = (struct yajl_parser_t*)ctx;
 
-  if (--parse_struct->json_depth == 0) {
-    return(0);
+  if (--parse_struct->json_depth > 0) {
+    parse_struct->pkglist = alpm_list_add_sorted(parse_struct->pkglist,
+        parse_struct->aurpkg, aurpkg_cmp);
   }
-
-  parse_struct->pkglist = alpm_list_add_sorted(parse_struct->pkglist,
-      parse_struct->aurpkg, aurpkg_cmp);
 
   return(1);
 }
@@ -804,7 +802,7 @@ int json_string(void *ctx, const unsigned char *data, unsigned int size) {
 
   if (STREQ(parse_struct->curkey, AUR_QUERY_TYPE) &&
       STR_STARTS_WITH(val, AUR_QUERY_ERROR)) {
-    return(0);
+    return(1);
   }
 
   if (STREQ(parse_struct->curkey, AUR_ID)) {
@@ -1626,9 +1624,19 @@ void usage() {
 }
 
 size_t yajl_parse_stream(void *ptr, size_t size, size_t nmemb, void *stream) {
+  yajl_handle hand;
+  yajl_status stat;
+
+  hand = *(yajl_handle*)stream;
   size_t realsize = size * nmemb;
 
-  yajl_parse(*(yajl_handle*)stream, ptr, realsize);
+  stat = yajl_parse(hand, ptr, realsize);
+  if (stat != yajl_status_ok && stat != yajl_status_insufficient_data) {
+    unsigned char *str = yajl_get_error(hand, 1, ptr, realsize);
+    cwr_fprintf(stderr, LOG_ERROR, "json parsing error: %s\n", str);
+    yajl_free_error(hand, str);
+    return(realsize);
+  }
 
   return(realsize);
 }
