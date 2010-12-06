@@ -19,6 +19,8 @@ _cower() {
     COMPREPLY=($(compgen -W "$opts" -- $cur))
   elif [[ $cur == --target= || $prev == '-t' ]]; then
     COMPREPLY=($(compgen -f -- $cur))
+  elif [[ ${COMP_WORDS[@]} = *-@(!(-*)[u]*|--update)* ]]; then
+    COMPREPLY=($(compgen -W "$(pacman -Qqm)" -- $cur))
   elif [[ ${COMP_WORDS[@]} = *-@(!(-*)[di]*|-download|-info)* ]]; then
     COMPREPLY=($(compgen -W "$((( ${#cur} > 2 )) && $COWER -sq -- $cur 2>/dev/null)" -- $cur))
   fi
