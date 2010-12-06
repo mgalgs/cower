@@ -73,7 +73,6 @@
 #define AUR_ID                "ID"
 #define AUR_CAT               "CategoryID"
 #define AUR_DESC              "Description"
-#define AUR_URLPATH           "URLPath"
 #define AUR_LICENSE           "License"
 #define AUR_VOTES             "NumVotes"
 #define AUR_OOD               "OutOfDate"
@@ -174,7 +173,6 @@ struct aurpkg_t {
   const char *ver;
   const char *desc;
   const char *url;
-  const char *urlpath;
   const char *lic;
   const char *votes;
   int cat;
@@ -495,7 +493,6 @@ void aurpkg_free(void *pkg) {
   FREE(it->ver);
   FREE(it->desc);
   FREE(it->url);
-  FREE(it->urlpath);
   FREE(it->lic);
   FREE(it->votes);
 
@@ -817,8 +814,6 @@ int json_string(void *ctx, const unsigned char *data, unsigned int size) {
     parse_struct->aurpkg->desc = strndup(val, size);
   } else if (STREQ(parse_struct->curkey, URL)) {
     parse_struct->aurpkg->url = strndup(val, size);
-  } else if (STREQ(parse_struct->curkey, AUR_URLPATH)) {
-    parse_struct->aurpkg->urlpath = strndup(val, size);
   } else if (STREQ(parse_struct->curkey, AUR_LICENSE)) {
     parse_struct->aurpkg->lic = strndup(val, size);
   } else if (STREQ(parse_struct->curkey, AUR_VOTES)) {
