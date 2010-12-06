@@ -1015,7 +1015,6 @@ int parse_options(int argc, char *argv[]) {
     }
     optind++;
   }
-  targs = targets;
 
   return(0);
 }
@@ -1689,6 +1688,7 @@ int main(int argc, char *argv[]) {
     targets = alpm_find_foreign_pkgs();
   }
 
+  targs = targets;
   num_threads = alpm_list_count(targets);
   if (num_threads == 0) {
     fprintf(stderr, "error: no targets specified (use -h for help)\n");
