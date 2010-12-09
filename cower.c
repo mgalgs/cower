@@ -1448,6 +1448,12 @@ void *task_query(void *arg) {
   argstr = (const char*)arg;
   for (p = argstr; *p; p++) {
     span = strcspn(p, REGEX_CHARS);
+
+    /* given 'cow?', we can't include w in the search */
+    if (*(p + span) == '?' || *(p + span) == '*') {
+      span--;
+    }
+
     if (span >= 2) {
       break;
     }
