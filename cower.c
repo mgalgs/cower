@@ -1438,26 +1438,31 @@ void *task_query(void *arg) {
   CURLcode curlstat;
   yajl_handle yajl_hand = NULL;
   regex_t regex;
-  const char *argstr;
+  const char *argstr, *p;
   char *escaped, *url, *searchstr;
   long httpcode;
-  int soff, eoff;
+  int span = 0;
   struct yajl_parser_t *parse_struct;
 
+  /* find a valid chunk of search string */
   argstr = (const char*)arg;
+  for (p = argstr; *p; p++) {
+    span = strcspn(p, REGEX_CHARS);
+    if (span >= 2) {
+      break;
+    }
+  }
 
-  if ((opmask & OP_SEARCH) && strlen(argstr) < 2) {
+  if ((opmask & OP_SEARCH) && span < 2) {
     cwr_fprintf(stderr, LOG_ERROR, "search string '%s' too short\n", (const char*)arg);
     return(NULL);
   }
 
-  /* prepare search string */
-  soff = strspn(argstr, REGEX_CHARS);
-  eoff = strcspn(argstr + soff, REGEX_CHARS);
-  searchstr = strndup(argstr + soff, eoff - soff);
+  searchstr = strndup(p, span);
+
   if (regcomp(&regex, argstr, REGEX_OPTS) != 0) {
     cwr_fprintf(stderr, LOG_ERROR, "invalid regex pattern: %s\n", (const char*)arg);
-    free(searchstr);
+    FREE(searchstr);
     return(NULL);
   }
 

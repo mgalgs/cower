@@ -32,12 +32,12 @@ Search for packages maintained by target(s).
 =item B<-s, --search>
 
 Search for packages with the I<target>(s) as the search term(s). Extended regex
-patterns are allowed as defined by POSIX are accepted.
+patterns (except for character ranges) as defined by POSIX are allowed.
 
 B<Note:> This is more or less a hack because it's implemented on top of what
-the AUR enforces for search rules.  The first span of non-regex characters in a
-search string must be at least 2 characters long or the search will return no
-results. This is not explicitly checked at runtime.
+the 2 character minimum and lack of regex that the AUR offers. Cower will search
+based on the first span of 2 non-regex characters it finds and filter using the
+regular expression provided.
 
 =item B<-u, --update>
 
