@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include <pthread.h>
+#include <regex.h>
 #include <semaphore.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -120,6 +121,9 @@
 #define BOLDMAGENTA           "\033[1;35m"
 #define BOLDCYAN              "\033[1;36m"
 #define BOLDWHITE             "\033[1;37m"
+
+#define REGEX_OPTS            REG_ICASE|REG_EXTENDED|REG_NOSUB|REG_NEWLINE
+#define REGEX_CHARS           "^.+*?$"
 
 /* enums */
 typedef enum __loglevel_t {
@@ -1429,16 +1433,31 @@ finish:
 }
 
 void *task_query(void *arg) {
-  alpm_list_t *pkglist = NULL;
+  alpm_list_t *i, *pkglist = NULL;
   CURL *curl;
   CURLcode curlstat;
   yajl_handle yajl_hand = NULL;
-  char *escaped, *url;
+  regex_t regex;
+  const char *argstr;
+  char *escaped, *url, *searchstr;
   long httpcode;
+  int soff, eoff;
   struct yajl_parser_t *parse_struct;
 
-  if ((opmask & OP_SEARCH) && strlen(arg) < 2) {
+  argstr = (const char*)arg;
+
+  if ((opmask & OP_SEARCH) && strlen(argstr) < 2) {
     cwr_fprintf(stderr, LOG_ERROR, "search string '%s' too short\n", (const char*)arg);
+    return(NULL);
+  }
+
+  /* prepare search string */
+  soff = strspn(argstr, REGEX_CHARS);
+  eoff = strcspn(argstr + soff, REGEX_CHARS);
+  searchstr = strndup(argstr + soff, eoff - soff);
+  if (regcomp(&regex, argstr, REGEX_OPTS) != 0) {
+    cwr_fprintf(stderr, LOG_ERROR, "invalid regex pattern: %s\n", (const char*)arg);
+    free(searchstr);
     return(NULL);
   }
 
@@ -1455,7 +1474,7 @@ void *task_query(void *arg) {
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, yajl_parse_stream);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &yajl_hand);
 
-  escaped = curl_easy_escape(curl, arg, strlen(arg));
+  escaped = curl_easy_escape(curl, searchstr, strlen(searchstr));
   if (opmask & OP_SEARCH) {
     cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_SEARCH, escaped);
   } else if (opmask & OP_MSEARCH) {
@@ -1484,8 +1503,21 @@ void *task_query(void *arg) {
     goto finish;
   }
 
-  /* save the embedded list before we free the carrying struct */
-  pkglist = parse_struct->pkglist;
+  /* filter and save the embedded list -- skip if no regex chars */
+  if (strcmp(searchstr, argstr) == 0) {
+    pkglist = parse_struct->pkglist;
+  } else {
+    for (i = parse_struct->pkglist; i; i = alpm_list_next(i)) {
+      struct aurpkg_t *p = alpm_list_getdata(i);
+      if (regexec(&regex, p->name, 0, 0, 0) != REG_NOMATCH) {
+        pkglist = alpm_list_add(pkglist, p);
+      } else {
+        aurpkg_free(p);
+      }
+    }
+    alpm_list_free(parse_struct->pkglist);
+  }
+  regfree(&regex);
 
   if (pkglist && optextinfo) {
     struct aurpkg_t *aurpkg;
@@ -1509,6 +1541,7 @@ void *task_query(void *arg) {
 finish:
   curl_easy_cleanup(curl);
   curl_free(escaped);
+  FREE(searchstr);
   FREE(parse_struct);
   FREE(url);
 

@@ -31,7 +31,13 @@ Search for packages maintained by target(s).
 
 =item B<-s, --search>
 
-Search for packages with the I<target>(s) as the search term(s).
+Search for packages with the I<target>(s) as the search term(s). Extended regex
+patterns are allowed as defined by POSIX are accepted.
+
+B<Note:> This is more or less a hack because it's implemented on top of what
+the AUR enforces for search rules.  The first span of non-regex characters in a
+search string must be at least 2 characters long or the search will return no
+results. This is not explicitly checked at runtime.
 
 =item B<-u, --update>
 
