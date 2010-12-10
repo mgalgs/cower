@@ -1438,19 +1438,18 @@ void *task_query(void *arg) {
   CURLcode curlstat;
   yajl_handle yajl_hand = NULL;
   regex_t regex;
-  const char *argstr, *p;
-  char *escaped, *url, *searchstr;
+  const char *argstr;
+  char *escaped, *url;
   long httpcode;
   int span = 0;
   struct yajl_parser_t *parse_struct;
 
   /* find a valid chunk of search string */
-  argstr = (const char*)arg;
-  for (p = argstr; *p; p++) {
-    span = strcspn(p, REGEX_CHARS);
+  for (argstr = arg; *argstr; argstr++) {
+    span = strcspn(argstr, REGEX_CHARS);
 
     /* given 'cow?', we can't include w in the search */
-    if (*(p + span) == '?' || *(p + span) == '*') {
+    if (*(argstr + span) == '?' || *(argstr + span) == '*') {
       span--;
     }
 
@@ -1464,11 +1463,8 @@ void *task_query(void *arg) {
     return(NULL);
   }
 
-  searchstr = strndup(p, span);
-
-  if (regcomp(&regex, argstr, REGEX_OPTS) != 0) {
+  if ((opmask & OP_SEARCH) && regcomp(&regex, arg, REGEX_OPTS) != 0) {
     cwr_fprintf(stderr, LOG_ERROR, "invalid regex pattern: %s\n", (const char*)arg);
-    FREE(searchstr);
     return(NULL);
   }
 
@@ -1485,7 +1481,7 @@ void *task_query(void *arg) {
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, yajl_parse_stream);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &yajl_hand);
 
-  escaped = curl_easy_escape(curl, searchstr, strlen(searchstr));
+  escaped = curl_easy_escape(curl, argstr, span);
   if (opmask & OP_SEARCH) {
     cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_SEARCH, escaped);
   } else if (opmask & OP_MSEARCH) {
@@ -1515,7 +1511,7 @@ void *task_query(void *arg) {
   }
 
   /* filter and save the embedded list -- skip if no regex chars */
-  if (strcmp(searchstr, argstr) == 0) {
+  if (!(opmask & OP_SEARCH)) {
     pkglist = parse_struct->pkglist;
   } else {
     for (i = parse_struct->pkglist; i; i = alpm_list_next(i)) {
@@ -1527,8 +1523,8 @@ void *task_query(void *arg) {
       }
     }
     alpm_list_free(parse_struct->pkglist);
+    regfree(&regex);
   }
-  regfree(&regex);
 
   if (pkglist && optextinfo) {
     struct aurpkg_t *aurpkg;
@@ -1552,7 +1548,6 @@ void *task_query(void *arg) {
 finish:
   curl_easy_cleanup(curl);
   curl_free(escaped);
-  FREE(searchstr);
   FREE(parse_struct);
   FREE(url);
 
