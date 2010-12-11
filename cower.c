@@ -52,12 +52,10 @@
 
 #define COWER_USERAGENT       "cower/3.x"
 
-#define HTTP                  "http"
-#define HTTPS                 "https"
-#define AUR_PKGBUILD_PATH     "%s://aur.archlinux.org/packages/%s/%s/PKGBUILD"
-#define AUR_PKG_URL           "%s://aur.archlinux.org/packages/%s/%s.tar.gz"
-#define AUR_PKG_URL_FORMAT    "%s://aur.archlinux.org/packages.php?ID="
-#define AUR_RPC_URL           "%s://aur.archlinux.org/rpc.php?type=%s&arg=%s"
+#define AUR_PKGBUILD_PATH     "https://aur.archlinux.org/packages/%s/%s/PKGBUILD"
+#define AUR_PKG_URL           "https://aur.archlinux.org/packages/%s/%s.tar.gz"
+#define AUR_PKG_URL_FORMAT    "https://aur.archlinux.org/packages.php?ID="
+#define AUR_RPC_URL           "https://aur.archlinux.org/rpc.php?type=%s&arg=%s"
 #define AUR_MAX_CONNECTIONS   10
 #define THREAD_MAX            20
 
@@ -249,7 +247,6 @@ static size_t yajl_parse_stream(void*, size_t, size_t, void*);
 
 /* options */
 char *download_dir = NULL;
-char *optproto = HTTP;
 int optcolor = 0;
 int optextinfo = 0;
 int optforce = 0;
@@ -971,9 +968,6 @@ int parse_options(int argc, char *argv[]) {
       case OP_DEBUG:
         logmask |= LOG_DEBUG;
         break;
-      case OP_SSL:
-        optproto = HTTPS;
-        break;
       case OP_IGNORE:
         for (token = strtok(optarg, ","); token; token = strtok(NULL, ",")) {
           if (!alpm_list_find_str(ignore, token)) {
@@ -1109,7 +1103,7 @@ void print_pkg_info(struct aurpkg_t *pkg) {
       pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
   printf(URL "            : %s%s%s\n", colstr->url, pkg->url, colstr->nc);
   printf(PKG_AURPAGE "       : %s" AUR_PKG_URL_FORMAT "%s%s\n",
-      colstr->url, optproto, pkg->id, colstr->nc);
+      colstr->url, pkg->id, colstr->nc);
 
   print_extinfo_list(pkg->depends, PKG_DEPENDS);
   print_extinfo_list(pkg->makedepends, PKG_MAKEDEPENDS);
@@ -1384,7 +1378,7 @@ void *task_download(void *arg) {
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_response);
 
   escaped = curl_easy_escape(curl, arg, strlen(arg));
-  cwr_asprintf(&url, AUR_PKG_URL, optproto, escaped, escaped);
+  cwr_asprintf(&url, AUR_PKG_URL, escaped, escaped);
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_free(escaped);
 
@@ -1483,11 +1477,11 @@ void *task_query(void *arg) {
 
   escaped = curl_easy_escape(curl, argstr, span);
   if (opmask & OP_SEARCH) {
-    cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_SEARCH, escaped);
+    cwr_asprintf(&url, AUR_RPC_URL, AUR_QUERY_TYPE_SEARCH, escaped);
   } else if (opmask & OP_MSEARCH) {
-    cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_MSRCH, escaped);
+    cwr_asprintf(&url, AUR_RPC_URL, AUR_QUERY_TYPE_MSRCH, escaped);
   } else {
-    cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_INFO, escaped);
+    cwr_asprintf(&url, AUR_RPC_URL, AUR_QUERY_TYPE_INFO, escaped);
   }
   curl_easy_setopt(curl, CURLOPT_URL, url);
 
@@ -1532,7 +1526,7 @@ void *task_query(void *arg) {
 
     aurpkg = alpm_list_getdata(pkglist);
 
-    cwr_asprintf(&pburl, AUR_PKGBUILD_PATH, optproto, escaped, escaped);
+    cwr_asprintf(&pburl, AUR_PKGBUILD_PATH, escaped, escaped);
     pkgbuild = curl_get_url_as_buffer(pburl);
     free(pburl);
 
@@ -1646,7 +1640,6 @@ void usage() {
       "  -f, --force             overwrite existing files when downloading\n"
       "  -h, --help              display this help and exit\n"
       "      --ignore <pkg>      ignore a package upgrade (can be used more than once)\n"
-      "      --ssl               create connections over https\n"
       "  -t, --target <dir>      specify an alternate download directory\n"
       "      --threads <num>     limit number of threads created\n\n");
   fprintf(stderr, " Output options:\n"
@@ -1702,11 +1695,7 @@ int main(int argc, char *argv[]) {
   }
 
   cwr_printf(LOG_DEBUG, "initializing curl\n");
-  if (STREQ(optproto, HTTPS)) {
-    ret = curl_global_init(CURL_GLOBAL_SSL);
-  } else {
-    ret = curl_global_init(CURL_GLOBAL_NOTHING);
-  }
+  ret = curl_global_init(CURL_GLOBAL_SSL);
   if (ret != 0) {
     cwr_fprintf(stderr, LOG_ERROR, "failed to initialize curl\n");
     goto finish;
