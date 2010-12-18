@@ -1509,15 +1509,19 @@ void *task_query(void *arg) {
   if (!(opmask & OP_SEARCH)) {
     pkglist = parse_struct->pkglist;
   } else {
-    for (i = parse_struct->pkglist; i; i = alpm_list_next(i)) {
-      struct aurpkg_t *p = alpm_list_getdata(i);
-      if (regexec(&regex, p->name, 0, 0, 0) != REG_NOMATCH) {
-        pkglist = alpm_list_add(pkglist, p);
-      } else {
-        aurpkg_free(p);
+    if (STREQ(arg, argstr)) {
+      pkglist = parse_struct->pkglist;
+    } else {
+      for (i = parse_struct->pkglist; i; i = alpm_list_next(i)) {
+        struct aurpkg_t *p = alpm_list_getdata(i);
+        if (regexec(&regex, p->name, 0, 0, 0) != REG_NOMATCH) {
+          pkglist = alpm_list_add(pkglist, p);
+        } else {
+          aurpkg_free(p);
+        }
       }
+      alpm_list_free(parse_struct->pkglist);
     }
-    alpm_list_free(parse_struct->pkglist);
     regfree(&regex);
   }
 
