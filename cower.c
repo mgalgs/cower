@@ -281,11 +281,16 @@ static const char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
                                 "modules", "multimedia", "network", "office",
                                 "science", "system", "x11", "xfce", "kernels" };
 
+static const char *binary_repos[] = { "testing", "core", "extra", "community",
+                                      "community-testing", "multilib", NULL };
+
+
 /* function implementations */
 int alpm_init() {
   int ret = 0;
   FILE *fp;
   char line[PATH_MAX];
+  const char **repo;
   char *ptr, *section = NULL;
 
   cwr_printf(LOG_DEBUG, "initializing alpm\n");
@@ -311,6 +316,11 @@ int alpm_init() {
     return(1);
   }
 
+  for (repo = binary_repos; *repo; repo++) {
+    cwr_printf(LOG_DEBUG, "registering alpm db: %s\n", *repo);
+    alpm_db_register_sync(*repo);
+  }
+
   fp = fopen("/etc/pacman.conf", "r");
   if (!fp) {
     return(1);
@@ -327,24 +337,7 @@ int alpm_init() {
       *ptr = '\0';
     }
 
-    if (line[0] == '[' && line[strlen(line) - 1] == ']') {
-      ptr = &line[1];
-      if (section) {
-        free(section);
-      }
-
-      section = strdup(ptr);
-      section[strlen(section) - 1] = '\0';
-
-      if (strcmp(section, "options") != 0) {
-        if (!alpm_db_register_sync(section)) {
-          cwr_printf(LOG_ERROR, "bad section name in pacman.conf: [%s]\n", section);
-          ret = 1;
-          goto finish;
-        }
-        cwr_printf(LOG_DEBUG, "registering alpm db: %s\n", section);
-      }
-    } else {
+    if (line[0] != '[') {
       char *key, *token;
 
       key = ptr = line;
@@ -368,8 +361,6 @@ int alpm_init() {
     }
   }
 
-
-finish:
   free(section);
   fclose(fp);
   return(ret);
