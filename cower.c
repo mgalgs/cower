@@ -276,10 +276,10 @@ static yajl_callbacks callbacks = {
   NULL
 };
 
-static char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
-                           "emulators", "games", "gnome", "i18n", "kde", "lib",
-                           "modules", "multimedia", "network", "office",
-                           "science", "system", "x11", "xfce", "kernels" };
+static const char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
+                                "emulators", "games", "gnome", "i18n", "kde", "lib",
+                                "modules", "multimedia", "network", "office",
+                                "science", "system", "x11", "xfce", "kernels" };
 
 /* function implementations */
 int alpm_init() {
