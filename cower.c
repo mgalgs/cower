@@ -585,7 +585,7 @@ CURL *curl_create_easy_handle() {
   }
 
   curl_easy_setopt(handle, CURLOPT_USERAGENT, COWER_USERAGENT);
-  curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 5L);
+  curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 10L);
   curl_easy_setopt(handle, CURLOPT_ENCODING, "deflate, gzip");
 
   return(handle);
