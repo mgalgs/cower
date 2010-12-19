@@ -841,13 +841,12 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **array, int type) {
     pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
     strtrim(token);
-    if (strchr("\'\"", *token)) {
+    if (*token == '\'' || *token == '\"') {
       token++;
-    }
-
-    ptr = token + strlen(token) - 1;
-    if (strchr("\'\"", *ptr)) {
-      *ptr = '\0';
+      ptr = strrchr(token, *(token - 1));
+      if (ptr) {
+        *ptr = '\0';
+      }
     }
 
     /* some people feel compelled to do insane things in PKGBUILDs. these people suck */
