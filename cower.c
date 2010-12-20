@@ -1065,7 +1065,7 @@ void pkgbuild_get_extinfo(char **pkgbuild, alpm_list_t **details[]) {
 }
 
 void print_extinfo_list(alpm_list_t *list, const char *fieldname) {
-  alpm_list_t *i;
+  alpm_list_t *next, *i;
   size_t cols, count = 0;
 
   if (!list) {
@@ -1075,12 +1075,16 @@ void print_extinfo_list(alpm_list_t *list, const char *fieldname) {
   cols = getcols();
 
   count += printf("%-*s: ", INFO_INDENT - 2, fieldname);
-  for (i = list; i; i = i->next) {
+  for (i = list; i; i = next) {
+    next = alpm_list_next(i);
     if (cols > 0 && count + strlen(alpm_list_getdata(i)) >= cols) {
-      printf("%-*s", INFO_INDENT + 1, "\n");
+      printf("%-*c", INFO_INDENT + 1, '\n');
       count = INFO_INDENT;
     }
-    count += printf("%s  ", (const char*)i->data);
+    count += printf("%s", (const char*)alpm_list_getdata(i));
+    if (next) {
+      count += printf("  ");
+    }
   }
   putchar('\n');
 }
