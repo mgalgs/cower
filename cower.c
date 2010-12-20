@@ -819,25 +819,37 @@ int json_string(void *ctx, const unsigned char *data, unsigned int size) {
 }
 
 alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **array, int type) {
-  char *token;
+  char *ptr, *token;
 
   if (!*array) {
     return(NULL);
   }
 
   if (type == PKGDETAIL_OPTDEPENDS) {
-    for (token = strtok(*array, "\\\'\"\n"); token; token = strtok(NULL, "\\\'\"\n")) {
-      strtrim(token);
-      if (strlen(token)) {
-        cwr_printf(LOG_DEBUG, "adding depend: %s\n", token);
-        deplist = alpm_list_add(deplist, strdup(token));
+    const char *arrayend = rawmemchr(*array, '\0');
+    for (ptr = token = *array; token <= arrayend; token++) {
+      if (*token == '\'' || *token == '\"') {
+        token++;
+        ptr = strchr(token, *(token - 1));
+        *ptr = '\0';
+      } else if (isalpha(*token)) {
+        ptr = token;
+        while (!isspace(*++ptr));
+        *(ptr - 1) = '\0';
+      } else {
+        continue;
       }
+
+      strtrim(token);
+      cwr_printf(LOG_DEBUG, "adding depend: %s\n", token);
+      deplist = alpm_list_add(deplist, strdup(token));
+
+      token = ptr;
     }
     return(deplist);
   }
 
   for (token = strtok(*array, " \n"); token; token = strtok(NULL, " \n")) {
-    char *ptr;
     pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
     strtrim(token);
