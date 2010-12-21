@@ -12,17 +12,17 @@ _cower() {
   [[ -o nullglob ]] || { shopt -s nullglob; ng=1; }
 
   opts="-d --download -i --info -m --msearch -s --search -u --update -c --color
-        -f --force -q --quiet -t --target -v --debug --ssl -h --help"
+        -f --force -q --quiet -t --target --threads -v --verbose --debug -h --help"
 
   # complete options
   if [[ $cur == -* ]]; then
     COMPREPLY=($(compgen -W "$opts" -- $cur))
   elif [[ $cur == --target= || $prev == '-t' ]]; then
     COMPREPLY=($(compgen -f -- $cur))
-  elif [[ ${COMP_WORDS[@]} = *-@(!(-*)[u]*|--update)* ]]; then
-    COMPREPLY=($(compgen -W "$(pacman -Qqm)" -- $cur))
   elif [[ ${COMP_WORDS[@]} = *-@(!(-*)[di]*|-download|-info)* ]]; then
     COMPREPLY=($(compgen -W "$((( ${#cur} > 2 )) && $COWER -sq -- $cur 2>/dev/null)" -- $cur))
+  elif [[ ${COMP_WORDS[@]} = *-@(!(-*)[u]*|--update)* ]]; then
+    COMPREPLY=($(compgen -W "$(pacman -Qqm)" -- $cur))
   fi
 
   # restore nullglob setting
