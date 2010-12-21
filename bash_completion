@@ -14,14 +14,13 @@ _cower() {
   opts="-d --download -i --info -m --msearch -s --search -u --update -c --color
         -f --force -q --quiet -t --target --threads -v --verbose --debug -h --help"
 
-  # complete options
-  if [[ $cur == -* ]]; then
+  if [[ $cur == -* ]]; then # options
     COMPREPLY=($(compgen -W "$opts" -- $cur))
-  elif [[ $cur == --target= || $prev == '-t' ]]; then
+  elif [[ $cur == --target= || $prev == '-t' ]]; then # directories
     COMPREPLY=($(compgen -f -- $cur))
-  elif [[ ${COMP_WORDS[@]} = *-@(!(-*)[di]*|-download|-info)* ]]; then
+  elif [[ ${COMP_WORDS[@]} = *-@(!(-*)[di]*|-download|-info)* ]]; then # aur packages
     COMPREPLY=($(compgen -W "$((( ${#cur} > 2 )) && $COWER -sq -- $cur 2>/dev/null)" -- $cur))
-  elif [[ ${COMP_WORDS[@]} = *-@(!(-*)[u]*|--update)* ]]; then
+  elif [[ ${COMP_WORDS[@]} = *-@(!(-*)[u]*|--update)* ]]; then # local packages
     COMPREPLY=($(compgen -W "$(pacman -Qqm)" -- $cur))
   fi
 
