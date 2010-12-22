@@ -142,7 +142,6 @@ typedef enum __operation_t {
 
 enum {
   OP_DEBUG = 1000,
-  OP_SSL,
   OP_IGNORE,
   OP_THREADS
 };
@@ -228,9 +227,9 @@ static int json_end_map(void*);
 static int json_map_key(void*, const unsigned char*, unsigned int);
 static int json_start_map(void*);
 static int json_string(void*, const unsigned char*, unsigned int);
-static alpm_list_t *parse_bash_array(alpm_list_t*, char**, int);
+static alpm_list_t *parse_bash_array(alpm_list_t*, char*, int);
 static int parse_options(int, char*[]);
-static void pkgbuild_get_extinfo(char**, alpm_list_t**[]);
+static void pkgbuild_get_extinfo(char*, alpm_list_t**[]);
 static void print_extinfo_list(alpm_list_t*, const char*);
 static void print_pkg_info(struct aurpkg_t*);
 static void print_pkg_search(struct aurpkg_t*);
@@ -818,16 +817,16 @@ int json_string(void *ctx, const unsigned char *data, unsigned int size) {
   return(1);
 }
 
-alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **array, int type) {
+alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *array, int type) {
   char *ptr, *token;
 
-  if (!*array) {
+  if (!array) {
     return(NULL);
   }
 
   if (type == PKGDETAIL_OPTDEPENDS) {
-    const char *arrayend = rawmemchr(*array, '\0');
-    for (ptr = token = *array; token <= arrayend; token++) {
+    const char *arrayend = rawmemchr(array, '\0');
+    for (ptr = token = array; token <= arrayend; token++) {
       if (*token == '\'' || *token == '\"') {
         token++;
         ptr = strchr(token, *(token - 1));
@@ -849,7 +848,7 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char **array, int type) {
     return(deplist);
   }
 
-  for (token = strtok(*array, " \n"); token; token = strtok(NULL, " \n")) {
+  for (token = strtok(array, " \n"); token; token = strtok(NULL, " \n")) {
     pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
     strtrim(token);
@@ -896,7 +895,6 @@ int parse_options(int argc, char *argv[]) {
     {"help",      no_argument,        0, 'h'},
     {"ignore",    required_argument,  0, OP_IGNORE},
     {"quiet",     no_argument,        0, 'q'},
-    {"ssl",       no_argument,        0, OP_SSL},
     {"target",    required_argument,  0, 't'},
     {"threads",   required_argument,  0, OP_THREADS},
     {"verbose",   no_argument,        0, 'v'},
@@ -1015,10 +1013,10 @@ int parse_options(int argc, char *argv[]) {
   return(0);
 }
 
-void pkgbuild_get_extinfo(char **pkgbuild, alpm_list_t **details[]) {
+void pkgbuild_get_extinfo(char *pkgbuild, alpm_list_t **details[]) {
   char *lineptr;
 
-  for (lineptr = *pkgbuild; lineptr; lineptr = strchr(lineptr, '\n')) {
+  for (lineptr = pkgbuild; lineptr; lineptr = strchr(lineptr, '\n')) {
     char *arrayend;
     int depth = 1, type = 0;
     alpm_list_t **deplist;
@@ -1058,7 +1056,7 @@ void pkgbuild_get_extinfo(char **pkgbuild, alpm_list_t **details[]) {
         }
       }
       *(arrayend - 1) = '\0';
-      *deplist = parse_bash_array(*deplist, &arrayptr, type);
+      *deplist = parse_bash_array(*deplist, arrayptr, type);
       lineptr = arrayend;
     }
   }
@@ -1205,7 +1203,7 @@ int resolve_dependencies(const char *pkgname) {
   };
 
   cwr_printf(LOG_DEBUG, "Parsing %s for extended info\n", filename);
-  pkgbuild_get_extinfo(&pkgbuild, pkg_details);
+  pkgbuild_get_extinfo(pkgbuild, pkg_details);
   free(pkgbuild);
 
   for (i = deplist; i; i = alpm_list_next(i)) {
@@ -1546,7 +1544,7 @@ void *task_query(void *arg) {
       &aurpkg->provides, &aurpkg->conflicts, &aurpkg->replaces
     };
 
-    pkgbuild_get_extinfo(&pkgbuild, pkg_details);
+    pkgbuild_get_extinfo(pkgbuild, pkg_details);
     free(pkgbuild);
   }
 
