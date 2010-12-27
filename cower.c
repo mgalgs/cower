@@ -1513,9 +1513,11 @@ void *task_query(void *arg) {
   if (!(opmask & OP_SEARCH)) {
     pkglist = parse_struct->pkglist;
   } else {
-    if (STREQ(arg, argstr)) {
+    if (strncmp(arg, argstr, span) == 0) {
+      cwr_printf(LOG_DEBUG, "skipping regex filtering\n");
       pkglist = parse_struct->pkglist;
     } else {
+      cwr_printf(LOG_DEBUG, "filtering results with regex: %s\n", (const char*)arg);
       for (i = parse_struct->pkglist; i; i = alpm_list_next(i)) {
         struct aurpkg_t *p = alpm_list_getdata(i);
         if (regexec(&regex, p->name, 0, 0, 0) != REG_NOMATCH) {
