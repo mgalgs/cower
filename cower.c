@@ -1409,6 +1409,7 @@ void *task_download(void *arg) {
     default:
       cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with http%ld\n",
           httpcode);
+      goto finish;
   }
   cwr_printf(LOG_INFO, "%s%s%s downloaded to %s\n",
       colstr->pkg, (const char*)arg, colstr->nc, download_dir);
