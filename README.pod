@@ -4,7 +4,7 @@ cower - a simple AUR downloader
 
 =head1 SYNOPSIS
 
-Usage: I<cower> [options] E<lt>operationE<gt> [ targets... ]
+Usage: I<cower> E<lt>operationE<gt> [ options ] [ targets ]
 
 =head1 DESCRIPTION
 
@@ -18,16 +18,16 @@ applicable options, and usually one or more targets.
 
 =item B<-d, --download>
 
-Download I<target>(s). Pass this option twice to fetch dependencies (done
+Download I<target>. Pass this option twice to fetch dependencies (done
 recursively).
 
 =item B<-i, --info>
 
-Show info for I<targets>. Pass this option twice to fetch more detailed info.
+Show info for I<target>. Pass this option twice to fetch more detailed info.
 
 =item B<-m, --msearch>
 
-Search for packages maintained by target(s).
+Search for packages maintained by I<target>.
 
 =item B<-s, --search>
 
@@ -53,7 +53,7 @@ those targets will be checked. This operation can be combined with the
 
 =over 4
 
-=item B<-c, --color[=WHEN]>
+=item B<-c>, B<--color>[B<=>I<WHEN>]
 
 Use colored output. WHEN is `always' or `auto'. Color will be disabled in a
 pipe unless WHEN is set to always.
@@ -70,7 +70,7 @@ Overwrite existing files when downloading.
 
 Display the help message and quit.
 
-=item B<--ignore> <'pkg'>
+=item B<--ignore=>I<PKG>
 
 Ignore a package upgrade. Can be used more than once. Also accepts a comma
 delimited list as a single argument. Packages listed in pacman's IgnorePkg
@@ -80,13 +80,12 @@ directive are honored.
 
 Output less.
 
-=item B<-t, --target> <'dir'>
+=item B<-t> I<DIR>, B<--target=>I<DIR>
 
-Download taurballs to alternate directory, specified by I<DIR>. Either a
-relative or absolute path can be specified, but all components of the path must
-exist.
+Download targets to alternate directory, specified by I<DIR>. Either a relative
+or absolute path can be specified, but all components of the path must exist.
 
-=item B<--threads> <'num'>
+=item B<--threads=>I<NUM>
 
 Limit the number of threads created, with a default of 20. In practice, you
 should never need to bother with this setting. Other than the case of an
@@ -99,6 +98,33 @@ the number of threads created will instead be the number of targets.
 Output more. This primarily affects the update operation.
 
 =back
+
+=head1 FORMATTING
+
+When the B<--format> option is used the following sequences are interpreted
+within the format string:
+
+  %c    category
+
+  %d    description
+
+  %i    id
+
+  %l    license
+
+  %n    name
+
+  %o    votes
+
+  %p    AUR page
+
+  %t    out of date (yes/no)
+
+  %u    project URL
+
+  %v    version
+
+  %%    a literal %
 
 =head1 AUTHOR
 
