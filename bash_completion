@@ -1,7 +1,7 @@
 #!/bin/bash
 
 _cower() {
-  local COWER cur prev opts ng
+  local COWER i cur prev opts ng
 
   COWER=$(type -P cower)
   [[ -z $COWER ]] && return 0
@@ -16,12 +16,17 @@ _cower() {
 
   if [[ $cur == -* ]]; then # options
     COMPREPLY=($(compgen -W "$opts" -- $cur))
-  elif [[ $cur == --target= || $prev == '-t' ]]; then # directories
-    COMPREPLY=($(compgen -f -- $cur))
-  elif [[ ${COMP_WORDS[@]} = *-@(!(-*)[di]*|-download|-info)* ]]; then # aur packages
-    COMPREPLY=($(compgen -W "$((( ${#cur} > 2 )) && $COWER -sq -- $cur 2>/dev/null)" -- $cur))
-  elif [[ ${COMP_WORDS[@]} = *-@(!(-*)[u]*|--update)* ]]; then # local packages
+  elif [[ $cur == --target= || $prev == '-t' ]]; then # directories (taken from _cd)
+    compgen -f /non-existing-dir/ >/dev/null
+    _filedir -d
+    if (( ${#COMPREPLY[@]} == 1 )); then
+      i=${COMPREPLY[0]}
+      [[ "$i" == "$cur" && $i != "*/" ]] && COMPREPLY[0]="${i}/"
+    fi
+  elif [[ ${COMP_WORDS[@]} = *-@(!(-*)@(u)*|-update)* ]]; then # local packages
     COMPREPLY=($(compgen -W "$(pacman -Qqm)" -- $cur))
+  elif [[ ${COMP_WORDS[@]} = *-@(!(-*)@(d|i)*|-download|-info)* ]]; then # aur packages
+    COMPREPLY=($(compgen -W "$((( ${#cur} > 2 )) && $COWER -sq -- $cur 2>/dev/null)" -- $cur))
   fi
 
   # restore nullglob setting
@@ -29,4 +34,4 @@ _cower() {
 
 }
 
-complete -F _cower cower
+complete -F _cower -o nospace cower
