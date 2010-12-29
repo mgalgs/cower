@@ -1514,7 +1514,7 @@ void *task_query(void *arg) {
   if (!(opmask & OP_SEARCH)) {
     pkglist = parse_struct->pkglist;
   } else {
-    if (strncmp(arg, argstr, span) == 0) {
+    if (strlen(arg) == (size_t)span) {
       cwr_printf(LOG_DEBUG, "skipping regex filtering\n");
       pkglist = parse_struct->pkglist;
     } else {
