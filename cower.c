@@ -1444,6 +1444,11 @@ void *task_query(void *arg) {
   int span = 0;
   struct yajl_parser_t *parse_struct;
 
+  if ((opmask & OP_SEARCH) && regcomp(&regex, arg, REGEX_OPTS) != 0) {
+    cwr_fprintf(stderr, LOG_ERROR, "invalid regex pattern: %s\n", (const char*)arg);
+    return(NULL);
+  }
+
   /* find a valid chunk of search string */
   for (argstr = arg; *argstr; argstr++) {
     span = strcspn(argstr, REGEX_CHARS);
@@ -1460,11 +1465,6 @@ void *task_query(void *arg) {
 
   if ((opmask & OP_SEARCH) && span < 2) {
     cwr_fprintf(stderr, LOG_ERROR, "search string '%s' too short\n", (const char*)arg);
-    return(NULL);
-  }
-
-  if ((opmask & OP_SEARCH) && regcomp(&regex, arg, REGEX_OPTS) != 0) {
-    cwr_fprintf(stderr, LOG_ERROR, "invalid regex pattern: %s\n", (const char*)arg);
     return(NULL);
   }
 
