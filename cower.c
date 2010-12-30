@@ -1458,6 +1458,12 @@ void *task_query(void *arg) {
       span--;
     }
 
+    /* a string inside [] or {} cannot be a valid span */
+    if (strchr("[{", *argstr)) {
+      argstr = strpbrk(argstr + span, "]}");
+      continue;
+    }
+
     if (span >= 2) {
       break;
     }
