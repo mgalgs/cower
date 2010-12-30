@@ -121,7 +121,7 @@
 #define BOLDWHITE             "\033[1;37m"
 
 #define REGEX_OPTS            REG_ICASE|REG_EXTENDED|REG_NOSUB|REG_NEWLINE
-#define REGEX_CHARS           "^.+*?$[]()\\"
+#define REGEX_CHARS           "^.+*?$[](){}|\\"
 
 /* enums */
 typedef enum __loglevel_t {
