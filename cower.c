@@ -1674,9 +1674,9 @@ void usage() {
       " Operations:\n"
       "  -d, --download          download target(s) -- pass twice to "
                                    "download AUR dependencies\n"
-      "  -m, --msearch           show packages maintained by target(s)\n"
       "  -i, --info              show info for target(s) -- pass twice for "
                                    "more detail\n"
+      "  -m, --msearch           show packages maintained by target(s)\n"
       "  -s, --search            search for target(s)\n"
       "  -u, --update            check for updates against AUR -- can be combined "
                                    "with the -d flag\n\n");
