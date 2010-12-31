@@ -34,11 +34,11 @@ Search for packages maintained by I<target>.
 Search for packages with the I<target>(s) as the search term(s). Extended regex
 patterns as defined by POSIX are allowed.
 
-B<Note:> This is more or less a hack because it's implemented on top of what
-the 2 character minimum and lack of regex that the AUR offers. Cower will
-search based on the first span of 2 non-regex characters it finds and filter
-using the regular expression provided. cower makes no guarantees that complex
-patterns will return accurate results.
+B<Note:> This is more or less a hack because it's implemented on top of the
+AUR's the 2 character search minimum and lack of regex. cower will search based
+on the first span of 2 non-regex characters it finds and filter using the
+regular expression provided. cower makes no guarantees that complex patterns
+will return accurate results.
 
 =item B<-u, --update>
 
