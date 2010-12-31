@@ -34,7 +34,7 @@ dist: clean
 	rm -rf cower-${VERSION}
 
 strip: cower
-	strip --strip-unneeded cower
+	strip --strip-all cower
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
