@@ -58,6 +58,7 @@
 #define AUR_RPC_URL           "https://aur.archlinux.org/rpc.php?type=%s&arg=%s"
 #define AUR_MAX_CONNECTIONS   10
 #define THREAD_MAX            20
+#define DEFAULT_TIMEOUT       10L
 
 #define AUR_QUERY_TYPE        "type"
 #define AUR_QUERY_TYPE_INFO   "info"
@@ -143,7 +144,8 @@ typedef enum __operation_t {
 enum {
   OP_DEBUG = 1000,
   OP_IGNORE,
-  OP_THREADS
+  OP_THREADS,
+  OP_TIMEOUT
 };
 
 enum {
@@ -252,6 +254,7 @@ int optforce = 0;
 int optgetdeps = 0;
 int optmaxthreads = THREAD_MAX;
 int optquiet = 0;
+int opttimeout = DEFAULT_TIMEOUT;
 
 /* variables */
 struct strings_t *colstr;
@@ -584,9 +587,15 @@ CURL *curl_create_easy_handle() {
   }
 
   curl_easy_setopt(handle, CURLOPT_USERAGENT, COWER_USERAGENT);
-  curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 10L);
-  curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1L);
   curl_easy_setopt(handle, CURLOPT_ENCODING, "deflate, gzip");
+  curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, opttimeout);
+
+  /* This is required of multi-threaded apps using timeouts. See
+   * curl_easy_setopt(3)
+   */
+  if (opttimeout > 0L) {
+    curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1L);
+  }
 
   return(handle);
 }
@@ -898,6 +907,7 @@ int parse_options(int argc, char *argv[]) {
     {"quiet",     no_argument,        0, 'q'},
     {"target",    required_argument,  0, 't'},
     {"threads",   required_argument,  0, OP_THREADS},
+    {"timeout",   required_argument,  0, OP_TIMEOUT},
     {"verbose",   no_argument,        0, 'v'},
     {0, 0, 0, 0}
   };
@@ -982,6 +992,14 @@ int parse_options(int argc, char *argv[]) {
         optmaxthreads = strtol(optarg, &token, 10);
         if (*token != '\0') {
           fprintf(stderr, "error: invalid argument to --threads\n");
+          return(1);
+        }
+        break;
+
+      case OP_TIMEOUT:
+        opttimeout = strtol(optarg, &token, 10);
+        if (*token != '\0') {
+          fprintf(stderr, "error: invalid argument to --timeout\n");
           return(1);
         }
         break;
@@ -1660,7 +1678,8 @@ void usage() {
       "  -h, --help              display this help and exit\n"
       "      --ignore <pkg>      ignore a package upgrade (can be used more than once)\n"
       "  -t, --target <dir>      specify an alternate download directory\n"
-      "      --threads <num>     limit number of threads created\n\n");
+      "      --threads <num>     limit number of threads created\n"
+      "      --timeout <num>     specify connection timeout in seconds\n\n");
   fprintf(stderr, " Output options:\n"
       "  -c, --color[=WHEN]      use colored output. WHEN is `never', `always', or `auto'\n"
       "      --debug             show debug output\n"

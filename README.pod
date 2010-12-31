@@ -93,6 +93,12 @@ should never need to bother with this setting. Other than the case of an
 target provided to cower. If cower has fewer targets than threads specified,
 the number of threads created will instead be the number of targets.
 
+=item B<--timeout=>I<NUM>
+
+Specify how long libcurl is willing to wait for a connection to be made, in
+seconds. By default, this is 10 seconds. Setting this value to 0 will disable
+timeouts.
+
 =item B<-v, --verbose>
 
 Output more. This primarily affects the update operation.
