@@ -208,7 +208,7 @@ struct task_t {
 static alpm_list_t *alpm_find_foreign_pkgs(void);
 static int alpm_init(void);
 static int alpm_pkg_is_foreign(pmpkg_t*);
-static pmdb_t *alpm_provides_pkg(const char*);
+static const char *alpm_provides_pkg(const char*);
 static int archive_extract_file(const struct response_t*);
 static int aurpkg_cmp(const void*, const void*);
 static void aurpkg_free(void*);
@@ -415,14 +415,14 @@ int alpm_pkg_is_foreign(pmpkg_t *pkg) {
   return(1);
 }
 
-pmdb_t *alpm_provides_pkg(const char *pkgname) {
+const char *alpm_provides_pkg(const char *pkgname) {
   alpm_list_t *i;
   pmdb_t *db;
 
   for (i = alpm_option_get_syncdbs(); i; i = alpm_list_next(i)) {
     db = alpm_list_getdata(i);
     if (alpm_db_get_pkg(db, pkgname)) {
-      return(db);
+      return(alpm_db_get_name(db));
     }
   }
 
@@ -1331,9 +1331,9 @@ char *strtrim(char *str) {
 
 void *task_download(void *arg) {
   alpm_list_t *queryresult = NULL;
-  pmdb_t *db;
   CURL *curl;
   CURLcode curlstat;
+  const char *db;
   char *url, *escaped;
   const void *self;
   int ret;
@@ -1353,7 +1353,7 @@ void *task_download(void *arg) {
   if (db) {
     cwr_fprintf(stderr, LOG_WARN, "%s%s%s is available in %s%s%s\n",
         colstr->pkg, (const char*)arg, colstr->nc,
-        colstr->repo, alpm_db_get_name(db), colstr->nc);
+        colstr->repo, db, colstr->nc);
     return(NULL);
   }
 
