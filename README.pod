@@ -99,33 +99,6 @@ Output more. This primarily affects the update operation.
 
 =back
 
-=head1 FORMATTING
-
-When the B<--format> option is used the following sequences are interpreted
-within the format string:
-
-  %c    category
-
-  %d    description
-
-  %i    id
-
-  %l    license
-
-  %n    name
-
-  %o    votes
-
-  %p    AUR page
-
-  %t    out of date (yes/no)
-
-  %u    project URL
-
-  %v    version
-
-  %%    a literal %
-
 =head1 AUTHOR
 
 Dave Reisner E<lt>d@falconindy.comE<gt>
