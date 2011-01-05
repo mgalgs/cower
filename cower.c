@@ -1476,28 +1476,32 @@ void *task_query(void *arg) {
   }
 
   /* find a valid chunk of search string */
-  for (argstr = arg; *argstr; argstr++) {
-    span = strcspn(argstr, REGEX_CHARS);
+  if (opmask & OP_SEARCH) {
+    for (argstr = arg; *argstr; argstr++) {
+      span = strcspn(argstr, REGEX_CHARS);
 
-    /* given 'cow?', we can't include w in the search */
-    if (*(argstr + span) == '?' || *(argstr + span) == '*') {
-      span--;
+      /* given 'cow?', we can't include w in the search */
+      if (*(argstr + span) == '?' || *(argstr + span) == '*') {
+        span--;
+      }
+
+      /* a string inside [] or {} cannot be a valid span */
+      if (strchr("[{", *argstr)) {
+        argstr = strpbrk(argstr + span, "]}");
+        continue;
+      }
+
+      if (span >= 2) {
+        break;
+      }
     }
 
-    /* a string inside [] or {} cannot be a valid span */
-    if (strchr("[{", *argstr)) {
-      argstr = strpbrk(argstr + span, "]}");
-      continue;
+    if (span < 2) {
+      cwr_fprintf(stderr, LOG_ERROR, "search string '%s' too short\n", (const char*)arg);
+      return(NULL);
     }
-
-    if (span >= 2) {
-      break;
-    }
-  }
-
-  if ((opmask & OP_SEARCH) && span < 2) {
-    cwr_fprintf(stderr, LOG_ERROR, "search string '%s' too short\n", (const char*)arg);
-    return(NULL);
+  } else {
+    argstr = arg;
   }
 
   parse_struct = malloc(sizeof *parse_struct);
