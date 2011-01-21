@@ -453,10 +453,7 @@ int archive_extract_file(const struct response_t *file) {
   if (ret == ARCHIVE_OK) {
     while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
       switch (archive_read_extract(archive, entry, archive_flags)) {
-        case ARCHIVE_OK:
-        case ARCHIVE_WARN:
-        case ARCHIVE_RETRY:
-          break;
+        /* NOOP on ARCHIVE_{OK,WARN,RETRY} */
         case ARCHIVE_FATAL:
           ret = ARCHIVE_FATAL;
           break;
