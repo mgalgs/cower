@@ -1371,9 +1371,9 @@ void *task_download(void *arg) {
   self = (const void*)pthread_self();
 
   pthread_mutex_lock(&lock);
-  cwr_printf(LOG_DEBUG, "thread[%p]: locking alpm mutex\n", self);
+  cwr_printf(LOG_DEBUG, "[%p]: locking alpm mutex\n", self);
   db = alpm_provides_pkg(arg);
-  cwr_printf(LOG_DEBUG, "thread[%p]: unlocking alpm mutex\n", self);
+  cwr_printf(LOG_DEBUG, "[%p]: unlocking alpm mutex\n", self);
   pthread_mutex_unlock(&lock);
 
   if (db) {
@@ -1414,9 +1414,9 @@ void *task_download(void *arg) {
   curl_free(escaped);
 
   sem_wait(&sem_download);
-  cwr_printf(LOG_DEBUG, "---> thread[%p]: entering critical\n", self);
+  cwr_printf(LOG_DEBUG, "---> [%p]: entering critical\n", self);
   curlstat = curl_easy_perform(curl);
-  cwr_printf(LOG_DEBUG, "<--- thread[%p]: leaving critical\n", self);
+  cwr_printf(LOG_DEBUG, "<--- [%p]: leaving critical\n", self);
   sem_post(&sem_download);
 
   if (curlstat != CURLE_OK) {
@@ -1528,7 +1528,7 @@ void *task_query(void *arg) {
   curl_easy_setopt(curl, CURLOPT_URL, url);
 
   sem_wait(&sem_download); /* limit concurrent downloads to AUR_MAX_CONNECTIONS */
-  cwr_printf(LOG_DEBUG, "performing curl operation on %s\n", url);
+  cwr_printf(LOG_DEBUG, "[%p]: curl_easy_perform %s\n", (void*)pthread_self(), url);
   curlstat = curl_easy_perform(curl);
   sem_post(&sem_download);
 
@@ -1797,12 +1797,12 @@ int main(int argc, char *argv[]) {
           strerror(ret));
       return(ret); /* we don't want to recover from this */
     }
-    cwr_printf(LOG_DEBUG, "thread[%p]: spawned\n", (void*)threads[n]);
+    cwr_printf(LOG_DEBUG, "[%p]: spawned\n", (void*)threads[n]);
   }
 
   for (n = 0; n < num_threads; n++) {
     pthread_join(threads[n], (void**)&thread_return);
-    cwr_printf(LOG_DEBUG, "thread[%p]: joined\n", (void*)threads[n]);
+    cwr_printf(LOG_DEBUG, "[%p]: joined\n", (void*)threads[n]);
     results = alpm_list_mmerge(results, thread_return, aurpkg_cmp);
   }
 
