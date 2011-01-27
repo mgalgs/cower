@@ -1208,17 +1208,17 @@ void print_results(alpm_list_t *results, void (*printfn)(struct aurpkg_t*)) {
 
 int resolve_dependencies(const char *pkgname) {
   alpm_list_t *i, *deplist = NULL;
+  int ret = 0;
   char *filename, *pkgbuild;
   static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
   void *retval;
 
-  cwr_asprintf(&filename, "%s/PKGBUILD", pkgname);
+  cwr_asprintf(&filename, "%s/%s/PKGBUILD", download_dir, pkgname);
 
   pkgbuild = get_file_as_buffer(filename);
-  free(filename);
-
   if (!pkgbuild) {
-    return(1);
+    ret = 1;
+    goto finish;
   }
 
   alpm_list_t **pkg_details[PKGDETAIL_MAX] = {
@@ -1228,6 +1228,7 @@ int resolve_dependencies(const char *pkgname) {
   cwr_printf(LOG_DEBUG, "Parsing %s for extended info\n", filename);
   pkgbuild_get_extinfo(pkgbuild, pkg_details);
   free(pkgbuild);
+  free(filename);
 
   for (i = deplist; i; i = alpm_list_next(i)) {
     const char *depend = alpm_list_getdata(i);
@@ -1256,6 +1257,7 @@ int resolve_dependencies(const char *pkgname) {
 
   FREELIST(deplist);
 
+finish:
   return(0);
 }
 
