@@ -431,7 +431,11 @@ const char *alpm_provides_pkg(const char *pkgname) {
 
   for (i = alpm_option_get_syncdbs(); i; i = alpm_list_next(i)) {
     db = alpm_list_getdata(i);
+#ifdef _HAVE_ALPM_FIND_SATISFIER
+    if (alpm_find_satisfier(alpm_db_get_pkgcache(db), pkgname)) {
+#else
     if (alpm_db_get_pkg(db, pkgname)) {
+#endif
       return(alpm_db_get_name(db));
     }
   }
