@@ -994,7 +994,7 @@ int parse_options(int argc, char *argv[]) {
         break;
       case OP_THREADS:
         optmaxthreads = strtol(optarg, &token, 10);
-        if (*token != '\0') {
+        if (*token != '\0' || optmaxthreads <= 0) {
           fprintf(stderr, "error: invalid argument to --threads\n");
           return(1);
         }
