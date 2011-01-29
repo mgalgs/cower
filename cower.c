@@ -311,7 +311,11 @@ int alpm_init() {
   }
   cwr_printf(LOG_DEBUG, "setting alpm DBPath to: %s\n", alpm_option_get_dbpath());
 
+#ifdef _HAVE_ALPM_DB_REGISTER_LOCAL
   db_local = alpm_db_register_local();
+#else
+  db_local = alpm_option_get_localdb();
+#endif
   if (!db_local) {
     return(1);
   }
