@@ -924,12 +924,8 @@ int parse_options(int argc, char *argv[]) {
     {0, 0, 0, 0}
   };
 
-  while ((opt = getopt_long(argc, argv, "cdfhimqst:uv", opts, &option_index))) {
+  while ((opt = getopt_long(argc, argv, "cdfhimqst:uv", opts, &option_index)) != -1) {
     char *token;
-
-    if (opt < 0) {
-      break;
-    }
 
     switch (opt) {
       /* operations */
