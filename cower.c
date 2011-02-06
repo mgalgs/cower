@@ -28,6 +28,7 @@
 #define _GNU_SOURCE
 #include <ctype.h>
 #include <errno.h>
+#include <locale.h>
 #include <getopt.h>
 #include <pthread.h>
 #include <regex.h>
@@ -1728,6 +1729,8 @@ int main(int argc, char *argv[]) {
     .printfn = NULL,
     .threadfn = task_query
   };
+
+  setlocale(LC_ALL, "");
 
   if ((ret = parse_options(argc, argv)) != 0) {
     return(ret);
