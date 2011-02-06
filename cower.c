@@ -383,7 +383,11 @@ int alpm_init() {
 alpm_list_t *alpm_find_foreign_pkgs() {
   alpm_list_t *i, *ret = NULL;
 
+#ifdef _HAVE_ALPM_DB_GET_PKGCACHE_LIST
+  for (i = alpm_db_get_pkgcache_list(db_local); i; i = alpm_list_next(i)) {
+#else
   for (i = alpm_db_get_pkgcache(db_local); i; i = alpm_list_next(i)) {
+#endif
     pmpkg_t *pkg = alpm_list_getdata(i);
 
     if (alpm_pkg_is_foreign(pkg)) {
@@ -436,8 +440,8 @@ const char *alpm_provides_pkg(const char *pkgname) {
 
   for (i = alpm_option_get_syncdbs(); i; i = alpm_list_next(i)) {
     db = alpm_list_getdata(i);
-#ifdef _HAVE_ALPM_FIND_SATISFIER
-    if (alpm_find_satisfier(alpm_db_get_pkgcache(db), pkgname)) {
+#ifdef _HAVE_ALPM_DB_GET_PKGCACHE_LIST
+    if (alpm_find_satisfier(alpm_db_get_pkgcache_list(db), pkgname)) {
 #else
     if (alpm_db_get_pkg(db, pkgname)) {
 #endif
@@ -1250,7 +1254,11 @@ int resolve_dependencies(const char *pkgname) {
     pthread_mutex_unlock(&lock);
 
     if (sanitized) {
+#ifdef _HAVE_ALPM_DB_GET_PKGCACHE_LIST
+      if (alpm_find_satisfier(alpm_db_get_pkgcache_list(db_local), depend)) {
+#else
       if (alpm_find_satisfier(alpm_db_get_pkgcache(db_local), depend)) {
+#endif
         cwr_printf(LOG_DEBUG, "%s is already satisified\n", depend);
       } else {
         retval = task_download(sanitized);

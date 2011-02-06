@@ -8,7 +8,7 @@ OBJ = ${SRC:.c=.o}
 all: cower doc
 
 35:
-	${MAKE} PMCHECK=-D_HAVE_ALPM_FIND_SATISFIER all
+	${MAKE} PMCHECK="-D_HAVE_ALPM_FIND_SATISFIER -D_HAVE_ALPM_DB_GET_PKGCACHE_LIST" all
 
 .c.o:
 	${CC} -c ${CFLAGS} $<
