@@ -1209,7 +1209,6 @@ void print_results(alpm_list_t *results, void (*printfn)(struct aurpkg_t*)) {
 
 int resolve_dependencies(CURL *curl, const char *pkgname) {
   alpm_list_t *i, *deplist = NULL;
-  int ret = 0;
   char *filename, *pkgbuild;
   static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
   void *retval;
@@ -1218,8 +1217,7 @@ int resolve_dependencies(CURL *curl, const char *pkgname) {
 
   pkgbuild = get_file_as_buffer(filename);
   if (!pkgbuild) {
-    ret = 1;
-    goto finish;
+    return(1);
   }
 
   alpm_list_t **pkg_details[PKGDETAIL_MAX] = {
@@ -1262,7 +1260,6 @@ int resolve_dependencies(CURL *curl, const char *pkgname) {
 
   FREELIST(deplist);
 
-finish:
   return(0);
 }
 
