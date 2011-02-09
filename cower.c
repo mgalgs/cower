@@ -621,6 +621,8 @@ char *curl_get_url_as_buffer(CURL *curl, const char *url) {
   struct response_t response;
   CURLcode curlstat;
 
+  curl = curl_init_easy_handle(curl);
+
   response.data = NULL;
   response.size = 0;
 
@@ -1214,6 +1216,8 @@ int resolve_dependencies(CURL *curl, const char *pkgname) {
   static pthread_mutex_t alock = PTHREAD_MUTEX_INITIALIZER;
   void *retval;
 
+  curl = curl_init_easy_handle(curl);
+
   cwr_asprintf(&filename, "%s/%s/PKGBUILD", download_dir, pkgname);
 
   pkgbuild = get_file_as_buffer(filename);
@@ -1373,6 +1377,8 @@ void *task_download(CURL *curl, void *arg) {
   struct stat st;
   static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
+  curl = curl_init_easy_handle(curl);
+
   self = (const void*)pthread_self();
 
   pthread_mutex_lock(&lock);
@@ -1447,7 +1453,6 @@ void *task_download(CURL *curl, void *arg) {
   }
 
   if (optgetdeps) {
-    curl = curl_init_easy_handle(curl);
     resolve_dependencies(curl, arg);
   }
 
@@ -1468,6 +1473,8 @@ void *task_query(CURL *curl, void *arg) {
   long httpcode;
   int span = 0;
   struct yajl_parser_t *parse_struct;
+
+  curl = curl_init_easy_handle(curl);
 
   if ((opmask & OP_SEARCH) && regcomp(&regex, arg, REGEX_OPTS) != 0) {
     cwr_fprintf(stderr, LOG_ERROR, "invalid regex pattern: %s\n", (const char*)arg);
@@ -1569,7 +1576,6 @@ void *task_query(CURL *curl, void *arg) {
     aurpkg = alpm_list_getdata(pkglist);
 
     cwr_asprintf(&pburl, AUR_PKGBUILD_PATH, escaped, escaped);
-    curl = curl_init_easy_handle(curl);
     pkgbuild = curl_get_url_as_buffer(curl, pburl);
     free(pburl);
 
@@ -1650,7 +1656,7 @@ void *thread_pool(void *arg) {
   curl = curl_easy_init();
   if (!curl) {
     cwr_fprintf(stderr, LOG_ERROR, "curl: failed to initialize handle\n");
-    pthread_exit(NULL);
+    return(NULL);
   }
 
   while (1) {
@@ -1665,7 +1671,6 @@ void *thread_pool(void *arg) {
       break;
     }
 
-    curl = curl_init_easy_handle(curl);
     ret = alpm_list_mmerge(ret, task->threadfn(curl, job), aurpkg_cmp);
   }
 
