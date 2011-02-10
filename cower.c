@@ -47,6 +47,9 @@
 #include <yajl/yajl_parse.h>
 
 /* macros */
+#define ALLOC_FAIL(s) do { cwr_fprintf(stderr, LOG_ERROR, "could not allocate %zd bytes\n", s); } while(0)
+#define MALLOC(p, s, action) do { p = calloc(1, s); if(!p) { ALLOC_FAIL(s); action; } } while(0)
+#define CALLOC(p, l, s, action) do { p = calloc(l, s); if(!p) { ALLOC_FAIL(s); action; } } while(0)
 #define FREE(x)               do { if(x) free((void*)x); x = NULL; } while(0)
 #define STREQ(x,y)            (strcmp((x),(y)) == 0)
 #define STR_STARTS_WITH(x,y)  (strncmp((x),(y), strlen(y)) == 0)
@@ -520,7 +523,7 @@ void aurpkg_free(void *pkg) {
 struct aurpkg_t *aurpkg_new() {
   struct aurpkg_t *pkg;
 
-  pkg = calloc(1, sizeof *pkg);
+  CALLOC(pkg, 1, sizeof *pkg, return(NULL));
 
   pkg->cat = pkg->ood = 0;
   pkg->name = pkg->id = pkg->ver = pkg->desc = pkg->lic = pkg->url = NULL;
@@ -694,11 +697,7 @@ char *get_file_as_buffer(const char *path) {
   fsize = ftell(fp);
   fseek(fp, 0L, SEEK_SET);
 
-  buf = calloc(1, fsize + 1);
-  if (!buf) {
-    cwr_fprintf(stderr, LOG_ERROR, "Failed to allocate %ld bytes\n", fsize + 1);
-    return(NULL);
-  }
+  CALLOC(buf, 1, fsize + 1, return(NULL));
 
   nread = fread(buf, 1, fsize, fp);
   fclose(fp);
@@ -730,7 +729,7 @@ void indentprint(const char *str, int indent) {
   }
 
   len = strlen(str) + 1;
-  wcstr = calloc(len, sizeof *wcstr);
+  CALLOC(wcstr, len, sizeof *wcstr, return);
   len = mbstowcs(wcstr, str, len);
   p = wcstr;
   cidx = indent;
@@ -1306,11 +1305,7 @@ int set_download_path() {
 }
 
 int strings_init() {
-  colstr = malloc(sizeof *colstr);
-  if (!colstr) {
-    cwr_fprintf(stderr, LOG_ERROR, "failed to allocate %zd bytes\n", sizeof *colstr);
-    return(1);
-  }
+  MALLOC(colstr, sizeof *colstr, return(1));
 
   if (optcolor) {
     colstr->error = BOLDRED "::" NC;
@@ -1510,7 +1505,7 @@ void *task_query(CURL *curl, void *arg) {
     argstr = arg;
   }
 
-  parse_struct = malloc(sizeof *parse_struct);
+  MALLOC(parse_struct, sizeof *parse_struct, return(NULL));
   parse_struct->pkglist = NULL;
   parse_struct->json_depth = 0;
   yajl_hand = yajl_alloc(&callbacks, NULL, NULL, (void*)parse_struct);
@@ -1779,11 +1774,7 @@ int main(int argc, char *argv[]) {
     num_threads = optmaxthreads;
   }
 
-  if (!(threads = calloc(num_threads, sizeof *threads))) {
-    cwr_fprintf(stderr, LOG_ERROR, "failed to allocate memory: %s\n",
-        strerror(errno));
-    goto finish;
-  }
+  CALLOC(threads, num_threads, sizeof *threads, goto finish);
 
   sem_init(&sem_download, 0, AUR_MAX_CONNECTIONS);
   pthread_attr_init(&attr);
