@@ -1210,7 +1210,8 @@ void print_results(alpm_list_t *results, void (*printfn)(struct aurpkg_t*)) {
 int resolve_dependencies(CURL *curl, const char *pkgname) {
   alpm_list_t *i, *deplist = NULL;
   char *filename, *pkgbuild;
-  static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+  static pthread_mutex_t flock = PTHREAD_MUTEX_INITIALIZER;
+  static pthread_mutex_t alock = PTHREAD_MUTEX_INITIALIZER;
   void *retval;
 
   cwr_asprintf(&filename, "%s/%s/PKGBUILD", download_dir, pkgname);
@@ -1235,20 +1236,24 @@ int resolve_dependencies(CURL *curl, const char *pkgname) {
 
     *(sanitized + strcspn(sanitized, "<>=")) = '\0';
 
-    pthread_mutex_lock(&lock);
+    pthread_mutex_lock(&alock);
     if (!alpm_list_find_str(targets, sanitized)) {
       targets = alpm_list_add(targets, sanitized);
     } else {
       FREE(sanitized);
     }
-    pthread_mutex_unlock(&lock);
+    pthread_mutex_unlock(&alock);
 
     if (sanitized) {
 #ifdef _HAVE_ALPM_DB_GET_PKGCACHE_LIST
-      if (alpm_find_satisfier(alpm_db_get_pkgcache_list(db_local), depend)) {
+      alpm_list_t *pkgcache = alpm_db_get_pkgcache_list(db_local);
 #else
-      if (alpm_find_satisfier(alpm_db_get_pkgcache(db_local), depend)) {
+      alpm_list_t *pkgcache = alpm_db_get_pkgcache(db_local);
 #endif
+      pthread_mutex_lock(&flock);
+      pmpkg_t *satisfier = alpm_find_satisfier(pkgcache, depend);
+      pthread_mutex_unlock(&flock);
+      if (satisfier) {
         cwr_printf(LOG_DEBUG, "%s is already satisified\n", depend);
       } else {
         retval = task_download(curl, sanitized);
