@@ -400,7 +400,7 @@ alpm_list_t *alpm_find_foreign_pkgs() {
 
 #ifndef _HAVE_ALPM_FIND_SATISFIER
 /* this is a half assed version of the real thing */
-char *alpm_find_satisfier(alpm_list_t *pkgs, const char *depstring) {
+pmpkg_t *alpm_find_satisfier(alpm_list_t *pkgs, const char *depstring) {
   alpm_list_t *results, *target = NULL;
   char *pkgname;
 
