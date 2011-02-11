@@ -697,7 +697,7 @@ char *get_file_as_buffer(const char *path) {
   fsize = ftell(fp);
   fseek(fp, 0L, SEEK_SET);
 
-  CALLOC(buf, 1, fsize + 1, return(NULL));
+  CALLOC(buf, 1, (ssize_t)fsize + 1, return(NULL));
 
   nread = fread(buf, 1, fsize, fp);
   fclose(fp);
