@@ -287,8 +287,8 @@ static const char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
                                 "modules", "multimedia", "network", "office",
                                 "science", "system", "x11", "xfce", "kernels" };
 
-static const char binrepos[][20] = { "community", "community-testing", "core",
-                                     "extra", "multilib", "testing" };
+static const char binrepos[][20] = { "community", "community-testing", "core", "extra",
+                                    "multilib", "testing", "multilib-testing" };
 
 /* function implementations */
 int alpm_init() {
