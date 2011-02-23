@@ -1511,7 +1511,7 @@ void *task_query(CURL *curl, void *arg) {
   yajl_hand = yajl_alloc(&callbacks, NULL, NULL, (void*)parse_struct);
 
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, yajl_parse_stream);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &yajl_hand);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, yajl_hand);
 
   escaped = curl_easy_escape(curl, argstr, span);
   if (opmask & OP_SEARCH) {
@@ -1705,7 +1705,7 @@ size_t yajl_parse_stream(void *ptr, size_t size, size_t nmemb, void *stream) {
   yajl_handle hand;
   yajl_status stat;
 
-  hand = *(yajl_handle*)stream;
+  hand = (yajl_handle)stream;
   size_t realsize = size * nmemb;
 
   stat = yajl_parse(hand, ptr, realsize);
