@@ -1537,7 +1537,7 @@ void *task_query(CURL *curl, void *arg) {
   }
 
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
-  if (httpcode != 200) {
+  if (httpcode >= 300) {
     cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with http%ld\n", httpcode);
     goto finish;
   }
