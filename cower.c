@@ -1461,7 +1461,7 @@ finish:
 void *task_query(CURL *curl, void *arg) {
   alpm_list_t *i, *pkglist = NULL;
   CURLcode curlstat;
-  yajl_handle yajl_hand = NULL;
+  struct yajl_handle_t *yajl_hand = NULL;
   regex_t regex;
   const char *argstr;
   char *escaped, *url;
@@ -1702,10 +1702,10 @@ void usage() {
 }
 
 size_t yajl_parse_stream(void *ptr, size_t size, size_t nmemb, void *stream) {
-  yajl_handle hand;
+  struct yajl_handle_t *hand;
   yajl_status stat;
 
-  hand = (yajl_handle)stream;
+  hand = (struct yajl_handle_t*)stream;
   size_t realsize = size * nmemb;
 
   stat = yajl_parse(hand, ptr, realsize);
