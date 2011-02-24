@@ -1703,18 +1703,11 @@ void usage() {
 
 size_t yajl_parse_stream(void *ptr, size_t size, size_t nmemb, void *stream) {
   struct yajl_handle_t *hand;
-  yajl_status stat;
 
   hand = (struct yajl_handle_t*)stream;
   size_t realsize = size * nmemb;
 
-  stat = yajl_parse(hand, ptr, realsize);
-  if (stat != yajl_status_ok && stat != yajl_status_insufficient_data) {
-    unsigned char *str = yajl_get_error(hand, 1, ptr, realsize);
-    cwr_fprintf(stderr, LOG_ERROR, "json parsing error: %s\n", str);
-    yajl_free_error(hand, str);
-    return realsize;
-  }
+  yajl_parse(hand, ptr, realsize);
 
   return realsize;
 }
