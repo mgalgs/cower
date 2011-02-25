@@ -386,11 +386,7 @@ int alpm_init() {
 alpm_list_t *alpm_find_foreign_pkgs() {
   alpm_list_t *i, *ret = NULL;
 
-#ifdef _HAVE_ALPM_DB_GET_PKGCACHE_LIST
-  for (i = alpm_db_get_pkgcache_list(db_local); i; i = alpm_list_next(i)) {
-#else
   for (i = alpm_db_get_pkgcache(db_local); i; i = alpm_list_next(i)) {
-#endif
     pmpkg_t *pkg = alpm_list_getdata(i);
 
     if (alpm_pkg_is_foreign(pkg)) {
@@ -443,8 +439,8 @@ const char *alpm_provides_pkg(const char *pkgname) {
 
   for (i = alpm_option_get_syncdbs(); i; i = alpm_list_next(i)) {
     db = alpm_list_getdata(i);
-#ifdef _HAVE_ALPM_DB_GET_PKGCACHE_LIST
-    if (alpm_find_satisfier(alpm_db_get_pkgcache_list(db), pkgname)) {
+#ifdef _HAVE_ALPM_FIND_SATISFIER
+    if (alpm_find_satisfier(alpm_db_get_pkgcache(db), pkgname)) {
 #else
     if (alpm_db_get_pkg(db, pkgname)) {
 #endif
@@ -1248,11 +1244,7 @@ int resolve_dependencies(CURL *curl, const char *pkgname) {
     pthread_mutex_unlock(&alock);
 
     if (sanitized) {
-#ifdef _HAVE_ALPM_DB_GET_PKGCACHE_LIST
-      alpm_list_t *pkgcache = alpm_db_get_pkgcache_list(db_local);
-#else
       alpm_list_t *pkgcache = alpm_db_get_pkgcache(db_local);
-#endif
       pthread_mutex_lock(&flock);
       pmpkg_t *satisfier = alpm_find_satisfier(pkgcache, depend);
       pthread_mutex_unlock(&flock);
