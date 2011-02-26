@@ -56,7 +56,7 @@
 
 #define COWER_USERAGENT       "cower/3.x"
 
-#define AUR_PKGBUILD_PATH     "https://aur.archlinux.org/packages/%s/%s/PKGBUILD"
+#define AUR_PKGBUILD_PATH     "https://aur.archlinux.org/packages/%s/PKGBUILD"
 #define AUR_PKG_URL           "https://aur.archlinux.org/packages/%s/%s.tar.gz"
 #define AUR_PKG_URL_FORMAT    "https://aur.archlinux.org/packages.php?ID="
 #define AUR_RPC_URL           "https://aur.archlinux.org/rpc.php?type=%s&arg=%s"
@@ -1562,7 +1562,7 @@ void *task_query(CURL *curl, void *arg) {
 
     aurpkg = alpm_list_getdata(pkglist);
 
-    cwr_asprintf(&pburl, AUR_PKGBUILD_PATH, escaped, escaped);
+    cwr_asprintf(&pburl, AUR_PKGBUILD_PATH, escaped);
     pkgbuild = curl_get_url_as_buffer(curl, pburl);
     free(pburl);
 
