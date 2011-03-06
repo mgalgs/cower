@@ -97,7 +97,7 @@ or absolute path can be specified, but all components of the path must exist.
 
 =item B<--threads=>I<NUM>
 
-Limit the number of threads created, with a default of 20. In practice, you
+Limit the number of threads created, with a default of 10. In practice, you
 should never need to bother with this setting. Other than the case of an
 --update operation with no targets specified, a thread is created for each
 target provided to cower. If cower has fewer targets than threads specified,

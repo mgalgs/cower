@@ -61,7 +61,7 @@
 #define AUR_PKG_URL_FORMAT    "%s://aur.archlinux.org/packages.php?ID="
 #define AUR_RPC_URL           "%s://aur.archlinux.org/rpc.php?type=%s&arg=%s"
 #define AUR_MAX_CONNECTIONS   10
-#define THREAD_MAX            20
+#define THREAD_MAX            10
 #define DEFAULT_TIMEOUT       10L
 
 #define AUR_QUERY_TYPE        "type"
