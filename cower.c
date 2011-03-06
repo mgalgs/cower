@@ -32,7 +32,6 @@
 #include <getopt.h>
 #include <pthread.h>
 #include <regex.h>
-#include <semaphore.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,7 +59,6 @@
 #define AUR_PKG_URL           "%s://aur.archlinux.org/packages/%s/%s.tar.gz"
 #define AUR_PKG_URL_FORMAT    "%s://aur.archlinux.org/packages.php?ID="
 #define AUR_RPC_URL           "%s://aur.archlinux.org/rpc.php?type=%s&arg=%s"
-#define AUR_MAX_CONNECTIONS   10
 #define THREAD_MAX            10
 #define DEFAULT_TIMEOUT       10L
 
@@ -270,7 +268,6 @@ pmdb_t *db_local;
 alpm_list_t *targs, *ignore = NULL, *targets = NULL;
 loglevel_t logmask = LOG_ERROR|LOG_WARN|LOG_INFO;
 operation_t opmask = 0;
-sem_t sem_download;
 
 static yajl_callbacks callbacks = {
   NULL,
@@ -1419,11 +1416,7 @@ void *task_download(CURL *curl, void *arg) {
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_free(escaped);
 
-  sem_wait(&sem_download);
-  cwr_printf(LOG_DEBUG, "---> [%p]: entering critical\n", self);
   curlstat = curl_easy_perform(curl);
-  cwr_printf(LOG_DEBUG, "<--- [%p]: leaving critical\n", self);
-  sem_post(&sem_download);
 
   if (curlstat != CURLE_OK) {
     cwr_fprintf(stderr, LOG_ERROR, "curl: %s\n", curl_easy_strerror(curlstat));
@@ -1528,10 +1521,8 @@ void *task_query(CURL *curl, void *arg) {
   }
   curl_easy_setopt(curl, CURLOPT_URL, url);
 
-  sem_wait(&sem_download); /* limit concurrent downloads to AUR_MAX_CONNECTIONS */
   cwr_printf(LOG_DEBUG, "[%p]: curl_easy_perform %s\n", (void*)pthread_self(), url);
   curlstat = curl_easy_perform(curl);
-  sem_post(&sem_download);
 
   yajl_parse_complete(yajl_hand);
   yajl_free(yajl_hand);
@@ -1780,7 +1771,6 @@ int main(int argc, char *argv[]) {
 
   CALLOC(threads, num_threads, sizeof *threads, goto finish);
 
-  sem_init(&sem_download, 0, AUR_MAX_CONNECTIONS);
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
@@ -1823,7 +1813,6 @@ int main(int argc, char *argv[]) {
 
   free(threads);
   pthread_attr_destroy(&attr);
-  sem_destroy(&sem_download);
 
 finish:
   FREE(download_dir);
