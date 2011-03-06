@@ -146,7 +146,7 @@ typedef enum __operation_t {
 
 enum {
   OP_DEBUG = 1000,
-  OP_IGNORE,
+  OP_IGNOREPKG,
   OP_IGNOREREPO,
   OP_NOSSL,
   OP_THREADS,
@@ -253,6 +253,7 @@ static void usage(void);
 static size_t yajl_parse_stream(void*, size_t, size_t, void*);
 
 /* options */
+alpm_list_t *ignored_pkgs = NULL;
 alpm_list_t *ignored_repos = NULL;
 char *download_dir = NULL;
 int optcolor = -1;
@@ -267,7 +268,7 @@ int opttimeout = DEFAULT_TIMEOUT;
 /* variables */
 struct strings_t *colstr;
 pmdb_t *db_local;
-alpm_list_t *targs, *ignore = NULL, *targets = NULL;
+alpm_list_t *targs, *targets = NULL;
 loglevel_t logmask = LOG_ERROR|LOG_WARN|LOG_INFO;
 operation_t opmask = 0;
 
@@ -368,9 +369,9 @@ int alpm_init() {
         alpm_option_set_dbpath(ptr);
       } else if (STREQ(key, "IgnorePkg")) {
         for (token = strtok(ptr, " "); token; token = strtok(NULL, ",")) {
-          if (!alpm_list_find_str(ignore, token)) {
+          if (!alpm_list_find_str(ignored_pkgs, token)) {
             cwr_printf(LOG_DEBUG, "ignoring package: %s\n", token);
-            ignore = alpm_list_add(ignore, strdup(token));
+            ignored_pkgs = alpm_list_add(ignored_pkgs, strdup(token));
           }
         }
       }
@@ -952,9 +953,9 @@ int parse_configfile() {
     } else if (STREQ(key, "IgnorePkg")) {
       cwr_printf(LOG_DEBUG, "found config option: IgnoreRepo\n");
       for (key = strtok(val, " "); key; key = strtok(NULL, " ")) {
-        if (!alpm_list_find_str(ignore, key)) {
+        if (!alpm_list_find_str(ignored_pkgs, key)) {
           cwr_printf(LOG_DEBUG, "ignoring package: %s\n", key);
-          ignore = alpm_list_add(ignore, strdup(key));
+          ignored_pkgs = alpm_list_add(ignored_pkgs, strdup(key));
         }
       }
     } else if (STREQ(key, "TargetDir")) {
@@ -1032,7 +1033,7 @@ int parse_options(int argc, char *argv[]) {
     {"debug",       no_argument,        0, OP_DEBUG},
     {"force",       no_argument,        0, 'f'},
     {"help",        no_argument,        0, 'h'},
-    {"ignore",      required_argument,  0, OP_IGNORE},
+    {"ignore",      required_argument,  0, OP_IGNOREPKG},
     {"ignorerepo",  required_argument,  0, OP_IGNOREREPO},
     {"nossl",       no_argument,        0, OP_NOSSL},
     {"quiet",       no_argument,        0, 'q'},
@@ -1107,11 +1108,11 @@ int parse_options(int argc, char *argv[]) {
       case OP_DEBUG:
         logmask |= LOG_DEBUG;
         break;
-      case OP_IGNORE:
+      case OP_IGNOREPKG:
         for (token = strtok(optarg, ","); token; token = strtok(NULL, ",")) {
-          if (!alpm_list_find_str(ignore, token)) {
+          if (!alpm_list_find_str(ignored_pkgs, token)) {
             cwr_printf(LOG_DEBUG, "ignoring package: %s\n", token);
-            ignore = alpm_list_add(ignore, strdup(token));
+            ignored_pkgs = alpm_list_add(ignored_pkgs, strdup(token));
           }
         }
         break;
@@ -1719,7 +1720,7 @@ void *task_update(CURL *curl, void *arg) {
   struct aurpkg_t *aurpkg;
   void *dlretval, *qretval;
 
-  if (alpm_list_find_str(ignore, arg)) {
+  if (alpm_list_find_str(ignored_pkgs, arg)) {
     return NULL;
   }
 
@@ -1948,7 +1949,7 @@ int main(int argc, char *argv[]) {
 finish:
   FREE(download_dir);
   FREELIST(targets);
-  FREELIST(ignore);
+  FREELIST(ignored_pkgs);
   FREELIST(ignored_repos);
   FREE(colstr);
 
