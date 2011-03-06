@@ -148,6 +148,7 @@ typedef enum __operation_t {
 enum {
   OP_DEBUG = 1000,
   OP_IGNORE,
+  OP_IGNOREREPO,
   OP_THREADS,
   OP_TIMEOUT
 };
@@ -251,6 +252,7 @@ static void usage(void);
 static size_t yajl_parse_stream(void*, size_t, size_t, void*);
 
 /* options */
+alpm_list_t *ignored_repos = NULL;
 char *download_dir = NULL;
 int optcolor = 0;
 int optextinfo = 0;
@@ -346,7 +348,7 @@ int alpm_init() {
       section = strdup(ptr);
       section[strlen(section) - 1] = '\0';
 
-      if (!STREQ(section, "options")) {
+      if (!STREQ(section, "options") && !alpm_list_find_str(ignored_repos, section)) {
         alpm_db_register_sync(section);
         cwr_printf(LOG_DEBUG, "registering alpm db: %s\n", section);
       }
@@ -894,23 +896,24 @@ int parse_options(int argc, char *argv[]) {
 
   static struct option opts[] = {
     /* Operations */
-    {"download",  no_argument,        0, 'd'},
-    {"info",      no_argument,        0, 'i'},
-    {"msearch",   no_argument,        0, 'm'},
-    {"search",    no_argument,        0, 's'},
-    {"update",    no_argument,        0, 'u'},
+    {"download",    no_argument,        0, 'd'},
+    {"info",        no_argument,        0, 'i'},
+    {"msearch",     no_argument,        0, 'm'},
+    {"search",      no_argument,        0, 's'},
+    {"update",      no_argument,        0, 'u'},
 
     /* Options */
-    {"color",     optional_argument,  0, 'c'},
-    {"debug",     no_argument,        0, OP_DEBUG},
-    {"force",     no_argument,        0, 'f'},
-    {"help",      no_argument,        0, 'h'},
-    {"ignore",    required_argument,  0, OP_IGNORE},
-    {"quiet",     no_argument,        0, 'q'},
-    {"target",    required_argument,  0, 't'},
-    {"threads",   required_argument,  0, OP_THREADS},
-    {"timeout",   required_argument,  0, OP_TIMEOUT},
-    {"verbose",   no_argument,        0, 'v'},
+    {"color",       optional_argument,  0, 'c'},
+    {"debug",       no_argument,        0, OP_DEBUG},
+    {"force",       no_argument,        0, 'f'},
+    {"help",        no_argument,        0, 'h'},
+    {"ignore",      required_argument,  0, OP_IGNORE},
+    {"ignorerepo",  required_argument,  0, OP_IGNOREREPO},
+    {"quiet",       no_argument,        0, 'q'},
+    {"target",      required_argument,  0, 't'},
+    {"threads",     required_argument,  0, OP_THREADS},
+    {"timeout",     required_argument,  0, OP_TIMEOUT},
+    {"verbose",     no_argument,        0, 'v'},
     {0, 0, 0, 0}
   };
 
@@ -983,6 +986,14 @@ int parse_options(int argc, char *argv[]) {
           if (!alpm_list_find_str(ignore, token)) {
             cwr_printf(LOG_DEBUG, "ignoring package: %s\n", token);
             ignore = alpm_list_add(ignore, strdup(token));
+          }
+        }
+        break;
+      case OP_IGNOREREPO:
+        for (token = strtok(optarg, ","); token; token = strtok(NULL, ",")) {
+          if (!alpm_list_find_str(ignored_repos, token)) {
+            cwr_printf(LOG_DEBUG, "ignoring repos: %s\n", token);
+            ignored_repos = alpm_list_add(ignored_repos, strdup(token));
           }
         }
         break;
@@ -1679,6 +1690,7 @@ void usage() {
       "  -f, --force             overwrite existing files when downloading\n"
       "  -h, --help              display this help and exit\n"
       "      --ignore <pkg>      ignore a package upgrade (can be used more than once)\n"
+      "      --ignorerepo <repo> ignore a binary repo (can be used more than once)\n"
       "  -t, --target <dir>      specify an alternate download directory\n"
       "      --threads <num>     limit number of threads created\n"
       "      --timeout <num>     specify connection timeout in seconds\n\n");
@@ -1806,6 +1818,7 @@ finish:
   FREE(download_dir);
   FREELIST(targets);
   FREELIST(ignore);
+  FREELIST(ignored_repos);
   FREE(colstr);
 
   cwr_printf(LOG_DEBUG, "releasing curl\n");
