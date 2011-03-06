@@ -1854,13 +1854,13 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  if ((ret = parse_configfile() != 0)) {
-    return ret;
-  }
-
   if (!opmask) {
     fprintf(stderr, "error: no operation specified (use -h for help)\n");
     return 1;
+  }
+
+  if ((ret = parse_configfile() != 0)) {
+    return ret;
   }
 
   if ((ret = strings_init()) != 0) {
