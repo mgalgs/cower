@@ -82,6 +82,10 @@ directive are honored.
 Ignore a binary repo when checking for updates. Can be used more than once.
 Also accepts a comma delimited list as a single argument.
 
+=item B<--nossl>
+
+Avoid usage of secure http connections to the AUR.
+
 =item B<-q, --quiet>
 
 Output less.

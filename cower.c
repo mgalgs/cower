@@ -56,10 +56,10 @@
 
 #define COWER_USERAGENT       "cower/3.x"
 
-#define AUR_PKGBUILD_PATH     "https://aur.archlinux.org/packages/%s/PKGBUILD"
-#define AUR_PKG_URL           "https://aur.archlinux.org/packages/%s/%s.tar.gz"
-#define AUR_PKG_URL_FORMAT    "https://aur.archlinux.org/packages.php?ID="
-#define AUR_RPC_URL           "https://aur.archlinux.org/rpc.php?type=%s&arg=%s"
+#define AUR_PKGBUILD_PATH     "%s://aur.archlinux.org/packages/%s/PKGBUILD"
+#define AUR_PKG_URL           "%s://aur.archlinux.org/packages/%s/%s.tar.gz"
+#define AUR_PKG_URL_FORMAT    "%s://aur.archlinux.org/packages.php?ID="
+#define AUR_RPC_URL           "%s://aur.archlinux.org/rpc.php?type=%s&arg=%s"
 #define AUR_MAX_CONNECTIONS   10
 #define THREAD_MAX            20
 #define DEFAULT_TIMEOUT       10L
@@ -149,6 +149,7 @@ enum {
   OP_DEBUG = 1000,
   OP_IGNORE,
   OP_IGNOREREPO,
+  OP_NOSSL,
   OP_THREADS,
   OP_TIMEOUT
 };
@@ -259,6 +260,7 @@ int optextinfo = 0;
 int optforce = 0;
 int optgetdeps = 0;
 int optmaxthreads = THREAD_MAX;
+char *optproto = "https";
 int optquiet = 0;
 int opttimeout = DEFAULT_TIMEOUT;
 
@@ -909,6 +911,7 @@ int parse_options(int argc, char *argv[]) {
     {"help",        no_argument,        0, 'h'},
     {"ignore",      required_argument,  0, OP_IGNORE},
     {"ignorerepo",  required_argument,  0, OP_IGNOREREPO},
+    {"nossl",       no_argument,        0, OP_NOSSL},
     {"quiet",       no_argument,        0, 'q'},
     {"target",      required_argument,  0, 't'},
     {"threads",     required_argument,  0, OP_THREADS},
@@ -996,6 +999,9 @@ int parse_options(int argc, char *argv[]) {
             ignored_repos = alpm_list_add(ignored_repos, strdup(token));
           }
         }
+        break;
+      case OP_NOSSL:
+        optproto = "http";
         break;
       case OP_THREADS:
         optmaxthreads = strtol(optarg, &token, 10);
@@ -1136,7 +1142,7 @@ void print_pkg_info(struct aurpkg_t *pkg) {
       pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
   printf(URL "            : %s%s%s\n", colstr->url, pkg->url, colstr->nc);
   printf(PKG_AURPAGE "       : %s" AUR_PKG_URL_FORMAT "%s%s\n",
-      colstr->url, pkg->id, colstr->nc);
+      colstr->url, optproto, pkg->id, colstr->nc);
 
   print_extinfo_list(pkg->depends, PKG_DEPENDS);
   print_extinfo_list(pkg->makedepends, PKG_MAKEDEPENDS);
@@ -1409,7 +1415,7 @@ void *task_download(CURL *curl, void *arg) {
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_response);
 
   escaped = curl_easy_escape(curl, arg, strlen(arg));
-  cwr_asprintf(&url, AUR_PKG_URL, escaped, escaped);
+  cwr_asprintf(&url, AUR_PKG_URL, optproto, escaped, escaped);
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_free(escaped);
 
@@ -1514,11 +1520,11 @@ void *task_query(CURL *curl, void *arg) {
 
   escaped = curl_easy_escape(curl, argstr, span);
   if (opmask & OP_SEARCH) {
-    cwr_asprintf(&url, AUR_RPC_URL, AUR_QUERY_TYPE_SEARCH, escaped);
+    cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_SEARCH, escaped);
   } else if (opmask & OP_MSEARCH) {
-    cwr_asprintf(&url, AUR_RPC_URL, AUR_QUERY_TYPE_MSRCH, escaped);
+    cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_MSRCH, escaped);
   } else {
-    cwr_asprintf(&url, AUR_RPC_URL, AUR_QUERY_TYPE_INFO, escaped);
+    cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_INFO, escaped);
   }
   curl_easy_setopt(curl, CURLOPT_URL, url);
 
@@ -1569,7 +1575,7 @@ void *task_query(CURL *curl, void *arg) {
 
     aurpkg = alpm_list_getdata(pkglist);
 
-    cwr_asprintf(&pburl, AUR_PKGBUILD_PATH, escaped);
+    cwr_asprintf(&pburl, AUR_PKGBUILD_PATH, optproto, escaped);
     pkgbuild = curl_get_url_as_buffer(curl, pburl);
     free(pburl);
 
@@ -1691,6 +1697,7 @@ void usage() {
       "  -h, --help              display this help and exit\n"
       "      --ignore <pkg>      ignore a package upgrade (can be used more than once)\n"
       "      --ignorerepo <repo> ignore a binary repo (can be used more than once)\n"
+      "      --nossl             do not use https connections\n"
       "  -t, --target <dir>      specify an alternate download directory\n"
       "      --threads <num>     limit number of threads created\n"
       "      --timeout <num>     specify connection timeout in seconds\n\n");
@@ -1742,7 +1749,11 @@ int main(int argc, char *argv[]) {
   }
 
   cwr_printf(LOG_DEBUG, "initializing curl\n");
-  ret = curl_global_init(CURL_GLOBAL_SSL);
+  if (STREQ(optproto, "https")) {
+    ret = curl_global_init(CURL_GLOBAL_SSL);
+  } else {
+    ret = curl_global_init(CURL_GLOBAL_NOTHING);
+  }
   if (ret != 0) {
     cwr_fprintf(stderr, LOG_ERROR, "failed to initialize curl\n");
     goto finish;
