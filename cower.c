@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <wordexp.h>
 #include <wchar.h>
 
 /* external libs */
@@ -234,6 +235,7 @@ static int json_map_key(void*, const unsigned char*, unsigned int);
 static int json_start_map(void*);
 static int json_string(void*, const unsigned char*, unsigned int);
 static alpm_list_t *parse_bash_array(alpm_list_t*, char*, int);
+static int parse_configfile(void);
 static int parse_options(int, char*[]);
 static void pkgbuild_get_extinfo(char*, alpm_list_t**[]);
 static void print_extinfo_list(alpm_list_t*, const char*);
@@ -253,7 +255,7 @@ static size_t yajl_parse_stream(void*, size_t, size_t, void*);
 /* options */
 alpm_list_t *ignored_repos = NULL;
 char *download_dir = NULL;
-int optcolor = 0;
+int optcolor = -1;
 int optextinfo = 0;
 int optforce = 0;
 int optgetdeps = 0;
@@ -890,6 +892,130 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *array, int type) {
   return deplist;
 }
 
+int parse_configfile() {
+  char *xdg_config_home, *home, *config_path;
+  char line[BUFSIZ];
+  int ret = 0;
+  FILE *fp;
+
+  xdg_config_home = getenv("XDG_CONFIG_HOME");
+  if (xdg_config_home) {
+    cwr_asprintf(&config_path, "%s/cower/config", xdg_config_home);
+  } else {
+    home = getenv("HOME");
+    if (!home) {
+      cwr_fprintf(stderr, LOG_ERROR, "Unable to find path to config file.\n");
+      return 1;
+    }
+    cwr_asprintf(&config_path, "%s/.config/cower/config", getenv("HOME"));
+  }
+
+  fp = fopen(config_path, "r");
+  if (!fp) {
+    cwr_printf(LOG_DEBUG, "config file not found. skipping parsing");
+    return 0; /* not an error, just nothing to do here */
+  }
+
+  /* don't need this anymore, get rid of it ASAP */
+  free(config_path);
+
+  while (fgets(line, BUFSIZ, fp)) {
+    char *key, *val;
+
+    strtrim(line);
+    if (strlen(line) == 0 || line[0] == '#') {
+      continue;
+    }
+
+    if ((val = strchr(line, '#'))) {
+      *val = '\0';
+    }
+
+    key = val = line;
+    strsep(&val, "=");
+    strtrim(key);
+    strtrim(val);
+
+    /* colors are not initialized in this section, so usage of cwr_printf
+     * functions is verboten unless we're using loglevel_t LOG_DEBUG */
+    if (STREQ(key, "NoSSL")) {
+      cwr_printf(LOG_DEBUG, "found config option: NoSSL\n");
+      optproto = "http";
+    } else if (STREQ(key, "IgnoreRepo")) {
+      cwr_printf(LOG_DEBUG, "found config option: IgnoreRepo\n");
+      for (key = strtok(val, " "); key; key = strtok(NULL, " ")) {
+        if (!alpm_list_find_str(ignored_repos, key)) {
+          cwr_printf(LOG_DEBUG, "ignoring repo: %s\n", key);
+          ignored_repos = alpm_list_add(ignored_repos, strdup(key));
+        }
+      }
+    } else if (STREQ(key, "IgnorePkg")) {
+      cwr_printf(LOG_DEBUG, "found config option: IgnoreRepo\n");
+      for (key = strtok(val, " "); key; key = strtok(NULL, " ")) {
+        if (!alpm_list_find_str(ignore, key)) {
+          cwr_printf(LOG_DEBUG, "ignoring package: %s\n", key);
+          ignore = alpm_list_add(ignore, strdup(key));
+        }
+      }
+    } else if (STREQ(key, "TargetDir")) {
+      cwr_printf(LOG_DEBUG, "found config option: TargetDir\n");
+      if (!download_dir) {
+        wordexp_t p;
+        if (wordexp(val, &p, 0) == 0) {
+          if (p.we_wordc == 1) {
+            download_dir = strdup(p.we_wordv[0]);
+          }
+        }
+        wordfree(&p);
+      }
+    } else if (STREQ(key, "MaxThreads")) {
+      cwr_printf(LOG_DEBUG, "found config option: MaxThreads\n");
+      if (optmaxthreads == THREAD_MAX) {
+        optmaxthreads = strtol(val, &key, 10);
+        if (*key != '\0' || optmaxthreads <= 0) {
+          fprintf(stderr, "error: invalid option to MaxThreads: %s\n", val);
+          ret = 1;
+          goto finish;
+        }
+      }
+    } else if (STREQ(key, "ConnectTimeout")) {
+      cwr_printf(LOG_DEBUG, "found config option: ConnectTimeout\n");
+      if (opttimeout == DEFAULT_TIMEOUT) {
+        opttimeout = strtol(val, &key, 10);
+        if (*key != '\0' || opttimeout <= 0) {
+          fprintf(stderr, "error: invalid option to ConnectTimeout: %s\n", val);
+          ret = 1;
+          goto finish;
+        }
+      }
+    } else if (STREQ(key, "Color")) {
+      cwr_printf(LOG_DEBUG, "found config option: Color\n");
+      if (optcolor == -1) {
+        if (!val || STREQ(val, "auto")) {
+          if (isatty(fileno(stdout))) {
+            optcolor = 1;
+          } else {
+            optcolor = 0;
+          }
+        } else if (STREQ(val, "always")) {
+          optcolor = 1;
+        } else if (STREQ(val, "never")) {
+          optcolor = 0;
+        } else {
+          fprintf(stderr, "invalid argument to Color\n");
+          return 1;
+        }
+      }
+    } else {
+      fprintf(stderr, "ignoring unknown option: %s\n", key);
+    }
+  }
+
+finish:
+  fclose(fp);
+  return ret;
+}
+
 int parse_options(int argc, char *argv[]) {
   int opt, option_index = 0;
 
@@ -973,7 +1099,7 @@ int parse_options(int argc, char *argv[]) {
         optquiet = 1;
         break;
       case 't':
-        download_dir = optarg;
+        download_dir = strdup(optarg);
         break;
       case 'v':
         logmask |= LOG_VERBOSE;
@@ -1277,17 +1403,18 @@ int set_download_path() {
   char *resolved;
 
   if (!(opmask & OP_DOWNLOAD)) {
-    download_dir = NULL;
+    FREE(download_dir);
     return 0;
   }
 
   resolved = download_dir ? realpath(download_dir, NULL) : getcwd(NULL, 0);
   if (!resolved) {
     cwr_fprintf(stderr, LOG_ERROR, "%s: %s\n", download_dir, strerror(errno));
-    download_dir = NULL;
+    FREE(download_dir);
     return 1;
   }
 
+  free(download_dir);
   download_dir = resolved;
 
   if (access(download_dir, W_OK) != 0) {
@@ -1309,7 +1436,7 @@ int set_download_path() {
 int strings_init() {
   MALLOC(colstr, sizeof *colstr, return 1);
 
-  if (optcolor) {
+  if (optcolor > 0) {
     colstr->error = BOLDRED "::" NC;
     colstr->warn = BOLDYELLOW "::" NC;
     colstr->info = BOLDBLUE "::" NC;
@@ -1723,6 +1850,10 @@ int main(int argc, char *argv[]) {
   setlocale(LC_ALL, "");
 
   if ((ret = parse_options(argc, argv)) != 0) {
+    return ret;
+  }
+
+  if ((ret = parse_configfile() != 0)) {
     return ret;
   }
 

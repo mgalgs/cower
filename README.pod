@@ -115,6 +115,18 @@ Output more. This primarily affects the update operation.
 
 =back
 
+=head1 OPTIONS
+
+cower honors a config file which will be looked for first at:
+
+  $XDG_CONFIG_HOME/cower/config
+
+and falling back to:
+
+  $HOME/.config/cower/config
+
+A documented example config file can be found at /usr/share/cower/config.
+
 =head1 AUTHOR
 
 Dave Reisner E<lt>d@falconindy.comE<gt>
