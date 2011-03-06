@@ -287,9 +287,6 @@ static const char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
                                 "modules", "multimedia", "network", "office",
                                 "science", "system", "x11", "xfce", "kernels" };
 
-static const char binrepos[][20] = { "community", "community-testing", "core", "extra",
-                                    "multilib", "testing", "multilib-testing" };
-
 /* function implementations */
 int alpm_init() {
   int ret = 0;
@@ -349,8 +346,7 @@ int alpm_init() {
       section = strdup(ptr);
       section[strlen(section) - 1] = '\0';
 
-      if (strcmp(section, "options") != 0 &&
-          bsearch(section, binrepos, 6, 20, (__compar_fn_t)strcmp)) {
+      if (!STREQ(section, "options")) {
         alpm_db_register_sync(section);
         cwr_printf(LOG_DEBUG, "registering alpm db: %s\n", section);
       }
