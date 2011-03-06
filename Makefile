@@ -25,6 +25,7 @@ install: cower cower.1
 	install -D -m755 cower ${DESTDIR}${PREFIX}/bin/cower
 	install -D -m644 cower.1 ${DESTDIR}${MANPREFIX}/man1/cower.1
 	install -D -m644 bash_completion ${DESTDIR}/etc/bash_completion.d/cower
+	install -D -m644 config ${DESTDIR}/usr/share/cower/config
 
 dist: clean
 	mkdir cower-${VERSION}
@@ -43,6 +44,8 @@ uninstall:
 	rm -f ${DESTDIR}/${PREFIX}/man1/cower.1
 	@echo removing bash completion
 	rm -f ${DESTDIR}/etc/bash_completion.d/cower
+	@echo removing sample config
+	rm -f ${DESTDIR}/usr/share/cower/config
 
 cscope: cscope.out
 cscope.out:
