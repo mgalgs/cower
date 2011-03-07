@@ -61,7 +61,7 @@
 #define AUR_PKG_URL_FORMAT    "%s://aur.archlinux.org/packages.php?ID="
 #define AUR_RPC_URL           "%s://aur.archlinux.org/rpc.php?type=%s&arg=%s"
 #define THREAD_MAX            10
-#define DEFAULT_TIMEOUT       10L
+#define CONNECT_TIMEOUT       10L
 
 #define AUR_QUERY_TYPE        "type"
 #define AUR_QUERY_TYPE_INFO   "info"
@@ -260,10 +260,10 @@ int optcolor = -1;
 int optextinfo = 0;
 int optforce = 0;
 int optgetdeps = 0;
-int optmaxthreads = THREAD_MAX;
+int optmaxthreads = -1;
 char *optproto = "https";
 int optquiet = 0;
-int opttimeout = DEFAULT_TIMEOUT;
+int opttimeout = -1;
 
 /* variables */
 struct strings_t *colstr;
@@ -971,7 +971,7 @@ int parse_configfile() {
       }
     } else if (STREQ(key, "MaxThreads")) {
       cwr_printf(LOG_DEBUG, "found config option: MaxThreads\n");
-      if (optmaxthreads == THREAD_MAX) {
+      if (optmaxthreads == -1) {
         optmaxthreads = strtol(val, &key, 10);
         if (*key != '\0' || optmaxthreads <= 0) {
           fprintf(stderr, "error: invalid option to MaxThreads: %s\n", val);
@@ -981,7 +981,7 @@ int parse_configfile() {
       }
     } else if (STREQ(key, "ConnectTimeout")) {
       cwr_printf(LOG_DEBUG, "found config option: ConnectTimeout\n");
-      if (opttimeout == DEFAULT_TIMEOUT) {
+      if (opttimeout == -1) {
         opttimeout = strtol(val, &key, 10);
         if (*key != '\0' || opttimeout <= 0) {
           fprintf(stderr, "error: invalid option to ConnectTimeout: %s\n", val);
@@ -1861,6 +1861,14 @@ int main(int argc, char *argv[]) {
 
   if ((ret = parse_configfile() != 0)) {
     return ret;
+  }
+
+  /* fallback from sentinel values */
+  if (optmaxthreads == -1) {
+    optmaxthreads = THREAD_MAX;
+  }
+  if (opttimeout == -1) {
+    opttimeout = CONNECT_TIMEOUT;
   }
 
   if ((ret = strings_init()) != 0) {
