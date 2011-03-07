@@ -144,7 +144,7 @@ operations, the following sequences are interpreted within the formatter::
 
 Simple backslash escape sequences are also honored -- see B<printf>(1)
 
-=head1 OPTIONS
+=head1 CONFIG FILE
 
 cower honors a config file which will be looked for first at:
 
