@@ -8,9 +8,9 @@ _cower() {
   # nullglob avoids problems when no results are found
   [[ -o nullglob ]] || { shopt -s nullglob; ng=1; }
 
-  opts="-d --download -i --info -m --msearch -s --search -u --update
-        -c --color -f --force  -h --help --ignore --ignorerepo --nossl
-        -q --quiet -t --target --threads -v --verbose --debug"
+  opts="-d --download -i --info -m --msearch -s --search -u --update -c --color
+        -f --force  --format -h --help --ignore --ignorerepo --nossl -q --quiet
+        -t --target --threads -v --verbose --debug"
 
   n=${#COMP_WORDS[@]}
 

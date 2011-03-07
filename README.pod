@@ -115,6 +115,35 @@ Output more. This primarily affects the update operation.
 
 =back
 
+=head1 FORMATTING
+
+When the B<--format> option is used with the --search, --msearch, or --info
+operations, the following sequences are interpreted within the formatter::
+
+  %c    category
+
+  %d    description
+
+  %i    id
+
+  %l    license
+
+  %n    name
+
+  %o    votes
+
+  %p    AUR page
+
+  %t    out of date (yes/no)
+
+  %u    project URL
+
+  %v    version
+
+  %%    a literal %
+
+Simple backslash escape sequences are also honored -- see B<printf>(1)
+
 =head1 OPTIONS
 
 cower honors a config file which will be looked for first at:

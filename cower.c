@@ -146,6 +146,7 @@ typedef enum __operation_t {
 
 enum {
   OP_DEBUG = 1000,
+  OP_FORMAT,
   OP_IGNOREPKG,
   OP_IGNOREREPO,
   OP_NOSSL,
@@ -238,7 +239,9 @@ static alpm_list_t *parse_bash_array(alpm_list_t*, char*, int);
 static int parse_configfile(void);
 static int parse_options(int, char*[]);
 static void pkgbuild_get_extinfo(char*, alpm_list_t**[]);
+static int print_escaped(const char*);
 static void print_extinfo_list(alpm_list_t*, const char*);
+static void print_pkg_formatted(struct aurpkg_t*);
 static void print_pkg_info(struct aurpkg_t*);
 static void print_pkg_search(struct aurpkg_t*);
 static void print_results(alpm_list_t*, void (*)(struct aurpkg_t*));
@@ -259,6 +262,7 @@ char *download_dir = NULL;
 int optcolor = -1;
 int optextinfo = 0;
 int optforce = 0;
+char *optformat = NULL;
 int optgetdeps = 0;
 int optmaxthreads = -1;
 char *optproto = "https";
@@ -1032,6 +1036,7 @@ int parse_options(int argc, char *argv[]) {
     {"color",       optional_argument,  0, 'c'},
     {"debug",       no_argument,        0, OP_DEBUG},
     {"force",       no_argument,        0, 'f'},
+    {"format",      required_argument,  0, OP_FORMAT},
     {"help",        no_argument,        0, 'h'},
     {"ignore",      required_argument,  0, OP_IGNOREPKG},
     {"ignorerepo",  required_argument,  0, OP_IGNOREREPO},
@@ -1107,6 +1112,9 @@ int parse_options(int argc, char *argv[]) {
         break;
       case OP_DEBUG:
         logmask |= LOG_DEBUG;
+        break;
+      case OP_FORMAT:
+        optformat = optarg;
         break;
       case OP_IGNOREPKG:
         for (token = strtok(optarg, ","); token; token = strtok(NULL, ",")) {
@@ -1220,6 +1228,51 @@ void pkgbuild_get_extinfo(char *pkgbuild, alpm_list_t **details[]) {
   }
 }
 
+int print_escaped(const char *delim) {
+  const char *f;
+  int out = 0;
+
+  for (f = delim; *f != '\0'; f++) {
+    if (*f == '\\') {
+      switch (*++f) {
+        case '\\':
+          putchar('\\');
+          break;
+        case '"':
+          putchar('\"');
+          break;
+        case 'a':
+          putchar('\a');
+          break;
+        case 'b':
+          putchar('\b');
+          break;
+        case 'e': /* \e is nonstandard */
+          putchar('\033');
+          break;
+        case 'n':
+          putchar('\n');
+          break;
+        case 'r':
+          putchar('\r');
+          break;
+        case 't':
+          putchar('\t');
+          break;
+        case 'v':
+          putchar('\v');
+          break;
+        ++out;
+      }
+    } else {
+      putchar(*f);
+      ++out;
+    }
+  }
+
+  return(out);
+}
+
 void print_extinfo_list(alpm_list_t *list, const char *fieldname) {
   alpm_list_t *next, *i;
   size_t cols, count = 0;
@@ -1243,6 +1296,63 @@ void print_extinfo_list(alpm_list_t *list, const char *fieldname) {
     }
   }
   putchar('\n');
+}
+
+void print_pkg_formatted(struct aurpkg_t *pkg) {
+  const char *p;
+
+  for (p = optformat; *p != '\0'; p++) {
+    if (*p == '%') {
+      switch (*++p) {
+        case 'c':
+          printf("%s", aur_cat[pkg->cat]);
+          break;
+        case 'd':
+          printf("%s", pkg->desc);
+          break;
+        case 'i':
+          printf("%s", pkg->id);
+          break;
+        case 'l':
+          printf("%s", pkg->lic);
+          break;
+        case 'n':
+          printf("%s", pkg->name);
+          break;
+        case 'o':
+          printf("%s", pkg->votes);
+          break;
+        case 'p':
+          printf(AUR_PKG_URL_FORMAT "%s", optproto, pkg->id);
+          break;
+        case 't':
+          printf("%s", pkg->ood ? "yes" : "no");
+          break;
+        case 'u':
+          printf("%s", pkg->url);
+          break;
+        case 'v':
+          printf("%s", pkg->ver);
+          break;
+        case '%':
+          putchar('%');
+          break;
+        default:
+          putchar('?');
+          break;
+      }
+    } else if (*p == '\\') {
+      char buf[3];
+      buf[0] = *p;
+      buf[1] = *++p;
+      buf[2] = '\0';
+      print_escaped(buf);
+    } else {
+      putchar(*p);
+    }
+  }
+
+  return;
 }
 
 void print_pkg_info(struct aurpkg_t *pkg) {
@@ -1813,6 +1923,7 @@ void usage() {
                                    "with the -d flag\n\n");
   fprintf(stderr, " General options:\n"
       "  -f, --force             overwrite existing files when downloading\n"
+      "      --format <string>   print package output according to format string\n"
       "  -h, --help              display this help and exit\n"
       "      --ignore <pkg>      ignore a package upgrade (can be used more than once)\n"
       "      --ignorerepo <repo> ignore a binary repo (can be used more than once)\n"
@@ -1918,9 +2029,9 @@ int main(int argc, char *argv[]) {
   if (opmask & OP_UPDATE) {
     task.threadfn = task_update;
   } else if (opmask & OP_INFO) {
-    task.printfn = print_pkg_info;
+    task.printfn = optformat ? print_pkg_formatted : print_pkg_info;
   } else if (opmask & (OP_SEARCH|OP_MSEARCH)) {
-    task.printfn = print_pkg_search;
+    task.printfn = optformat ? print_pkg_formatted : print_pkg_search;
   } else if (opmask & OP_DOWNLOAD) {
     task.threadfn = task_download;
   }
