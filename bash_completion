@@ -23,6 +23,8 @@ _cower() {
       i=${COMPREPLY[0]}
       [[ "$i" = $cur && "$i" != */ ]] && COMPREPLY[0]="${i}/"
     fi
+  elif [[ "$prev" = --ignore ]]; then
+    COMPREPLY=($(compgen -W "$(pacman -Qq)" -- $cur))
   elif [[ "$prev" = --ignorerepo ]]; then
     COMPREPLY=($(compgen -W "$(sed '/^\[\(.*\)\]$/!d;s//\1/;/options/d' /etc/pacman.conf)" -- $cur))
   elif [[ "${COMP_WORDS[@]:1:n-2}" = *-@(!(-*)@(u)*|-update)* ]]; then # local packages
