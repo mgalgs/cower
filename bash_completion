@@ -14,20 +14,20 @@ _cower() {
 
   n=${#COMP_WORDS[@]}
 
-  if [[ $cur == -* ]]; then # options
+  if [[ "$cur" = -* ]]; then # options
     COMPREPLY=($(compgen -W "$opts" -- $cur))
-  elif [[ $prev == @(-*t|--target) ]]; then # directories (taken from _cd)
+  elif [[ "$prev" = @(-*t|--target) ]]; then # directories (taken from _cd)
     compgen -f /non-existing-dir/ >/dev/null
     _filedir -d
     if (( ${#COMPREPLY[@]} == 1 )); then
       i=${COMPREPLY[0]}
-      [[ "$i" == $cur && "$i" != */ ]] && COMPREPLY[0]="${i}/"
+      [[ "$i" = $cur && "$i" != */ ]] && COMPREPLY[0]="${i}/"
     fi
-  elif [[ $prev = --ignorerepo ]]; then
+  elif [[ "$prev" = --ignorerepo ]]; then
     COMPREPLY=($(compgen -W "$(sed '/^\[\(.*\)\]$/!d;s//\1/;/options/d' /etc/pacman.conf)" -- $cur))
-  elif [[ ${COMP_WORDS[@]:1:n-2} = *-@(!(-*)@(u)*|-update)* ]]; then # local packages
+  elif [[ "${COMP_WORDS[@]:1:n-2}" = *-@(!(-*)@(u)*|-update)* ]]; then # local packages
     COMPREPLY=($(compgen -W "$(pacman -Qqm)" -- $cur))
-  elif [[ ${COMP_WORDS[@]:1:n-2} = *-@(!(-*)@(d|i)*|-download|-info)* ]]; then # aur packages
+  elif [[ "${COMP_WORDS[@]:1:n-2}" = *-@(!(-*)@(d|i)*|-download|-info)* ]]; then # aur packages
     COMPREPLY=($(compgen -W "$("${COMP_WORDS[0]}" -sq -- ^$cur 2>/dev/null)" -- $cur))
   fi
 
