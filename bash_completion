@@ -38,4 +38,4 @@ _cower() {
 
 }
 
-complete -F _cower -o nospace cower
+complete -F _cower cower
