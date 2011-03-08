@@ -103,6 +103,7 @@
 
 #define INFO_INDENT           17
 #define SRCH_INDENT           4
+#define LIST_DELIM            "  "
 
 #define NC                    "\033[0m"
 #define BOLD                  "\033[1m"
@@ -149,6 +150,7 @@ enum {
   OP_FORMAT,
   OP_IGNOREPKG,
   OP_IGNOREREPO,
+  OP_LISTDELIM,
   OP_NOSSL,
   OP_THREADS,
   OP_TIMEOUT
@@ -240,7 +242,7 @@ static int parse_configfile(void);
 static int parse_options(int, char*[]);
 static void pkgbuild_get_extinfo(char*, alpm_list_t**[]);
 static int print_escaped(const char*);
-static void print_extinfo_list(alpm_list_t*, const char*);
+static void print_extinfo_list(alpm_list_t*, const char*, const char*, int);
 static void print_pkg_formatted(struct aurpkg_t*);
 static void print_pkg_info(struct aurpkg_t*);
 static void print_pkg_search(struct aurpkg_t*);
@@ -260,6 +262,7 @@ alpm_list_t *ignored_pkgs = NULL;
 alpm_list_t *ignored_repos = NULL;
 char *download_dir = NULL;
 int optcolor = -1;
+char *optdelim = LIST_DELIM;
 int optextinfo = 0;
 int optforce = 0;
 char *optformat = NULL;
@@ -1043,6 +1046,7 @@ int parse_options(int argc, char *argv[]) {
     {"help",        no_argument,        0, 'h'},
     {"ignore",      required_argument,  0, OP_IGNOREPKG},
     {"ignorerepo",  required_argument,  0, OP_IGNOREREPO},
+    {"listdelim",   required_argument,  0, OP_LISTDELIM},
     {"nossl",       no_argument,        0, OP_NOSSL},
     {"quiet",       no_argument,        0, 'q'},
     {"target",      required_argument,  0, 't'},
@@ -1134,6 +1138,9 @@ int parse_options(int argc, char *argv[]) {
             ignored_repos = alpm_list_add(ignored_repos, strdup(token));
           }
         }
+        break;
+      case OP_LISTDELIM:
+        optdelim = optarg;
         break;
       case OP_NOSSL:
         optproto = "http";
@@ -1276,7 +1283,7 @@ int print_escaped(const char *delim) {
   return(out);
 }
 
-void print_extinfo_list(alpm_list_t *list, const char *fieldname) {
+void print_extinfo_list(alpm_list_t *list, const char *fieldname, const char *delim, int wrap) {
   alpm_list_t *next, *i;
   size_t cols, count = 0;
 
@@ -1286,16 +1293,19 @@ void print_extinfo_list(alpm_list_t *list, const char *fieldname) {
 
   cols = getcols();
 
-  count += printf("%-*s: ", INFO_INDENT - 2, fieldname);
+  if (fieldname) {
+    count += printf("%-*s: ", INFO_INDENT - 2, fieldname);
+  }
+
   for (i = list; i; i = next) {
     next = alpm_list_next(i);
-    if (cols > 0 && count + strlen(alpm_list_getdata(i)) >= cols) {
+    if (wrap && cols > 0 && count + strlen(alpm_list_getdata(i)) >= cols) {
       printf("%-*c", INFO_INDENT + 1, '\n');
       count = INFO_INDENT;
     }
     count += printf("%s", (const char*)alpm_list_getdata(i));
     if (next) {
-      count += printf("  ");
+      count += print_escaped(delim);
     }
   }
   putchar('\n');
@@ -1315,6 +1325,7 @@ void print_pkg_formatted(struct aurpkg_t *pkg) {
       fmt[len + 1] = 's';
       p += len + 1;
       switch (*p) {
+        /* simple attributes */
         case 'c':
           printf(fmt, aur_cat[pkg->cat]);
           break;
@@ -1346,12 +1357,32 @@ void print_pkg_formatted(struct aurpkg_t *pkg) {
         case 'v':
           printf(fmt, pkg->ver);
           break;
+        /* list based attributes */
+        case 'C':
+          print_extinfo_list(pkg->conflicts, NULL, optdelim, 0);
+          break;
+        case 'D':
+          print_extinfo_list(pkg->depends, NULL, optdelim, 0);
+          break;
+        case 'M':
+          print_extinfo_list(pkg->makedepends, NULL, optdelim, 0);
+          break;
+        case 'O':
+          print_extinfo_list(pkg->optdepends, NULL, optdelim, 0);
+          break;
+        case 'P':
+          print_extinfo_list(pkg->provides, NULL, optdelim, 0);
+          break;
+        case 'R':
+          print_extinfo_list(pkg->replaces, NULL, optdelim, 0);
+          break;
         case '%':
           putchar('%');
           break;
         default:
           putchar('?');
           break;
+
       }
     } else if (*p == '\\') {
       char buf[3];
@@ -1390,10 +1421,10 @@ void print_pkg_info(struct aurpkg_t *pkg) {
   printf(PKG_AURPAGE "       : %s" AUR_PKG_URL_FORMAT "%s%s\n",
       colstr->url, optproto, pkg->id, colstr->nc);
 
-  print_extinfo_list(pkg->depends, PKG_DEPENDS);
-  print_extinfo_list(pkg->makedepends, PKG_MAKEDEPENDS);
-  print_extinfo_list(pkg->provides, PKG_PROVIDES);
-  print_extinfo_list(pkg->conflicts, PKG_CONFLICTS);
+  print_extinfo_list(pkg->depends, PKG_DEPENDS, LIST_DELIM, 1);
+  print_extinfo_list(pkg->makedepends, PKG_MAKEDEPENDS, LIST_DELIM, 1);
+  print_extinfo_list(pkg->provides, PKG_PROVIDES, LIST_DELIM, 1);
+  print_extinfo_list(pkg->conflicts, PKG_CONFLICTS, LIST_DELIM, 1);
 
   if (pkg->optdepends) {
     printf(PKG_OPTDEPENDS "  : %s\n", (const char*)alpm_list_getdata(pkg->optdepends));
@@ -1402,7 +1433,7 @@ void print_pkg_info(struct aurpkg_t *pkg) {
     }
   }
 
-  print_extinfo_list(pkg->replaces, PKG_REPLACES);
+  print_extinfo_list(pkg->replaces, PKG_REPLACES, LIST_DELIM, 1);
 
   printf(PKG_CAT "       : %s\n"
          PKG_LICENSE "        : %s\n"
@@ -1580,6 +1611,10 @@ int strings_init() {
     colstr->utd = "";
     colstr->nc = "";
   }
+
+  /* guard against optdelim being something other than LIST_DELIM if optextinfo
+   * and format aren't provided */
+  optdelim = (optextinfo && optformat) ? optdelim : LIST_DELIM;
 
   return 0;
 }

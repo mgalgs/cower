@@ -67,6 +67,11 @@ Show debug output. This option should be passed first if used.
 
 Overwrite existing files when downloading.
 
+=item B<--format>=I<FORMAT>
+
+Print outside from --info, --search, and --msearch operations described by the
+provided format string. See the FORMATTING section.
+
 =item B<-h, --help>
 
 Display the help message and quit.
@@ -81,6 +86,12 @@ directive are honored.
 
 Ignore a binary repo when checking for updates. Can be used more than once.
 Also accepts a comma delimited list as a single argument.
+
+=item B<--listdelim=>I<STRING>
+
+Specify a delimiter when printing list formatters. This option only has an
+effect when using the -ii operation combined with --format. See the FORMATTING
+section.
 
 =item B<--nossl>
 
@@ -142,9 +153,25 @@ operations, the following sequences are interpreted within the formatter::
 
   %%    a literal %
 
+When --info is specified twice, the following formatters are also available (if
+the PKGBUILD specifies them). Items in lists are delimited according to the
+string specified by the --listdelim option, defaulting to 2 spaces.
+
+  %C    conflicts
+
+  %D    depends
+
+  %M    makedepends
+
+  %)    optdepends
+
+  %P    provides
+
+  %R    replaces
+
 Full printf formatter support with justification and field width is supported,
-e.g. '%-20o'. Simple backslash escape sequences are also honored -- see
-B<printf>(1).
+e.g. '%-20o'. Simple backslash escape sequences are also honored for lowercase
+formatters -- see B<printf>(1).
 
 =head1 CONFIG FILE
 
