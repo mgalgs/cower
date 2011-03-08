@@ -1935,7 +1935,6 @@ void usage() {
                                    "with the -d flag\n\n");
   fprintf(stderr, " General options:\n"
       "  -f, --force             overwrite existing files when downloading\n"
-      "      --format <string>   print package output according to format string\n"
       "  -h, --help              display this help and exit\n"
       "      --ignore <pkg>      ignore a package upgrade (can be used more than once)\n"
       "      --ignorerepo <repo> ignore a binary repo (can be used more than once)\n"
@@ -1946,6 +1945,7 @@ void usage() {
   fprintf(stderr, " Output options:\n"
       "  -c, --color[=WHEN]      use colored output. WHEN is `never', `always', or `auto'\n"
       "      --debug             show debug output\n"
+      "      --format <string>   print package output according to format string\n"
       "  -q, --quiet             output less\n"
       "  -v, --verbose           output more\n\n");
 }
