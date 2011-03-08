@@ -142,7 +142,9 @@ operations, the following sequences are interpreted within the formatter::
 
   %%    a literal %
 
-Simple backslash escape sequences are also honored -- see B<printf>(1)
+Full printf formatter support with justification and field width is supported,
+e.g. '%-20o'. Simple backslash escape sequences are also honored -- see
+B<printf>(1).
 
 =head1 CONFIG FILE
 

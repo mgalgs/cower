@@ -290,6 +290,9 @@ static yajl_callbacks callbacks = {
   NULL
 };
 
+static char const digits[] = "0123456789";
+static char const printf_flags[] = "'-+ #0I";
+
 static const char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
                                 "emulators", "games", "gnome", "i18n", "kde", "lib",
                                 "modules", "multimedia", "network", "office",
@@ -1300,39 +1303,48 @@ void print_extinfo_list(alpm_list_t *list, const char *fieldname) {
 
 void print_pkg_formatted(struct aurpkg_t *pkg) {
   const char *p;
+  char fmt[32], buf[64];
+  int len;
 
   for (p = optformat; *p != '\0'; p++) {
+    len = 0;
     if (*p == '%') {
-      switch (*++p) {
+      len = strspn(p + 1 + len, printf_flags);
+      len += strspn(p + 1 + len, digits);
+      snprintf(fmt, len + 3, "%ss", p);
+      fmt[len + 1] = 's';
+      p += len + 1;
+      switch (*p) {
         case 'c':
-          printf("%s", aur_cat[pkg->cat]);
+          printf(fmt, aur_cat[pkg->cat]);
           break;
         case 'd':
-          printf("%s", pkg->desc);
+          printf(fmt, pkg->desc);
           break;
         case 'i':
-          printf("%s", pkg->id);
+          printf(fmt, pkg->id);
           break;
         case 'l':
-          printf("%s", pkg->lic);
+          printf(fmt, pkg->lic);
           break;
         case 'n':
-          printf("%s", pkg->name);
+          printf(fmt, pkg->name);
           break;
         case 'o':
-          printf("%s", pkg->votes);
+          printf(fmt, pkg->votes);
           break;
         case 'p':
-          printf(AUR_PKG_URL_FORMAT "%s", optproto, pkg->id);
+          snprintf(buf, 64, AUR_PKG_URL_FORMAT "%s", optproto, pkg->id);
+          printf(fmt, buf);
           break;
         case 't':
-          printf("%s", pkg->ood ? "yes" : "no");
+          printf(fmt, pkg->ood ? "yes" : "no");
           break;
         case 'u':
-          printf("%s", pkg->url);
+          printf(fmt, pkg->url);
           break;
         case 'v':
-          printf("%s", pkg->ver);
+          printf(fmt, pkg->ver);
           break;
         case '%':
           putchar('%');
