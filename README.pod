@@ -89,9 +89,9 @@ Also accepts a comma delimited list as a single argument.
 
 =item B<--listdelim=>I<STRING>
 
-Specify a delimiter when printing list formatters. This option only has an
-effect when using the -ii operation combined with --format. See the FORMATTING
-section.
+Specify a delimiter when printing list formatters, default to 2 spaces. This
+option only has an effect when using the -ii operation combined with --format.
+See the FORMATTING section.
 
 =item B<--nossl>
 
@@ -154,8 +154,8 @@ operations, the following sequences are interpreted within the formatter::
   %%    a literal %
 
 When --info is specified twice, the following formatters are also available (if
-the PKGBUILD specifies them). Items in lists are delimited according to the
-string specified by the --listdelim option, defaulting to 2 spaces.
+the PKGBUILD specifies them). Items in these lists are delimited according to
+the --listdelim option.
 
   %C    conflicts
 
