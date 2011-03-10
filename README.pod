@@ -67,7 +67,7 @@ Show debug output. This option should be passed first if used.
 
 Overwrite existing files when downloading.
 
-=item B<--format>=I<FORMAT>
+=item B<--format=>I<FORMAT>
 
 Print outside from --info, --search, and --msearch operations described by the
 provided format string. See the FORMATTING section.
