@@ -314,12 +314,6 @@ int alpm_init() {
     return ret;
   }
 
-  ret = alpm_option_set_root("/");
-  if (ret != 0) {
-    return ret;
-  }
-  cwr_printf(LOG_DEBUG, "setting alpm RootDir to %s\n", alpm_option_get_root());
-
   ret = alpm_option_set_dbpath("/var/lib/pacman");
   if (ret != 0) {
     return ret;
@@ -371,10 +365,7 @@ int alpm_init() {
       strsep(&ptr, "=");
       strtrim(key);
       strtrim(ptr);
-      if (STREQ(key, "RootDir")) {
-        cwr_printf(LOG_DEBUG, "setting alpm RootDir to: %s\n", ptr);
-        alpm_option_set_root(ptr);
-      } else if (STREQ(key, "DBPath")) {
+      if (STREQ(key, "DBPath")) {
         cwr_printf(LOG_DEBUG, "setting alpm DBPath to: %s\n", ptr);
         alpm_option_set_dbpath(ptr);
       } else if (STREQ(key, "IgnorePkg")) {
