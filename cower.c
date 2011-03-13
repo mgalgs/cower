@@ -1878,7 +1878,12 @@ void *task_update(CURL *curl, void *arg) {
   qretval = task_query(curl, arg);
   aurpkg = alpm_list_getdata(qretval);
   if (aurpkg) {
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+    pthread_mutex_lock(&lock);
     pmpkg = alpm_db_get_pkg(db_local, arg);
+    pthread_mutex_unlock(&lock);
+
     if (!pmpkg) {
       cwr_fprintf(stderr, LOG_WARN, "skipping uninstalled package %s\n",
           (const char*)arg);
