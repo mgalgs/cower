@@ -975,7 +975,6 @@ int parse_configfile() {
         if (*download_dir != '/') {
           fprintf(stderr, "error: TargetDir cannot be a relative path\n");
           ret = 1;
-          goto finish;
         }
       }
     } else if (STREQ(key, "MaxThreads")) {
@@ -984,7 +983,6 @@ int parse_configfile() {
         if (*key != '\0' || optmaxthreads <= 0) {
           fprintf(stderr, "error: invalid option to MaxThreads: %s\n", val);
           ret = 1;
-          goto finish;
         }
       }
     } else if (STREQ(key, "ConnectTimeout")) {
@@ -993,7 +991,6 @@ int parse_configfile() {
         if (*key != '\0' || opttimeout <= 0) {
           fprintf(stderr, "error: invalid option to ConnectTimeout: %s\n", val);
           ret = 1;
-          goto finish;
         }
       }
     } else if (STREQ(key, "Color")) {
@@ -1015,6 +1012,9 @@ int parse_configfile() {
       }
     } else {
       fprintf(stderr, "ignoring unknown option: %s\n", key);
+    }
+    if (ret > 0) {
+      goto finish;
     }
   }
 
