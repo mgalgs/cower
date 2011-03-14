@@ -969,11 +969,14 @@ int parse_configfile() {
           if (p.we_wordc == 1) {
             download_dir = strdup(p.we_wordv[0]);
           }
-        }
-        wordfree(&p);
-        /* error on relative paths */
-        if (*download_dir != '/') {
-          fprintf(stderr, "error: TargetDir cannot be a relative path\n");
+          wordfree(&p);
+          /* error on relative paths */
+          if (*download_dir != '/') {
+            fprintf(stderr, "error: TargetDir cannot be a relative path\n");
+            ret = 1;
+          }
+        } else {
+          fprintf(stderr, "error: failed to resolve option to TargetDir\n");
           ret = 1;
         }
       }
