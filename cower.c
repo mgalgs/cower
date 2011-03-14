@@ -969,6 +969,12 @@ int parse_configfile() {
           }
         }
         wordfree(&p);
+        /* error on relative paths */
+        if (*download_dir != '/') {
+          fprintf(stderr, "error: TargetDir cannot be a relative path\n");
+          ret = 1;
+          goto finish;
+        }
       }
     } else if (STREQ(key, "MaxThreads")) {
       cwr_printf(LOG_DEBUG, "found config option: MaxThreads\n");
