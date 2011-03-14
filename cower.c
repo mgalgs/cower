@@ -28,8 +28,8 @@
 #define _GNU_SOURCE
 #include <ctype.h>
 #include <errno.h>
-#include <locale.h>
 #include <getopt.h>
+#include <locale.h>
 #include <pthread.h>
 #include <regex.h>
 #include <stdarg.h>
@@ -37,8 +37,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <wordexp.h>
 #include <wchar.h>
+#include <wordexp.h>
 
 /* external libs */
 #include <alpm.h>
