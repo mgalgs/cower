@@ -942,13 +942,13 @@ int parse_configfile() {
       val = NULL;
     }
 
+    cwr_printf(LOG_DEBUG, "found config option: %s => %s\n", key, val);
+
     /* colors are not initialized in this section, so usage of cwr_printf
      * functions is verboten unless we're using loglevel_t LOG_DEBUG */
     if (STREQ(key, "NoSSL")) {
-      cwr_printf(LOG_DEBUG, "found config option: NoSSL\n");
       optproto = "http";
     } else if (STREQ(key, "IgnoreRepo")) {
-      cwr_printf(LOG_DEBUG, "found config option: IgnoreRepo\n");
       for (key = strtok(val, " "); key; key = strtok(NULL, " ")) {
         if (!alpm_list_find_str(ignored_repos, key)) {
           cwr_printf(LOG_DEBUG, "ignoring repo: %s\n", key);
@@ -956,7 +956,6 @@ int parse_configfile() {
         }
       }
     } else if (STREQ(key, "IgnorePkg")) {
-      cwr_printf(LOG_DEBUG, "found config option: IgnoreRepo\n");
       for (key = strtok(val, " "); key; key = strtok(NULL, " ")) {
         if (!alpm_list_find_str(ignored_pkgs, key)) {
           cwr_printf(LOG_DEBUG, "ignoring package: %s\n", key);
@@ -964,7 +963,6 @@ int parse_configfile() {
         }
       }
     } else if (STREQ(key, "TargetDir")) {
-      cwr_printf(LOG_DEBUG, "found config option: TargetDir\n");
       if (val && !download_dir) {
         wordexp_t p;
         if (wordexp(val, &p, 0) == 0) {
@@ -981,7 +979,6 @@ int parse_configfile() {
         }
       }
     } else if (STREQ(key, "MaxThreads")) {
-      cwr_printf(LOG_DEBUG, "found config option: MaxThreads\n");
       if (val && optmaxthreads == -1) {
         optmaxthreads = strtol(val, &key, 10);
         if (*key != '\0' || optmaxthreads <= 0) {
@@ -991,7 +988,6 @@ int parse_configfile() {
         }
       }
     } else if (STREQ(key, "ConnectTimeout")) {
-      cwr_printf(LOG_DEBUG, "found config option: ConnectTimeout\n");
       if (val && opttimeout == -1) {
         opttimeout = strtol(val, &key, 10);
         if (*key != '\0' || opttimeout <= 0) {
@@ -1001,7 +997,6 @@ int parse_configfile() {
         }
       }
     } else if (STREQ(key, "Color")) {
-      cwr_printf(LOG_DEBUG, "found config option: Color\n");
       if (optcolor == -1) {
         if (!val || STREQ(val, "auto")) {
           if (isatty(fileno(stdout))) {
