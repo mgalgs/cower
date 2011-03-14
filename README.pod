@@ -185,6 +185,12 @@ and falling back to:
 
 A documented example config file can be found at /usr/share/cower/config.
 
+=head1 BUGS
+
+Heavily threaded operations over SSL can occasionally hit race conditions. If
+you experience intermittent segfaults during updates, disable SSL or curb your
+thread usage.
+
 =head1 AUTHOR
 
 Dave Reisner E<lt>d@falconindy.comE<gt>
