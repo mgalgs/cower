@@ -938,6 +938,10 @@ int parse_configfile() {
     strtrim(key);
     strtrim(val);
 
+    if (val && !*val) {
+      val = NULL;
+    }
+
     /* colors are not initialized in this section, so usage of cwr_printf
      * functions is verboten unless we're using loglevel_t LOG_DEBUG */
     if (STREQ(key, "NoSSL")) {
@@ -961,7 +965,7 @@ int parse_configfile() {
       }
     } else if (STREQ(key, "TargetDir")) {
       cwr_printf(LOG_DEBUG, "found config option: TargetDir\n");
-      if (!download_dir) {
+      if (val && !download_dir) {
         wordexp_t p;
         if (wordexp(val, &p, 0) == 0) {
           if (p.we_wordc == 1) {
@@ -978,7 +982,7 @@ int parse_configfile() {
       }
     } else if (STREQ(key, "MaxThreads")) {
       cwr_printf(LOG_DEBUG, "found config option: MaxThreads\n");
-      if (optmaxthreads == -1) {
+      if (val && optmaxthreads == -1) {
         optmaxthreads = strtol(val, &key, 10);
         if (*key != '\0' || optmaxthreads <= 0) {
           fprintf(stderr, "error: invalid option to MaxThreads: %s\n", val);
@@ -988,7 +992,7 @@ int parse_configfile() {
       }
     } else if (STREQ(key, "ConnectTimeout")) {
       cwr_printf(LOG_DEBUG, "found config option: ConnectTimeout\n");
-      if (opttimeout == -1) {
+      if (val && opttimeout == -1) {
         opttimeout = strtol(val, &key, 10);
         if (*key != '\0' || opttimeout <= 0) {
           fprintf(stderr, "error: invalid option to ConnectTimeout: %s\n", val);
