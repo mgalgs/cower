@@ -44,6 +44,7 @@
 #include <alpm.h>
 #include <archive.h>
 #include <curl/curl.h>
+#include <openssl/crypto.h>
 #include <yajl/yajl_parse.h>
 
 /* macros */
@@ -214,6 +215,11 @@ struct task_t {
   void (*printfn)(struct aurpkg_t*);
 };
 
+struct openssl_mutex_t {
+  pthread_mutex_t *lock;
+  long *lock_count;
+};
+
 /* function declarations */
 static alpm_list_t *alpm_find_foreign_pkgs(void);
 static int alpm_init(void);
@@ -237,6 +243,10 @@ static int json_end_map(void*);
 static int json_map_key(void*, const unsigned char*, unsigned int);
 static int json_start_map(void*);
 static int json_string(void*, const unsigned char*, unsigned int);
+static void openssl_crypto_cleanup(void);
+static void openssl_crypto_init(void);
+static unsigned long openssl_thread_id(void);
+static void openssl_thread_cb(int, int, char*, int);
 static alpm_list_t *parse_bash_array(alpm_list_t*, char*, int);
 static int parse_configfile(void);
 static int parse_options(int, char*[]);
@@ -278,6 +288,7 @@ pmdb_t *db_local;
 alpm_list_t *targs, *targets = NULL;
 loglevel_t logmask = LOG_ERROR|LOG_WARN|LOG_INFO;
 operation_t opmask = 0;
+struct openssl_mutex_t openssl_lock;
 
 static yajl_callbacks callbacks = {
   NULL,
@@ -832,6 +843,55 @@ int json_string(void *ctx, const unsigned char *data, unsigned int size) {
   }
 
   return 1;
+}
+
+void openssl_crypto_cleanup() {
+  int i;
+
+  if (strcmp(optproto, "https") != 0) {
+    return;
+  }
+
+  CRYPTO_set_locking_callback(NULL);
+
+  for (i = 0; i < CRYPTO_num_locks(); i++) {
+    pthread_mutex_destroy(&(openssl_lock.lock[i]));
+  }
+
+  OPENSSL_free(openssl_lock.lock);
+  OPENSSL_free(openssl_lock.lock_count);
+}
+
+void openssl_crypto_init() {
+  int i;
+
+  openssl_lock.lock = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
+  openssl_lock.lock_count = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(long));
+  for (i = 0; i < CRYPTO_num_locks(); i++) {
+    openssl_lock.lock_count[i] = 0;
+    pthread_mutex_init(&(openssl_lock.lock[i]), NULL);
+  }
+
+  CRYPTO_set_id_callback((unsigned long (*)())openssl_thread_id);
+  CRYPTO_set_locking_callback((void (*)())openssl_thread_cb);
+}
+
+void openssl_thread_cb(int mode, int type, char *file, int line) {
+  (void)type; (void)file; (void)line;
+
+  if (mode & CRYPTO_LOCK) {
+    pthread_mutex_lock(&(openssl_lock.lock[type]));
+    openssl_lock.lock_count[type]++;
+  } else {
+    pthread_mutex_unlock(&(openssl_lock.lock[type]));
+  }
+}
+
+unsigned long openssl_thread_id(void) {
+  unsigned long ret;
+
+  ret = (unsigned long)pthread_self();
+  return(ret);
 }
 
 alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *array, int type) {
@@ -2045,6 +2105,7 @@ int main(int argc, char *argv[]) {
   cwr_printf(LOG_DEBUG, "initializing curl\n");
   if (STREQ(optproto, "https")) {
     ret = curl_global_init(CURL_GLOBAL_SSL);
+    openssl_crypto_init();
   } else {
     ret = curl_global_init(CURL_GLOBAL_NOTHING);
   }
@@ -2123,6 +2184,8 @@ finish:
   FREELIST(ignored_pkgs);
   FREELIST(ignored_repos);
   FREE(colstr);
+
+  openssl_crypto_cleanup();
 
   cwr_printf(LOG_DEBUG, "releasing curl\n");
   curl_global_cleanup();
