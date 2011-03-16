@@ -29,7 +29,7 @@ install: cower cower.1
 
 dist: clean
 	mkdir cower-${VERSION}
-	cp Makefile README.pod bash_completion cower.c cower-${VERSION}
+	cp Makefile README.pod bash_completion config cower.c cower-${VERSION}
 	sed "s/^VERSION = .*/VERSION = ${VERSION}/" config.mk > cower-${VERSION}/config.mk
 	tar cf - cower-${VERSION} | gzip -9 > cower-${VERSION}.tar.gz
 	rm -rf cower-${VERSION}
