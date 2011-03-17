@@ -5,6 +5,8 @@ include config.mk
 SRC = cower.c
 OBJ = ${SRC:.c=.o}
 
+DISTFILES = Makefile README.pod bash_completion config cower.c
+
 all: cower doc
 
 35:
@@ -29,7 +31,7 @@ install: cower cower.1
 
 dist: clean
 	mkdir cower-${VERSION}
-	cp Makefile README.pod bash_completion config cower.c cower-${VERSION}
+	cp ${DISTFILES} cower-${VERSION}
 	sed "s/^VERSION = .*/VERSION = ${VERSION}/" config.mk > cower-${VERSION}/config.mk
 	tar cf - cower-${VERSION} | gzip -9 > cower-${VERSION}.tar.gz
 	rm -rf cower-${VERSION}
