@@ -264,6 +264,7 @@ static char *strtrim(char*);
 static void *task_download(CURL*, void*);
 static void *task_query(CURL*, void*);
 static void *task_update(CURL*, void*);
+static void *thread_pool(void*);
 static void usage(void);
 static size_t yajl_parse_stream(void*, size_t, size_t, void*);
 
