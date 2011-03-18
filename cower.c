@@ -246,7 +246,7 @@ static int json_string(void*, const unsigned char*, unsigned int);
 static void openssl_crypto_cleanup(void);
 static void openssl_crypto_init(void);
 static unsigned long openssl_thread_id(void);
-static void openssl_thread_cb(int, int, char*, int);
+static void openssl_thread_cb(int, int, const char*, int);
 static alpm_list_t *parse_bash_array(alpm_list_t*, char*, int);
 static int parse_configfile(void);
 static int parse_options(int, char*[]);
@@ -873,11 +873,11 @@ void openssl_crypto_init() {
     pthread_mutex_init(&(openssl_lock.lock[i]), NULL);
   }
 
-  CRYPTO_set_id_callback((unsigned long (*)())openssl_thread_id);
-  CRYPTO_set_locking_callback((void (*)())openssl_thread_cb);
+  CRYPTO_set_id_callback(openssl_thread_id);
+  CRYPTO_set_locking_callback(openssl_thread_cb);
 }
 
-void openssl_thread_cb(int mode, int type, char *file, int line) {
+void openssl_thread_cb(int mode, int type, const char *file, int line) {
   (void)type; (void)file; (void)line;
 
   if (mode & CRYPTO_LOCK) {
