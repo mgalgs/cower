@@ -1753,6 +1753,7 @@ void *task_download(CURL *curl, void *arg) {
   response.data = NULL;
   response.size = 0;
 
+  curl_easy_setopt(curl, CURLOPT_ENCODING, "identity"); /* disable compression */
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_response);
 
