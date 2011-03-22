@@ -843,7 +843,7 @@ int json_string(void *ctx, const unsigned char *data, unsigned int size) {
 void openssl_crypto_cleanup() {
   int i;
 
-  if (strcmp(optproto, "https") != 0) {
+  if (!STREQ(optproto, "https")) {
     return;
   }
 
