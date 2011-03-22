@@ -534,12 +534,6 @@ struct aurpkg_t *aurpkg_new() {
 
   CALLOC(pkg, 1, sizeof *pkg, return NULL);
 
-  pkg->cat = pkg->ood = 0;
-  pkg->name = pkg->id = pkg->ver = pkg->desc = pkg->lic = pkg->url = NULL;
-
-  pkg->depends = pkg->makedepends = pkg->optdepends = NULL;
-  pkg->provides = pkg->conflicts = pkg->replaces = NULL;
-
   return pkg;
 }
 
