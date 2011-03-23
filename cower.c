@@ -921,7 +921,7 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *array, int type) {
   }
 
   for (token = strtok(array, " \n"); token; token = strtok(NULL, " \n")) {
-    pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
     strtrim(token);
     if (*token == '\'' || *token == '\"') {
