@@ -596,6 +596,7 @@ int cwr_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list arg
       prefix = "debug:";
       break;
     default:
+      prefix = "";
       break;
   }
 
