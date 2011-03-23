@@ -574,32 +574,35 @@ int cwr_printf(loglevel_t level, const char *format, ...) {
 }
 
 int cwr_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list args) {
-  int ret = 0;
+  const char *prefix;
+  char bufout[128];
 
   if (!(logmask & level)) {
-    return ret;
+    return 0;
   }
 
   switch (level) {
     case LOG_VERBOSE:
     case LOG_INFO:
-      fprintf(stream, "%s ", colstr->info);
+      prefix = colstr->info;
       break;
     case LOG_ERROR:
-      fprintf(stream, "%s ", colstr->error);
+      prefix = colstr->error;
       break;
     case LOG_WARN:
-      fprintf(stream, "%s ", colstr->warn);
+      prefix = colstr->warn;
       break;
     case LOG_DEBUG:
-      fprintf(stream, "debug: ");
+      prefix = "debug:";
       break;
     default:
       break;
   }
 
-  ret = vfprintf(stream, format, args);
-  return ret;
+  /* f.l.w.: 128 should be big enough... */
+  snprintf(bufout, 128, "%s %s", prefix, format);
+
+  return vfprintf(stream, bufout, args);
 }
 
 CURL *curl_init_easy_handle(CURL *handle) {
@@ -613,8 +616,7 @@ CURL *curl_init_easy_handle(CURL *handle) {
   curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, opttimeout);
 
   /* This is required of multi-threaded apps using timeouts. See
-   * curl_easy_setopt(3)
-   */
+   * curl_easy_setopt(3) */
   if (opttimeout > 0L) {
     curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1L);
   }
@@ -1085,14 +1087,14 @@ int parse_options(int argc, char *argv[]) {
   int opt, option_index = 0;
 
   static struct option opts[] = {
-    /* Operations */
+    /* operations */
     {"download",    no_argument,        0, 'd'},
     {"info",        no_argument,        0, 'i'},
     {"msearch",     no_argument,        0, 'm'},
     {"search",      no_argument,        0, 's'},
     {"update",      no_argument,        0, 'u'},
 
-    /* Options */
+    /* options */
     {"color",       optional_argument,  0, 'c'},
     {"debug",       no_argument,        0, OP_DEBUG},
     {"force",       no_argument,        0, 'f'},
@@ -2164,8 +2166,7 @@ int main(int argc, char *argv[]) {
   /* we need to exit with a non-zero value when:
    * a) search/info/download returns nothing
    * b) update (without download) returns something
-   * this is opposing behavior, so just XOR the result on a pure update
-   */
+   * this is opposing behavior, so just XOR the result on a pure update */
   ret = ((results == NULL) ^ !(opmask & ~OP_UPDATE));
   print_results(results, task.printfn);
   alpm_list_free_inner(results, aurpkg_free);
