@@ -1064,7 +1064,7 @@ int parse_configfile() {
         } else if (STREQ(val, "never")) {
           optcolor = 0;
         } else {
-          fprintf(stderr, "invalid argument to Color\n");
+          fprintf(stderr, "error: invalid option to Color\n");
           return 1;
         }
       }
