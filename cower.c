@@ -332,11 +332,7 @@ int alpm_init() {
   }
   cwr_printf(LOG_DEBUG, "setting alpm DBPath to: %s\n", alpm_option_get_dbpath());
 
-#ifdef _HAVE_ALPM_DB_REGISTER_LOCAL
-  db_local = alpm_db_register_local();
-#else
   db_local = alpm_option_get_localdb();
-#endif
   if (!db_local) {
     return 1;
   }
@@ -410,27 +406,6 @@ alpm_list_t *alpm_find_foreign_pkgs() {
   return ret;
 }
 
-#ifndef _HAVE_ALPM_FIND_SATISFIER
-/* this is a half assed version of the real thing */
-pmpkg_t *alpm_find_satisfier(alpm_list_t *pkgs, const char *depstring) {
-  alpm_list_t *results, *target = NULL;
-  char *pkgname;
-
-  (void)pkgs; /* NOOP for compatibility */
-
-  pkgname = strdup(depstring);
-  *(pkgname + strcspn(depstring, "<>=")) = '\0';
-
-  target = alpm_list_add(target, pkgname);
-
-  if ((results = alpm_db_search(db_local, target))) {
-    return alpm_list_getdata(results);
-  }
-
-  return NULL;
-}
-#endif
-
 int alpm_pkg_is_foreign(pmpkg_t *pkg) {
   alpm_list_t *i;
   const char *pkgname;
@@ -452,11 +427,7 @@ const char *alpm_provides_pkg(const char *pkgname) {
 
   for (i = alpm_option_get_syncdbs(); i; i = alpm_list_next(i)) {
     db = alpm_list_getdata(i);
-#ifdef _HAVE_ALPM_FIND_SATISFIER
     if (alpm_find_satisfier(alpm_db_get_pkgcache(db), pkgname)) {
-#else
-    if (alpm_db_get_pkg(db, pkgname)) {
-#endif
       return alpm_db_get_name(db);
     }
   }
