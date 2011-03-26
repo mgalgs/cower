@@ -2042,7 +2042,7 @@ size_t yajl_parse_stream(void *ptr, size_t size, size_t nmemb, void *stream) {
 }
 
 int main(int argc, char *argv[]) {
-  alpm_list_t *results = NULL, *filtered, *thread_return = NULL;
+  alpm_list_t *results = NULL, *thread_return = NULL;
   int ret, n, num_threads;
   pthread_attr_t attr;
   pthread_t *threads;
@@ -2152,11 +2152,11 @@ int main(int argc, char *argv[]) {
    * a) search/info/download returns nothing
    * b) update (without download) returns something
    * this is opposing behavior, so just XOR the result on a pure update */
+  results = filter_list(results);
   ret = ((results == NULL) ^ !(opmask & ~OP_UPDATE));
-  filtered = filter_list(results);
-  print_results(filtered, task.printfn);
-  alpm_list_free_inner(filtered, aurpkg_free);
-  alpm_list_free(filtered);
+  print_results(results, task.printfn);
+  alpm_list_free_inner(results, aurpkg_free);
+  alpm_list_free(results);
 
 finish:
   FREE(download_dir);
