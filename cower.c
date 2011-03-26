@@ -645,6 +645,42 @@ size_t curl_write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
   return realsize;
 }
 
+alpm_list_t *filter_list(alpm_list_t *list) {
+  alpm_list_t *i, *j, *ret = NULL;
+
+  if (!(opmask & OP_SEARCH)) {
+    return list;
+  }
+
+  for (i = targets; i; i = alpm_list_next(i)) {
+    regex_t regex;
+    const char *targ = (const char*)alpm_list_getdata(i);
+    ret = NULL;
+
+    if (regcomp(&regex, targ, REGEX_OPTS) == 0) {
+      for (j = list; j; j = alpm_list_next(j)) {
+        struct aurpkg_t *pkg = alpm_list_getdata(j);
+        const char *name = pkg->name;
+        const char *desc = pkg->desc;
+
+        if (regexec(&regex, name, 0, 0, 0) != REG_NOMATCH ||
+            regexec(&regex, desc, 0, 0, 0) != REG_NOMATCH) {
+          ret = alpm_list_add(ret, pkg);
+        } else {
+          aurpkg_free(pkg);
+        }
+      }
+      regfree(&regex);
+    }
+
+    /* switcheroo */
+    alpm_list_free(list);
+    list = ret;
+  }
+
+  return alpm_list_msort(ret, alpm_list_count(ret), aurpkg_cmp);
+}
+
 int getcols() {
   struct winsize win;
 
@@ -1771,10 +1807,9 @@ finish:
 }
 
 void *task_query(CURL *curl, void *arg) {
-  alpm_list_t *i, *pkglist = NULL;
+  alpm_list_t *pkglist = NULL;
   CURLcode curlstat;
   struct yajl_handle_t *yajl_hand = NULL;
-  regex_t regex;
   const char *argstr;
   char *escaped, *url;
   long httpcode;
@@ -1782,11 +1817,6 @@ void *task_query(CURL *curl, void *arg) {
   struct yajl_parser_t *parse_struct;
 
   curl = curl_init_easy_handle(curl);
-
-  if ((opmask & OP_SEARCH) && regcomp(&regex, arg, REGEX_OPTS) != 0) {
-    cwr_fprintf(stderr, LOG_ERROR, "invalid regex pattern: %s\n", (const char*)arg);
-    return NULL;
-  }
 
   /* find a valid chunk of search string */
   if (opmask & OP_SEARCH) {
@@ -1852,27 +1882,7 @@ void *task_query(CURL *curl, void *arg) {
     goto finish;
   }
 
-  /* filter and save the embedded list -- skip if no regex chars */
-  if (!(opmask & OP_SEARCH)) {
-    pkglist = parse_struct->pkglist;
-  } else {
-    if (strlen(arg) == (size_t)span) {
-      cwr_printf(LOG_DEBUG, "skipping regex filtering\n");
-      pkglist = parse_struct->pkglist;
-    } else {
-      cwr_printf(LOG_DEBUG, "filtering results with regex: %s\n", (const char*)arg);
-      for (i = parse_struct->pkglist; i; i = alpm_list_next(i)) {
-        struct aurpkg_t *p = alpm_list_getdata(i);
-        if (regexec(&regex, p->name, 0, 0, 0) != REG_NOMATCH) {
-          pkglist = alpm_list_add(pkglist, p);
-        } else {
-          aurpkg_free(p);
-        }
-      }
-      alpm_list_free(parse_struct->pkglist);
-    }
-    regfree(&regex);
-  }
+  pkglist = parse_struct->pkglist;
 
   if (pkglist && optextinfo) {
     struct aurpkg_t *aurpkg;
@@ -1981,7 +1991,7 @@ void *thread_pool(void *arg) {
       break;
     }
 
-    ret = alpm_list_mmerge(ret, task->threadfn(curl, job), aurpkg_cmp);
+    ret = alpm_list_join(ret, task->threadfn(curl, job));
   }
 
   curl_easy_cleanup(curl);
@@ -2032,7 +2042,7 @@ size_t yajl_parse_stream(void *ptr, size_t size, size_t nmemb, void *stream) {
 }
 
 int main(int argc, char *argv[]) {
-  alpm_list_t *results = NULL, *thread_return = NULL;
+  alpm_list_t *results = NULL, *filtered, *thread_return = NULL;
   int ret, n, num_threads;
   pthread_attr_t attr;
   pthread_t *threads;
@@ -2132,20 +2142,21 @@ int main(int argc, char *argv[]) {
   for (n = 0; n < num_threads; n++) {
     pthread_join(threads[n], (void**)&thread_return);
     cwr_printf(LOG_DEBUG, "[%p]: joined\n", (void*)threads[n]);
-    results = alpm_list_mmerge(results, thread_return, aurpkg_cmp);
+    results = alpm_list_join(results, thread_return);
   }
+
+  free(threads);
+  pthread_attr_destroy(&attr);
 
   /* we need to exit with a non-zero value when:
    * a) search/info/download returns nothing
    * b) update (without download) returns something
    * this is opposing behavior, so just XOR the result on a pure update */
   ret = ((results == NULL) ^ !(opmask & ~OP_UPDATE));
-  print_results(results, task.printfn);
-  alpm_list_free_inner(results, aurpkg_free);
-  alpm_list_free(results);
-
-  free(threads);
-  pthread_attr_destroy(&attr);
+  filtered = filter_list(results);
+  print_results(filtered, task.printfn);
+  alpm_list_free_inner(filtered, aurpkg_free);
+  alpm_list_free(filtered);
 
 finish:
   FREE(download_dir);
