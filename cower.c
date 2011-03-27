@@ -236,7 +236,7 @@ static int cwr_asprintf(char**, const char*, ...) __attribute__((format(printf,2
 static int cwr_fprintf(FILE*, loglevel_t, const char*, ...) __attribute__((format(printf,3,4)));
 static int cwr_printf(loglevel_t, const char*, ...) __attribute__((format(printf,2,3)));
 static int cwr_vfprintf(FILE*, loglevel_t, const char*, va_list) __attribute__((format(printf,3,0)));
-static alpm_list_t *filter_list(alpm_list_t*);
+static alpm_list_t *filter_results(alpm_list_t*);
 static char *get_file_as_buffer(const char*);
 static int getcols(void);
 static void indentprint(const char*, int);
@@ -646,8 +646,8 @@ size_t curl_write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
   return realsize;
 }
 
-alpm_list_t *filter_list(alpm_list_t *list) {
-  alpm_list_t *i, *j, *ret = NULL;
+alpm_list_t *filter_results(alpm_list_t *list) {
+  alpm_list_t *i, *j, *filterlist = NULL;
 
   if (!(opmask & OP_SEARCH)) {
     return list;
@@ -656,7 +656,7 @@ alpm_list_t *filter_list(alpm_list_t *list) {
   for (i = targets; i; i = alpm_list_next(i)) {
     regex_t regex;
     const char *targ = (const char*)alpm_list_getdata(i);
-    ret = NULL;
+    filterlist = NULL;
 
     if (regcomp(&regex, targ, REGEX_OPTS) == 0) {
       for (j = list; j; j = alpm_list_next(j)) {
@@ -666,7 +666,7 @@ alpm_list_t *filter_list(alpm_list_t *list) {
 
         if (regexec(&regex, name, 0, 0, 0) != REG_NOMATCH ||
             regexec(&regex, desc, 0, 0, 0) != REG_NOMATCH) {
-          ret = alpm_list_add(ret, pkg);
+          filterlist = alpm_list_add(filterlist, pkg);
         } else {
           aurpkg_free(pkg);
         }
@@ -676,10 +676,10 @@ alpm_list_t *filter_list(alpm_list_t *list) {
 
     /* switcheroo */
     alpm_list_free(list);
-    list = ret;
+    list = filterlist;
   }
 
-  return alpm_list_msort(ret, alpm_list_count(ret), aurpkg_cmp);
+  return alpm_list_msort(filterlist, alpm_list_count(filterlist), aurpkg_cmp);
 }
 
 int getcols() {
@@ -2153,7 +2153,7 @@ int main(int argc, char *argv[]) {
    * a) search/info/download returns nothing
    * b) update (without download) returns something
    * this is opposing behavior, so just XOR the result on a pure update */
-  results = filter_list(results);
+  results = filter_results(results);
   ret = ((results == NULL) ^ !(opmask & ~OP_UPDATE));
   print_results(results, task.printfn);
   alpm_list_free_inner(results, aurpkg_free);
