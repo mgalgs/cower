@@ -236,6 +236,7 @@ static int cwr_asprintf(char**, const char*, ...) __attribute__((format(printf,2
 static int cwr_fprintf(FILE*, loglevel_t, const char*, ...) __attribute__((format(printf,3,4)));
 static int cwr_printf(loglevel_t, const char*, ...) __attribute__((format(printf,2,3)));
 static int cwr_vfprintf(FILE*, loglevel_t, const char*, va_list) __attribute__((format(printf,3,0)));
+static alpm_list_t *filter_list(alpm_list_t*);
 static char *get_file_as_buffer(const char*);
 static int getcols(void);
 static void indentprint(const char*, int);
