@@ -782,7 +782,7 @@ void indentprint(const char *str, int indent) {
       }
       continue;
     }
-    printf("%lc", (wint_t)*p);
+    printf("%lc", *p);
     cidx += wcwidth(*p);
     p++;
   }
