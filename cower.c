@@ -157,7 +157,7 @@ enum {
   OP_TIMEOUT
 };
 
-enum {
+typedef enum __pkgdetail_t {
   PKGDETAIL_DEPENDS = 0,
   PKGDETAIL_MAKEDEPENDS,
   PKGDETAIL_OPTDEPENDS,
@@ -165,7 +165,7 @@ enum {
   PKGDETAIL_CONFLICTS,
   PKGDETAIL_REPLACES,
   PKGDETAIL_MAX
-};
+} pkgdetail_t;
 
 struct strings_t {
   const char *error;
@@ -248,7 +248,7 @@ static void openssl_crypto_cleanup(void);
 static void openssl_crypto_init(void);
 static unsigned long openssl_thread_id(void);
 static void openssl_thread_cb(int, int, const char*, int);
-static alpm_list_t *parse_bash_array(alpm_list_t*, char*, int);
+static alpm_list_t *parse_bash_array(alpm_list_t*, char*, pkgdetail_t);
 static int parse_configfile(void);
 static int parse_options(int, char*[]);
 static void pkgbuild_get_extinfo(char*, alpm_list_t**[]);
@@ -900,7 +900,7 @@ unsigned long openssl_thread_id(void) {
   return(ret);
 }
 
-alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *array, int type) {
+alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *array, pkgdetail_t type) {
   char *ptr, *token;
 
   if (!array) {
