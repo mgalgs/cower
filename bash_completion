@@ -5,8 +5,8 @@ _cower() {
 
   _get_comp_words_by_ref cur prev
 
+  # nullglob avoids problems when no results are found
   [[ -o nullglob ]] || { shopt -s nullglob; ng=1; }
-  [[ -o extglob ]] || { shopt -s extglob; eg=1; }
 
   opts="-d --download -i --info -m --msearch -s --search -u --update -c --color
         -f --force --format -h --help --ignore --ignorerepo --listdelim --nossl
@@ -33,9 +33,8 @@ _cower() {
     COMPREPLY=($(compgen -W "$("${COMP_WORDS[0]}" -sq -- ^$cur 2>/dev/null)" -- $cur))
   fi
 
-  # restore glob settings
+  # restore nullglob setting
   [[ $ng ]] && shopt -u nullglob
-  [[ $eg ]] && shopt -u extglob
 
 }
 
