@@ -2033,10 +2033,9 @@ void usage() {
 
 size_t yajl_parse_stream(void *ptr, size_t size, size_t nmemb, void *stream) {
   struct yajl_handle_t *hand;
-
-  hand = (struct yajl_handle_t*)stream;
   size_t realsize = size * nmemb;
 
+  hand = (struct yajl_handle_t*)stream;
   yajl_parse(hand, ptr, realsize);
 
   return realsize;
