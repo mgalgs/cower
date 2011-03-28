@@ -1377,11 +1377,13 @@ void print_extinfo_list(alpm_list_t *list, const char *fieldname, const char *de
 }
 
 void print_pkg_formatted(struct aurpkg_t *pkg) {
-  const char *p;
+  const char *p, *end;
   char fmt[32], buf[64];
   int len;
 
-  for (p = optformat; *p != '\0'; p++) {
+  end = rawmemchr(optformat, '\0');
+
+  for (p = optformat; p < end; p++) {
     len = 0;
     if (*p == '%') {
       len = strspn(p + 1 + len, printf_flags);
