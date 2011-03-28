@@ -32,8 +32,8 @@ Search for packages maintained by I<target>.
 =item B<-s, --search>
 
 Search for packages with the I<target>(s) as the search term(s). Queries with
-multiple targets will return the result of the intersection of all targets.
-Extended regex patterns as defined by POSIX are allowed.
+multiple targets will return the result of the intersection of all query
+results. Extended regex patterns as defined by POSIX are allowed.
 
 B<Note:> This is more or less a hack because it's implemented on top of the
 AUR's the 2 character search minimum and lack of regex. cower will search based
@@ -60,7 +60,7 @@ those targets will be checked. This operation can be combined with the
 Use colored output. WHEN is `always' or `auto'. Color will be disabled in a
 pipe unless WHEN is set to always.
 
-=item B<-v, --debug>
+=item B<--debug>
 
 Show debug output. This option should be passed first if used.
 
