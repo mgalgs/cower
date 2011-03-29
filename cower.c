@@ -1055,7 +1055,7 @@ int parse_configfile() {
     } else if (STREQ(key, "ConnectTimeout")) {
       if (val && opttimeout == -1) {
         opttimeout = strtol(val, &key, 10);
-        if (*key != '\0' || opttimeout <= 0) {
+        if (*key != '\0' || opttimeout < 0) {
           fprintf(stderr, "error: invalid option to ConnectTimeout: %s\n", val);
           ret = 1;
         }
