@@ -356,9 +356,7 @@ int alpm_init() {
 
     if (line[0] == '[' && line[strlen(line) - 1] == ']') {
       ptr = &line[1];
-      if (section) {
-        free(section);
-      }
+      free(section);
 
       section = strdup(ptr);
       section[strlen(section) - 1] = '\0';
