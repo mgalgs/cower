@@ -282,7 +282,7 @@ int optgetdeps = 0;
 int optmaxthreads = -1;
 char *optproto = "https";
 int optquiet = 0;
-int opttimeout = -1;
+long opttimeout = -1;
 
 /* variables */
 struct strings_t *colstr;
