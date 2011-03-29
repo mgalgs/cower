@@ -960,7 +960,7 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *array, pkgdetail_t typ
 
 int parse_configfile() {
   char *xdg_config_home, *home, *config_path;
-  char line[BUFSIZ];
+  char line[PATH_MAX];
   int ret = 0;
   FILE *fp;
 
@@ -985,7 +985,7 @@ int parse_configfile() {
   /* don't need this anymore, get rid of it ASAP */
   free(config_path);
 
-  while (fgets(line, BUFSIZ, fp)) {
+  while (fgets(line, PATH_MAX, fp)) {
     char *key, *val;
 
     strtrim(line);
