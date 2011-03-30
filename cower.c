@@ -130,6 +130,10 @@
 
 #define REGEX_OPTS            REG_ICASE|REG_EXTENDED|REG_NOSUB|REG_NEWLINE
 #define REGEX_CHARS           "^.+*?$[](){}|\\"
+
+#define BRIEF_ERR             "E"
+#define BRIEF_WARN            "W"
+#define BRIEF_OK              "S"
 /* }}} */
 
 /* typedefs and objects {{{ */
@@ -139,6 +143,7 @@ typedef enum __loglevel_t {
   LOG_WARN    = (1 << 2),
   LOG_DEBUG   = (1 << 3),
   LOG_VERBOSE = (1 << 4),
+  LOG_BRIEF   = (1 << 5)
 } loglevel_t;
 
 typedef enum __operation_t {
@@ -1118,6 +1123,7 @@ int parse_options(int argc, char *argv[]) { /* {{{ */
     {"update",      no_argument,        0, 'u'},
 
     /* options */
+    {"brief",       no_argument,        0, 'b'},
     {"color",       optional_argument,  0, 'c'},
     {"debug",       no_argument,        0, OP_DEBUG},
     {"force",       no_argument,        0, 'f'},
@@ -1136,7 +1142,7 @@ int parse_options(int argc, char *argv[]) { /* {{{ */
     {0, 0, 0, 0}
   };
 
-  while ((opt = getopt_long(argc, argv, "cdfhimqst:uvV", opts, &option_index)) != -1) {
+  while ((opt = getopt_long(argc, argv, "bcdfhimqst:uvV", opts, &option_index)) != -1) {
     char *token;
 
     switch (opt) {
@@ -1166,6 +1172,9 @@ int parse_options(int argc, char *argv[]) { /* {{{ */
         break;
 
       /* options */
+      case 'b':
+        logmask |= LOG_BRIEF;
+        break;
       case 'c':
         if (!optarg || STREQ(optarg, "auto")) {
           if (isatty(fileno(stdout))) {
@@ -1623,6 +1632,7 @@ int resolve_dependencies(CURL *curl, const char *pkgname) { /* {{{ */
     if (!alpm_list_find_str(cfg.targets, sanitized)) {
       cfg.targets = alpm_list_add(cfg.targets, sanitized);
     } else {
+      cwr_printf(LOG_BRIEF, "S\t%s\n", sanitized);
       FREE(sanitized);
     }
     pthread_mutex_unlock(&alock);
@@ -1764,6 +1774,7 @@ void *task_download(CURL *curl, void *arg) { /* {{{ */
   pthread_mutex_unlock(&lock);
 
   if (db) {
+    cwr_fprintf(stderr, LOG_BRIEF, BRIEF_WARN "\t%s\t", (const char*)arg);
     cwr_fprintf(stderr, LOG_WARN, "%s%s%s is available in %s%s%s\n",
         colstr->pkg, (const char*)arg, colstr->nc,
         colstr->repo, db, colstr->nc);
@@ -1772,11 +1783,13 @@ void *task_download(CURL *curl, void *arg) { /* {{{ */
 
   queryresult = task_query(curl, arg);
   if (!queryresult) {
+    cwr_fprintf(stderr, LOG_BRIEF, BRIEF_ERR "\t%s\t", (const char*)arg);
     cwr_fprintf(stderr, LOG_ERROR, "no results found for %s\n", (const char*)arg);
     return NULL;
   }
 
   if (stat(arg, &st) == 0 && !cfg.force) {
+    cwr_fprintf(stderr, LOG_BRIEF, BRIEF_ERR "\t%s\t", (const char*)arg);
     cwr_fprintf(stderr, LOG_ERROR, "`%s/%s' already exists. Use -f to overwrite.\n",
         cfg.dlpath, (const char*)arg);
     alpm_list_free_inner(queryresult, aurpkg_free);
@@ -1799,6 +1812,7 @@ void *task_download(CURL *curl, void *arg) { /* {{{ */
   curlstat = curl_easy_perform(curl);
 
   if (curlstat != CURLE_OK) {
+    cwr_fprintf(stderr, LOG_BRIEF, BRIEF_ERR "\t%s\t", (const char*)arg);
     cwr_fprintf(stderr, LOG_ERROR, "[%s]: %s\n", (const char*)arg, curl_easy_strerror(curlstat));
     goto finish;
   }
@@ -1811,15 +1825,18 @@ void *task_download(CURL *curl, void *arg) { /* {{{ */
     default:
       cwr_fprintf(stderr, LOG_ERROR, "[%s]: server responded with http%ld\n",
           (const char*)arg, httpcode);
+      cwr_fprintf(stderr, LOG_BRIEF, BRIEF_ERR "\t%s\t", (const char*)arg);
       goto finish;
   }
   cwr_printf(LOG_INFO, "%s%s%s downloaded to %s\n",
       colstr->pkg, (const char*)arg, colstr->nc, cfg.dlpath);
+  cwr_printf(LOG_BRIEF, BRIEF_OK "\t%s\t", (const char*)arg);
 
   ret = archive_extract_file(&response);
   if (ret != ARCHIVE_EOF && ret != ARCHIVE_OK) {
     cwr_fprintf(stderr, LOG_ERROR, "[%s]: failed to extract tarball\n",
         (const char*)arg);
+    cwr_fprintf(stderr, LOG_BRIEF, BRIEF_ERR "\t%s\t", (const char*)arg);
     goto finish;
   }
 
