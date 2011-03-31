@@ -1779,9 +1779,6 @@ void *task_download(CURL *curl, void *arg) {
   switch (httpcode) {
     case 200:
       break;
-    case 404:
-      cwr_fprintf(stderr, LOG_ERROR, "bad URL for package download: `%s'\n", url);
-      goto finish;
     default:
       cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with http%ld\n",
           httpcode);
