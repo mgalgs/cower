@@ -932,7 +932,13 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *array, pkgdetail_t typ
   for (token = strtok(array, " \n"); token; token = strtok(NULL, " \n")) {
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-    strtrim(token);
+    /* found an embedded comment. skip to the next line */
+    if (*token == '#') {
+      token = strtok(NULL, "\n");
+      continue;
+    }
+
+    /* unquote the element */
     if (*token == '\'' || *token == '\"') {
       token++;
       ptr = strrchr(token, *(token - 1));
