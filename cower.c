@@ -1632,7 +1632,9 @@ int resolve_dependencies(CURL *curl, const char *pkgname) { /* {{{ */
     if (!alpm_list_find_str(cfg.targets, sanitized)) {
       cfg.targets = alpm_list_add(cfg.targets, sanitized);
     } else {
-      cwr_printf(LOG_BRIEF, "S\t%s\n", sanitized);
+      if (logmask & LOG_BRIEF && !alpm_db_get_pkg(db_local, sanitized)) {
+          cwr_printf(LOG_BRIEF, "S\t%s\n", sanitized);
+      }
       FREE(sanitized);
     }
     pthread_mutex_unlock(&alock);
