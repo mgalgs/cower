@@ -907,7 +907,7 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *array, pkgdetail_t typ
 
   if (type == PKGDETAIL_OPTDEPENDS) {
     const char *arrayend = rawmemchr(array, '\0');
-    for (ptr = token = array; token <= arrayend; token++) {
+    for (token = array; token <= arrayend; token++) {
       if (*token == '\'' || *token == '\"') {
         token++;
         ptr = strchr(token, *(token - 1));
@@ -934,7 +934,7 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *array, pkgdetail_t typ
 
     /* found an embedded comment. skip to the next line */
     if (*token == '#') {
-      token = strtok(NULL, "\n");
+      strtok(NULL, "\n");
       continue;
     }
 
