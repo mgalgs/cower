@@ -438,7 +438,7 @@ int archive_extract_file(const struct response_t *file) {
   struct archive *archive;
   struct archive_entry *entry;
   const int archive_flags = ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_TIME;
-  int ret = ARCHIVE_OK;
+  int ok, ret = ARCHIVE_OK;
 
   archive = archive_read_new();
   archive_read_support_compression_all(archive);
@@ -447,19 +447,15 @@ int archive_extract_file(const struct response_t *file) {
   ret = archive_read_open_memory(archive, file->data, file->size);
   if (ret == ARCHIVE_OK) {
     while (archive_read_next_header(archive, &entry) == ARCHIVE_OK) {
-      switch (archive_read_extract(archive, entry, archive_flags)) {
-        /* NOOP on ARCHIVE_{OK,WARN,RETRY} */
-        case ARCHIVE_FATAL:
-          ret = ARCHIVE_FATAL;
-          break;
-        case ARCHIVE_EOF:
-          ret = ARCHIVE_EOF;
-          break;
+      ok = archive_read_extract(archive, entry, archive_flags);
+      /* NOOP ON ARCHIVE_{OK,WARN,RETRY} */
+      if (ok == ARCHIVE_FATAL || ok == ARCHIVE_EOF) {
+        ret = ok;
+        break;
       }
     }
     archive_read_close(archive);
   }
-
   archive_read_finish(archive);
 
   return ret;
@@ -512,11 +508,12 @@ int cwr_asprintf(char **string, const char *format, ...) {
   va_list args;
 
   va_start(args, format);
-  if (vasprintf(string, format, args) == -1) {
-    cwr_fprintf(stderr, LOG_ERROR, "failed to allocate string\n");
-    ret = -1;
-  }
+  ret = vasprintf(string, format, args);
   va_end(args);
+
+  if (ret == -1) {
+    cwr_fprintf(stderr, LOG_ERROR, "failed to allocate string\n");
+  }
 
   return ret;
 }
@@ -616,14 +613,9 @@ char *curl_get_url_as_buffer(CURL *curl, const char *url) {
   }
 
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
-
-  switch (httpcode) {
-    case 200:
-    case 404:
-      break;
-    default:
-      cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with http%ld\n",
-          httpcode);
+  if (!(httpcode == 200 || httpcode == 404)) {
+    cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with http%ld\n",
+        httpcode);
   }
 
 finish:
@@ -1453,7 +1445,6 @@ void print_pkg_formatted(struct aurpkg_t *pkg) {
         default:
           putchar('?');
           break;
-
       }
     } else if (*p == '\\') {
       char buf[3];
