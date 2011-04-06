@@ -1447,11 +1447,11 @@ void print_pkg_formatted(struct aurpkg_t *pkg) {
           break;
       }
     } else if (*p == '\\') {
-      char buf[3];
-      buf[0] = *p;
-      buf[1] = *++p;
-      buf[2] = '\0';
-      print_escaped(buf);
+      char ebuf[3];
+      ebuf[0] = *p;
+      ebuf[1] = *++p;
+      ebuf[2] = '\0';
+      print_escaped(ebuf);
     } else {
       putchar(*p);
     }
