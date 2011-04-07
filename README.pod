@@ -164,7 +164,7 @@ the --listdelim option.
 
   %M    makedepends
 
-  %)    optdepends
+  %O    optdepends
 
   %P    provides
 
