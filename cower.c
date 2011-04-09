@@ -54,6 +54,7 @@
 #define FREE(x)               do { if(x) free((void*)x); x = NULL; } while(0)
 #define STREQ(x,y)            (strcmp((x),(y)) == 0)
 #define STR_STARTS_WITH(x,y)  (strncmp((x),(y), strlen(y)) == 0)
+#define NCFLAG(val, flag)     (!optcolor && (val)) ? (flag) : ""
 
 #define COWER_USERAGENT       "cower/3.x"
 
@@ -1515,8 +1516,9 @@ void print_pkg_search(struct aurpkg_t *pkg) {
     printf("%s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
   } else {
     pmpkg_t *ipkg;
-    printf("%saur/%s%s%s %s%s%s (%s)", colstr->repo, colstr->nc, colstr->pkg, pkg->name,
-        pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc, pkg->votes);
+    printf("%saur/%s%s%s %s%s%s%s (%s)", colstr->repo, colstr->nc, colstr->pkg,
+        pkg->name, pkg->ood ? colstr->ood : colstr->utd, pkg->ver,
+        NCFLAG(pkg->ood, " <!>"), colstr->nc, pkg->votes);
     if ((ipkg = alpm_db_get_pkg(db_local, pkg->name))) {
       const char *instcolor;
       if (alpm_pkg_vercmp(pkg->ver, alpm_pkg_get_version(ipkg)) > 0) {
