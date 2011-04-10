@@ -393,7 +393,8 @@ int alpm_init() {
 }
 
 alpm_list_t *alpm_find_foreign_pkgs() {
-  alpm_list_t *i, *ret = NULL;
+  const alpm_list_t *i;
+  alpm_list_t *ret = NULL;
 
   for (i = alpm_db_get_pkgcache(db_local); i; i = alpm_list_next(i)) {
     pmpkg_t *pkg = alpm_list_getdata(i);
@@ -407,7 +408,7 @@ alpm_list_t *alpm_find_foreign_pkgs() {
 }
 
 int alpm_pkg_is_foreign(pmpkg_t *pkg) {
-  alpm_list_t *i;
+  const alpm_list_t *i;
   const char *pkgname;
 
   pkgname = alpm_pkg_get_name(pkg);
@@ -422,7 +423,7 @@ int alpm_pkg_is_foreign(pmpkg_t *pkg) {
 }
 
 const char *alpm_provides_pkg(const char *pkgname) {
-  alpm_list_t *i;
+  const alpm_list_t *i;
   pmdb_t *db;
 
   for (i = alpm_option_get_syncdbs(); i; i = alpm_list_next(i)) {
@@ -638,7 +639,8 @@ size_t curl_write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
 }
 
 alpm_list_t *filter_results(alpm_list_t *list) {
-  alpm_list_t *i, *j, *filterlist = NULL;
+  const alpm_list_t *i, *j;
+  alpm_list_t *filterlist = NULL;
 
   if (!(opmask & OP_SEARCH)) {
     return list;
@@ -1346,7 +1348,7 @@ int print_escaped(const char *delim) {
 }
 
 void print_extinfo_list(alpm_list_t *list, const char *fieldname, const char *delim, int wrap) {
-  alpm_list_t *next, *i;
+  const alpm_list_t *next, *i;
   size_t cols, count = 0;
 
   if (!list) {
@@ -1462,7 +1464,6 @@ void print_pkg_formatted(struct aurpkg_t *pkg) {
 }
 
 void print_pkg_info(struct aurpkg_t *pkg) {
-  alpm_list_t *i;
   pmpkg_t *ipkg;
 
   printf(PKG_REPO "     : %saur%s\n", colstr->repo, colstr->nc);
@@ -1490,6 +1491,7 @@ void print_pkg_info(struct aurpkg_t *pkg) {
   print_extinfo_list(pkg->conflicts, PKG_CONFLICTS, LIST_DELIM, 1);
 
   if (pkg->optdepends) {
+    const alpm_list_t *i;
     printf(PKG_OPTDEPENDS "  : %s\n", (const char*)alpm_list_getdata(pkg->optdepends));
     for (i = pkg->optdepends->next; i; i = alpm_list_next(i)) {
       printf("%-*s%s\n", INFO_INDENT, "", (const char*)alpm_list_getdata(i));
@@ -1535,7 +1537,7 @@ void print_pkg_search(struct aurpkg_t *pkg) {
 }
 
 void print_results(alpm_list_t *results, void (*printfn)(struct aurpkg_t*)) {
-  alpm_list_t *i;
+  const alpm_list_t *i;
   struct aurpkg_t *prev = NULL;
 
   if (!printfn) {
@@ -1559,7 +1561,8 @@ void print_results(alpm_list_t *results, void (*printfn)(struct aurpkg_t*)) {
 }
 
 int resolve_dependencies(CURL *curl, const char *pkgname) {
-  alpm_list_t *i, *deplist = NULL;
+  const alpm_list_t *i;
+  alpm_list_t *deplist = NULL;
   char *filename, *pkgbuild;
   static pthread_mutex_t flock = PTHREAD_MUTEX_INITIALIZER;
   static pthread_mutex_t alock = PTHREAD_MUTEX_INITIALIZER;
