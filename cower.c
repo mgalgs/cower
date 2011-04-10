@@ -62,8 +62,9 @@
 #define AUR_PKG_URL           "%s://aur.archlinux.org/packages/%s/%s.tar.gz"
 #define AUR_PKG_URL_FORMAT    "%s://aur.archlinux.org/packages.php?ID="
 #define AUR_RPC_URL           "%s://aur.archlinux.org/rpc.php?type=%s&arg=%s"
-#define THREAD_MAX            10
-#define CONNECT_TIMEOUT       10L
+#define THREAD_DEFAULT        10
+#define TIMEOUT_DEFAULT       10L
+#define UNSET                 -1
 
 #define AUR_QUERY_TYPE        "type"
 #define AUR_QUERY_TYPE_INFO   "info"
@@ -1054,7 +1055,7 @@ int parse_configfile() {
         }
       }
     } else if (STREQ(key, "MaxThreads")) {
-      if (val && cfg.maxthreads == -1) {
+      if (val && cfg.maxthreads == UNSET) {
         cfg.maxthreads = strtol(val, &key, 10);
         if (*key != '\0' || cfg.maxthreads <= 0) {
           fprintf(stderr, "error: invalid option to MaxThreads: %s\n", val);
@@ -1062,7 +1063,7 @@ int parse_configfile() {
         }
       }
     } else if (STREQ(key, "ConnectTimeout")) {
-      if (val && cfg.timeout == -1) {
+      if (val && cfg.timeout == UNSET) {
         cfg.timeout = strtol(val, &key, 10);
         if (*key != '\0' || cfg.timeout < 0) {
           fprintf(stderr, "error: invalid option to ConnectTimeout: %s\n", val);
@@ -1070,7 +1071,7 @@ int parse_configfile() {
         }
       }
     } else if (STREQ(key, "Color")) {
-      if (cfg.color == -1) {
+      if (cfg.color == UNSET) {
         if (!val || STREQ(val, "auto")) {
           if (isatty(fileno(stdout))) {
             cfg.color = 1;
@@ -2062,7 +2063,7 @@ int main(int argc, char *argv[]) {
 
   /* initialize config */
   memset(&cfg, 0, sizeof cfg);
-  cfg.color = cfg.maxthreads = cfg.timeout = -1;
+  cfg.color = cfg.maxthreads = cfg.timeout = UNSET;
   cfg.delim = LIST_DELIM;
   cfg.logmask = LOG_ERROR|LOG_WARN|LOG_INFO; 
   cfg.proto = "https";
@@ -2081,12 +2082,8 @@ int main(int argc, char *argv[]) {
   }
 
   /* fallback from sentinel values */
-  if (cfg.maxthreads == -1) {
-    cfg.maxthreads = THREAD_MAX;
-  }
-  if (cfg.timeout == -1) {
-    cfg.timeout = CONNECT_TIMEOUT;
-  }
+  cfg.maxthreads = cfg.maxthreads == UNSET ? THREAD_DEFAULT : cfg.maxthreads;
+  cfg.timeout = cfg.timeout == UNSET ? TIMEOUT_DEFAULT : cfg.timeout;
 
   if ((ret = strings_init()) != 0) {
     return ret;
