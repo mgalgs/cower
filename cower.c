@@ -54,7 +54,7 @@
 #define FREE(x)               do { if(x) free((void*)x); x = NULL; } while(0)
 #define STREQ(x,y)            (strcmp((x),(y)) == 0)
 #define STR_STARTS_WITH(x,y)  (strncmp((x),(y), strlen(y)) == 0)
-#define NCFLAG(val, flag)     (!optcolor && (val)) ? (flag) : ""
+#define NCFLAG(val, flag)     (!cfg.color && (val)) ? (flag) : ""
 
 #define COWER_USERAGENT       "cower/3.x"
 
@@ -270,27 +270,35 @@ static void *thread_pool(void*);
 static void usage(void);
 static size_t yajl_parse_stream(void*, size_t, size_t, void*);
 
-/* options */
-alpm_list_t *ignored_pkgs = NULL;
-alpm_list_t *ignored_repos = NULL;
-char *download_dir = NULL;
-int optcolor = -1;
-char *optdelim = LIST_DELIM;
-int optextinfo = 0;
-int optforce = 0;
-char *optformat = NULL;
-int optgetdeps = 0;
-int optmaxthreads = -1;
-char *optproto = "https";
-int optquiet = 0;
-long opttimeout = -1;
+/* runtime configuration */
+struct {
+  char *dlpath;
+  const char *delim;
+  const char *format;
+  const char *proto;
 
-/* variables */
+  operation_t opmask;
+  loglevel_t logmask;
+
+  int color;
+  int extinfo;
+  int force;
+  int getdeps;
+  int maxthreads;
+  int quiet;
+  long timeout;
+
+  alpm_list_t *targets;
+  struct {
+    alpm_list_t *pkgs;
+    alpm_list_t *repos;
+  } ignore;
+} cfg;
+
+/* globals */
 struct strings_t *colstr;
 pmdb_t *db_local;
-alpm_list_t *targs, *targets = NULL;
-loglevel_t logmask = LOG_ERROR|LOG_WARN|LOG_INFO;
-operation_t opmask = 0;
+alpm_list_t *workq;
 struct openssl_mutex_t openssl_lock;
 
 static yajl_callbacks callbacks = {
@@ -307,8 +315,8 @@ static yajl_callbacks callbacks = {
   NULL
 };
 
-static char const digits[] = "0123456789";
-static char const printf_flags[] = "'-+ #0I";
+static char const *digits = "0123456789";
+static char const *printf_flags = "'-+ #0I";
 
 static const char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
                                 "emulators", "games", "gnome", "i18n", "kde", "lib",
@@ -362,7 +370,7 @@ int alpm_init() {
       section = strdup(ptr);
       section[strlen(section) - 1] = '\0';
 
-      if (!STREQ(section, "options") && !alpm_list_find_str(ignored_repos, section)) {
+      if (!STREQ(section, "options") && !alpm_list_find_str(cfg.ignore.repos, section)) {
         alpm_db_register_sync(section);
         cwr_printf(LOG_DEBUG, "registering alpm db: %s\n", section);
       }
@@ -378,9 +386,9 @@ int alpm_init() {
         alpm_option_set_dbpath(ptr);
       } else if (STREQ(key, "IgnorePkg")) {
         for (token = strtok(ptr, " "); token; token = strtok(NULL, ",")) {
-          if (!alpm_list_find_str(ignored_pkgs, token)) {
+          if (!alpm_list_find_str(cfg.ignore.pkgs, token)) {
             cwr_printf(LOG_DEBUG, "ignoring package: %s\n", token);
-            ignored_pkgs = alpm_list_add(ignored_pkgs, strdup(token));
+            cfg.ignore.pkgs = alpm_list_add(cfg.ignore.pkgs, strdup(token));
           }
         }
       }
@@ -546,7 +554,7 @@ int cwr_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list arg
   const char *prefix;
   char bufout[128];
 
-  if (!(logmask & level)) {
+  if (!(cfg.logmask & level)) {
     return 0;
   }
 
@@ -583,11 +591,11 @@ CURL *curl_init_easy_handle(CURL *handle) {
   curl_easy_reset(handle);
   curl_easy_setopt(handle, CURLOPT_USERAGENT, COWER_USERAGENT);
   curl_easy_setopt(handle, CURLOPT_ENCODING, "deflate, gzip");
-  curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, opttimeout);
+  curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, cfg.timeout);
 
   /* This is required of multi-threaded apps using timeouts. See
    * curl_easy_setopt(3) */
-  if (opttimeout > 0L) {
+  if (cfg.timeout > 0L) {
     curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1L);
   }
 
@@ -642,11 +650,11 @@ alpm_list_t *filter_results(alpm_list_t *list) {
   const alpm_list_t *i, *j;
   alpm_list_t *filterlist = NULL;
 
-  if (!(opmask & OP_SEARCH)) {
+  if (!(cfg.opmask & OP_SEARCH)) {
     return list;
   }
 
-  for (i = targets; i; i = alpm_list_next(i)) {
+  for (i = cfg.targets; i; i = alpm_list_next(i)) {
     regex_t regex;
     const char *targ = (const char*)alpm_list_getdata(i);
     filterlist = NULL;
@@ -847,7 +855,7 @@ int json_string(void *ctx, const unsigned char *data, unsigned int size) {
 void openssl_crypto_cleanup() {
   int i;
 
-  if (!STREQ(optproto, "https")) {
+  if (!STREQ(cfg.proto, "https")) {
     return;
   }
 
@@ -1012,31 +1020,31 @@ int parse_configfile() {
     /* colors are not initialized in this section, so usage of cwr_printf
      * functions is verboten unless we're using loglevel_t LOG_DEBUG */
     if (STREQ(key, "NoSSL")) {
-      optproto = "http";
+      cfg.proto = "http";
     } else if (STREQ(key, "IgnoreRepo")) {
       for (key = strtok(val, " "); key; key = strtok(NULL, " ")) {
-        if (!alpm_list_find_str(ignored_repos, key)) {
+        if (!alpm_list_find_str(cfg.ignore.repos, key)) {
           cwr_printf(LOG_DEBUG, "ignoring repo: %s\n", key);
-          ignored_repos = alpm_list_add(ignored_repos, strdup(key));
+          cfg.ignore.repos = alpm_list_add(cfg.ignore.repos, strdup(key));
         }
       }
     } else if (STREQ(key, "IgnorePkg")) {
       for (key = strtok(val, " "); key; key = strtok(NULL, " ")) {
-        if (!alpm_list_find_str(ignored_pkgs, key)) {
+        if (!alpm_list_find_str(cfg.ignore.pkgs, key)) {
           cwr_printf(LOG_DEBUG, "ignoring package: %s\n", key);
-          ignored_pkgs = alpm_list_add(ignored_pkgs, strdup(key));
+          cfg.ignore.pkgs = alpm_list_add(cfg.ignore.pkgs, strdup(key));
         }
       }
     } else if (STREQ(key, "TargetDir")) {
-      if (val && !download_dir) {
+      if (val && !cfg.dlpath) {
         wordexp_t p;
         if (wordexp(val, &p, 0) == 0) {
           if (p.we_wordc == 1) {
-            download_dir = strdup(p.we_wordv[0]);
+            cfg.dlpath = strdup(p.we_wordv[0]);
           }
           wordfree(&p);
           /* error on relative paths */
-          if (*download_dir != '/') {
+          if (*cfg.dlpath != '/') {
             fprintf(stderr, "error: TargetDir cannot be a relative path\n");
             ret = 1;
           }
@@ -1046,33 +1054,33 @@ int parse_configfile() {
         }
       }
     } else if (STREQ(key, "MaxThreads")) {
-      if (val && optmaxthreads == -1) {
-        optmaxthreads = strtol(val, &key, 10);
-        if (*key != '\0' || optmaxthreads <= 0) {
+      if (val && cfg.maxthreads == -1) {
+        cfg.maxthreads = strtol(val, &key, 10);
+        if (*key != '\0' || cfg.maxthreads <= 0) {
           fprintf(stderr, "error: invalid option to MaxThreads: %s\n", val);
           ret = 1;
         }
       }
     } else if (STREQ(key, "ConnectTimeout")) {
-      if (val && opttimeout == -1) {
-        opttimeout = strtol(val, &key, 10);
-        if (*key != '\0' || opttimeout < 0) {
+      if (val && cfg.timeout == -1) {
+        cfg.timeout = strtol(val, &key, 10);
+        if (*key != '\0' || cfg.timeout < 0) {
           fprintf(stderr, "error: invalid option to ConnectTimeout: %s\n", val);
           ret = 1;
         }
       }
     } else if (STREQ(key, "Color")) {
-      if (optcolor == -1) {
+      if (cfg.color == -1) {
         if (!val || STREQ(val, "auto")) {
           if (isatty(fileno(stdout))) {
-            optcolor = 1;
+            cfg.color = 1;
           } else {
-            optcolor = 0;
+            cfg.color = 0;
           }
         } else if (STREQ(val, "always")) {
-          optcolor = 1;
+          cfg.color = 1;
         } else if (STREQ(val, "never")) {
-          optcolor = 0;
+          cfg.color = 0;
         } else {
           fprintf(stderr, "error: invalid option to Color\n");
           return 1;
@@ -1126,99 +1134,99 @@ int parse_options(int argc, char *argv[]) {
     switch (opt) {
       /* operations */
       case 's':
-        opmask |= OP_SEARCH;
+        cfg.opmask |= OP_SEARCH;
         break;
       case 'u':
-        opmask |= OP_UPDATE;
+        cfg.opmask |= OP_UPDATE;
         break;
       case 'i':
-        if (!(opmask & OP_INFO)) {
-          opmask |= OP_INFO;
+        if (!(cfg.opmask & OP_INFO)) {
+          cfg.opmask |= OP_INFO;
         } else {
-          optextinfo = 1;
+          cfg.extinfo = 1;
         }
         break;
       case 'd':
-        if (!(opmask & OP_DOWNLOAD)) {
-          opmask |= OP_DOWNLOAD;
+        if (!(cfg.opmask & OP_DOWNLOAD)) {
+          cfg.opmask |= OP_DOWNLOAD;
         } else {
-          optgetdeps = 1;
+          cfg.getdeps = 1;
         }
         break;
       case 'm':
-        opmask |= OP_MSEARCH;
+        cfg.opmask |= OP_MSEARCH;
         break;
 
       /* options */
       case 'c':
         if (!optarg || STREQ(optarg, "auto")) {
           if (isatty(fileno(stdout))) {
-            optcolor = 1;
+            cfg.color = 1;
           } else {
-            optcolor = 0;
+            cfg.color = 0;
           }
         } else if (STREQ(optarg, "always")) {
-          optcolor = 1;
+          cfg.color = 1;
         } else if (STREQ(optarg, "never")) {
-          optcolor = 0;
+          cfg.color = 0;
         } else {
           fprintf(stderr, "invalid argument to --color\n");
           return 1;
         }
         break;
       case 'f':
-        optforce = 1;
+        cfg.force = 1;
         break;
       case 'h':
         usage();
         return 1;
       case 'q':
-        optquiet = 1;
+        cfg.quiet = 1;
         break;
       case 't':
-        download_dir = strdup(optarg);
+        cfg.dlpath = strdup(optarg);
         break;
       case 'v':
-        logmask |= LOG_VERBOSE;
+        cfg.logmask |= LOG_VERBOSE;
         break;
       case OP_DEBUG:
-        logmask |= LOG_DEBUG;
+        cfg.logmask |= LOG_DEBUG;
         break;
       case OP_FORMAT:
-        optformat = optarg;
+        cfg.format = optarg;
         break;
       case OP_IGNOREPKG:
         for (token = strtok(optarg, ","); token; token = strtok(NULL, ",")) {
-          if (!alpm_list_find_str(ignored_pkgs, token)) {
+          if (!alpm_list_find_str(cfg.ignore.pkgs, token)) {
             cwr_printf(LOG_DEBUG, "ignoring package: %s\n", token);
-            ignored_pkgs = alpm_list_add(ignored_pkgs, strdup(token));
+            cfg.ignore.pkgs = alpm_list_add(cfg.ignore.pkgs, strdup(token));
           }
         }
         break;
       case OP_IGNOREREPO:
         for (token = strtok(optarg, ","); token; token = strtok(NULL, ",")) {
-          if (!alpm_list_find_str(ignored_repos, token)) {
+          if (!alpm_list_find_str(cfg.ignore.repos, token)) {
             cwr_printf(LOG_DEBUG, "ignoring repos: %s\n", token);
-            ignored_repos = alpm_list_add(ignored_repos, strdup(token));
+            cfg.ignore.repos = alpm_list_add(cfg.ignore.repos, strdup(token));
           }
         }
         break;
       case OP_LISTDELIM:
-        optdelim = optarg;
+        cfg.delim = optarg;
         break;
       case OP_NOSSL:
-        optproto = "http";
+        cfg.proto = "http";
         break;
       case OP_THREADS:
-        optmaxthreads = strtol(optarg, &token, 10);
-        if (*token != '\0' || optmaxthreads <= 0) {
+        cfg.maxthreads = strtol(optarg, &token, 10);
+        if (*token != '\0' || cfg.maxthreads <= 0) {
           fprintf(stderr, "error: invalid argument to --threads\n");
           return 1;
         }
         break;
 
       case OP_TIMEOUT:
-        opttimeout = strtol(optarg, &token, 10);
+        cfg.timeout = strtol(optarg, &token, 10);
         if (*token != '\0') {
           fprintf(stderr, "error: invalid argument to --timeout\n");
           return 1;
@@ -1233,19 +1241,19 @@ int parse_options(int argc, char *argv[]) {
   }
 
   /* check for invalid operation combos */
-  if (((opmask & OP_INFO) && (opmask & ~OP_INFO)) ||
-     ((opmask & OP_SEARCH) && (opmask & ~OP_SEARCH)) ||
-     ((opmask & OP_MSEARCH) && (opmask & ~OP_MSEARCH)) ||
-     ((opmask & (OP_UPDATE|OP_DOWNLOAD)) && (opmask & ~(OP_UPDATE|OP_DOWNLOAD)))) {
+  if (((cfg.opmask & OP_INFO) && (cfg.opmask & ~OP_INFO)) ||
+     ((cfg.opmask & OP_SEARCH) && (cfg.opmask & ~OP_SEARCH)) ||
+     ((cfg.opmask & OP_MSEARCH) && (cfg.opmask & ~OP_MSEARCH)) ||
+     ((cfg.opmask & (OP_UPDATE|OP_DOWNLOAD)) && (cfg.opmask & ~(OP_UPDATE|OP_DOWNLOAD)))) {
 
     fprintf(stderr, "error: invalid operation\n");
     return 2;
   }
 
   while (optind < argc) {
-    if (!alpm_list_find_str(targets, argv[optind])) {
+    if (!alpm_list_find_str(cfg.targets, argv[optind])) {
       cwr_fprintf(stderr, LOG_DEBUG, "adding target: %s\n", argv[optind]);
-      targets = alpm_list_add(targets, strdup(argv[optind]));
+      cfg.targets = alpm_list_add(cfg.targets, strdup(argv[optind]));
     }
     optind++;
   }
@@ -1380,9 +1388,9 @@ void print_pkg_formatted(struct aurpkg_t *pkg) {
   char fmt[32], buf[64];
   int len;
 
-  end = rawmemchr(optformat, '\0');
+  end = rawmemchr(cfg.format, '\0');
 
-  for (p = optformat; p < end; p++) {
+  for (p = cfg.format; p < end; p++) {
     len = 0;
     if (*p == '%') {
       len = strspn(p + 1 + len, printf_flags);
@@ -1411,7 +1419,7 @@ void print_pkg_formatted(struct aurpkg_t *pkg) {
           printf(fmt, pkg->votes);
           break;
         case 'p':
-          snprintf(buf, 64, AUR_PKG_URL_FORMAT "%s", optproto, pkg->id);
+          snprintf(buf, 64, AUR_PKG_URL_FORMAT "%s", cfg.proto, pkg->id);
           printf(fmt, buf);
           break;
         case 't':
@@ -1425,22 +1433,22 @@ void print_pkg_formatted(struct aurpkg_t *pkg) {
           break;
         /* list based attributes */
         case 'C':
-          print_extinfo_list(pkg->conflicts, NULL, optdelim, 0);
+          print_extinfo_list(pkg->conflicts, NULL, cfg.delim, 0);
           break;
         case 'D':
-          print_extinfo_list(pkg->depends, NULL, optdelim, 0);
+          print_extinfo_list(pkg->depends, NULL, cfg.delim, 0);
           break;
         case 'M':
-          print_extinfo_list(pkg->makedepends, NULL, optdelim, 0);
+          print_extinfo_list(pkg->makedepends, NULL, cfg.delim, 0);
           break;
         case 'O':
-          print_extinfo_list(pkg->optdepends, NULL, optdelim, 0);
+          print_extinfo_list(pkg->optdepends, NULL, cfg.delim, 0);
           break;
         case 'P':
-          print_extinfo_list(pkg->provides, NULL, optdelim, 0);
+          print_extinfo_list(pkg->provides, NULL, cfg.delim, 0);
           break;
         case 'R':
-          print_extinfo_list(pkg->replaces, NULL, optdelim, 0);
+          print_extinfo_list(pkg->replaces, NULL, cfg.delim, 0);
           break;
         case '%':
           putchar('%');
@@ -1483,7 +1491,7 @@ void print_pkg_info(struct aurpkg_t *pkg) {
       pkg->ood ? colstr->ood : colstr->utd, pkg->ver, colstr->nc);
   printf(URL "            : %s%s%s\n", colstr->url, pkg->url, colstr->nc);
   printf(PKG_AURPAGE "       : %s" AUR_PKG_URL_FORMAT "%s%s\n",
-      colstr->url, optproto, pkg->id, colstr->nc);
+      colstr->url, cfg.proto, pkg->id, colstr->nc);
 
   print_extinfo_list(pkg->depends, PKG_DEPENDS, LIST_DELIM, 1);
   print_extinfo_list(pkg->makedepends, PKG_MAKEDEPENDS, LIST_DELIM, 1);
@@ -1514,7 +1522,7 @@ void print_pkg_info(struct aurpkg_t *pkg) {
 }
 
 void print_pkg_search(struct aurpkg_t *pkg) {
-  if (optquiet) {
+  if (cfg.quiet) {
     printf("%s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
   } else {
     pmpkg_t *ipkg;
@@ -1544,7 +1552,7 @@ void print_results(alpm_list_t *results, void (*printfn)(struct aurpkg_t*)) {
     return;
   }
 
-  if (!results && (opmask & OP_INFO)) {
+  if (!results && (cfg.opmask & OP_INFO)) {
     cwr_fprintf(stderr, LOG_ERROR, "no results found\n");
     return;
   }
@@ -1570,7 +1578,7 @@ int resolve_dependencies(CURL *curl, const char *pkgname) {
 
   curl = curl_init_easy_handle(curl);
 
-  cwr_asprintf(&filename, "%s/%s/PKGBUILD", download_dir, pkgname);
+  cwr_asprintf(&filename, "%s/%s/PKGBUILD", cfg.dlpath, pkgname);
 
   pkgbuild = get_file_as_buffer(filename);
   if (!pkgbuild) {
@@ -1593,8 +1601,8 @@ int resolve_dependencies(CURL *curl, const char *pkgname) {
     *(sanitized + strcspn(sanitized, "<>=")) = '\0';
 
     pthread_mutex_lock(&alock);
-    if (!alpm_list_find_str(targets, sanitized)) {
-      targets = alpm_list_add(targets, sanitized);
+    if (!alpm_list_find_str(cfg.targets, sanitized)) {
+      cfg.targets = alpm_list_add(cfg.targets, sanitized);
     } else {
       FREE(sanitized);
     }
@@ -1623,33 +1631,33 @@ int resolve_dependencies(CURL *curl, const char *pkgname) {
 int set_download_path() {
   char *resolved;
 
-  if (!(opmask & OP_DOWNLOAD)) {
-    FREE(download_dir);
+  if (!(cfg.opmask & OP_DOWNLOAD)) {
+    FREE(cfg.dlpath);
     return 0;
   }
 
-  resolved = download_dir ? realpath(download_dir, NULL) : getcwd(NULL, 0);
+  resolved = cfg.dlpath ? realpath(cfg.dlpath, NULL) : getcwd(NULL, 0);
   if (!resolved) {
-    cwr_fprintf(stderr, LOG_ERROR, "%s: %s\n", download_dir, strerror(errno));
-    FREE(download_dir);
+    cwr_fprintf(stderr, LOG_ERROR, "%s: %s\n", cfg.dlpath, strerror(errno));
+    FREE(cfg.dlpath);
     return 1;
   }
 
-  free(download_dir);
-  download_dir = resolved;
+  free(cfg.dlpath);
+  cfg.dlpath = resolved;
 
-  if (access(download_dir, W_OK) != 0) {
+  if (access(cfg.dlpath, W_OK) != 0) {
     cwr_fprintf(stderr, LOG_ERROR, "cannot write to %s: %s\n",
-        download_dir, strerror(errno));
+        cfg.dlpath, strerror(errno));
     return 1;
   }
 
-  if (chdir(download_dir) != 0) {
-    cwr_fprintf(stderr, LOG_ERROR, "%s: %s\n", download_dir, strerror(errno));
+  if (chdir(cfg.dlpath) != 0) {
+    cwr_fprintf(stderr, LOG_ERROR, "%s: %s\n", cfg.dlpath, strerror(errno));
     return 1;
   }
 
-  cwr_printf(LOG_DEBUG, "working directory set to: %s\n", download_dir);
+  cwr_printf(LOG_DEBUG, "working directory set to: %s\n", cfg.dlpath);
 
   return 0;
 }
@@ -1657,7 +1665,7 @@ int set_download_path() {
 int strings_init() {
   MALLOC(colstr, sizeof *colstr, return 1);
 
-  if (optcolor > 0) {
+  if (cfg.color > 0) {
     colstr->error = BOLDRED "::" NC;
     colstr->warn = BOLDYELLOW "::" NC;
     colstr->info = BOLDBLUE "::" NC;
@@ -1679,9 +1687,9 @@ int strings_init() {
     colstr->nc = "";
   }
 
-  /* guard against optdelim being something other than LIST_DELIM if optextinfo
+  /* guard against delim being something other than LIST_DELIM if extinfo
    * and format aren't provided */
-  optdelim = (optextinfo && optformat) ? optdelim : LIST_DELIM;
+  cfg.delim = (cfg.extinfo && cfg.format) ? cfg.delim : LIST_DELIM;
 
   return 0;
 }
@@ -1749,9 +1757,9 @@ void *task_download(CURL *curl, void *arg) {
     return NULL;
   }
 
-  if (stat(arg, &st) == 0 && !optforce) {
+  if (stat(arg, &st) == 0 && !cfg.force) {
     cwr_fprintf(stderr, LOG_ERROR, "`%s/%s' already exists. Use -f to overwrite.\n",
-        download_dir, (const char*)arg);
+        cfg.dlpath, (const char*)arg);
     alpm_list_free_inner(queryresult, aurpkg_free);
     alpm_list_free(queryresult);
     return NULL;
@@ -1765,7 +1773,7 @@ void *task_download(CURL *curl, void *arg) {
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_response);
 
   escaped = curl_easy_escape(curl, arg, strlen(arg));
-  cwr_asprintf(&url, AUR_PKG_URL, optproto, escaped, escaped);
+  cwr_asprintf(&url, AUR_PKG_URL, cfg.proto, escaped, escaped);
   curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_free(escaped);
 
@@ -1787,7 +1795,7 @@ void *task_download(CURL *curl, void *arg) {
       goto finish;
   }
   cwr_printf(LOG_INFO, "%s%s%s downloaded to %s\n",
-      colstr->pkg, (const char*)arg, colstr->nc, download_dir);
+      colstr->pkg, (const char*)arg, colstr->nc, cfg.dlpath);
 
   ret = archive_extract_file(&response);
   if (ret != ARCHIVE_EOF && ret != ARCHIVE_OK) {
@@ -1795,7 +1803,7 @@ void *task_download(CURL *curl, void *arg) {
     goto finish;
   }
 
-  if (optgetdeps) {
+  if (cfg.getdeps) {
     resolve_dependencies(curl, arg);
   }
 
@@ -1819,7 +1827,7 @@ void *task_query(CURL *curl, void *arg) {
   curl = curl_init_easy_handle(curl);
 
   /* find a valid chunk of search string */
-  if (opmask & OP_SEARCH) {
+  if (cfg.opmask & OP_SEARCH) {
     for (argstr = arg; *argstr; argstr++) {
       span = strcspn(argstr, REGEX_CHARS);
 
@@ -1856,12 +1864,12 @@ void *task_query(CURL *curl, void *arg) {
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, yajl_hand);
 
   escaped = curl_easy_escape(curl, argstr, span);
-  if (opmask & OP_SEARCH) {
-    cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_SEARCH, escaped);
-  } else if (opmask & OP_MSEARCH) {
-    cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_MSRCH, escaped);
+  if (cfg.opmask & OP_SEARCH) {
+    cwr_asprintf(&url, AUR_RPC_URL, cfg.proto, AUR_QUERY_TYPE_SEARCH, escaped);
+  } else if (cfg.opmask & OP_MSEARCH) {
+    cwr_asprintf(&url, AUR_RPC_URL, cfg.proto, AUR_QUERY_TYPE_MSRCH, escaped);
   } else {
-    cwr_asprintf(&url, AUR_RPC_URL, optproto, AUR_QUERY_TYPE_INFO, escaped);
+    cwr_asprintf(&url, AUR_RPC_URL, cfg.proto, AUR_QUERY_TYPE_INFO, escaped);
   }
   curl_easy_setopt(curl, CURLOPT_URL, url);
 
@@ -1884,13 +1892,13 @@ void *task_query(CURL *curl, void *arg) {
 
   pkglist = parse_struct->pkglist;
 
-  if (pkglist && optextinfo) {
+  if (pkglist && cfg.extinfo) {
     struct aurpkg_t *aurpkg;
     char *pburl, *pkgbuild;
 
     aurpkg = alpm_list_getdata(pkglist);
 
-    cwr_asprintf(&pburl, AUR_PKGBUILD_PATH, optproto, escaped);
+    cwr_asprintf(&pburl, AUR_PKGBUILD_PATH, cfg.proto, escaped);
     pkgbuild = curl_get_url_as_buffer(curl, pburl);
     free(pburl);
 
@@ -1916,7 +1924,7 @@ void *task_update(CURL *curl, void *arg) {
   struct aurpkg_t *aurpkg;
   void *dlretval, *qretval;
 
-  if (alpm_list_find_str(ignored_pkgs, arg)) {
+  if (alpm_list_find_str(cfg.ignore.pkgs, arg)) {
     return NULL;
   }
 
@@ -1939,13 +1947,13 @@ void *task_update(CURL *curl, void *arg) {
     }
 
     if (alpm_pkg_vercmp(aurpkg->ver, alpm_pkg_get_version(pmpkg)) > 0) {
-      if (opmask & OP_DOWNLOAD) {
+      if (cfg.opmask & OP_DOWNLOAD) {
         /* we don't care about the return, but we do care about leaks */
         dlretval = task_download(curl, (void*)aurpkg->name);
         alpm_list_free_inner(dlretval, aurpkg_free);
         alpm_list_free(dlretval);
       } else {
-        if (optquiet) {
+        if (cfg.quiet) {
           printf("%s%s%s\n", colstr->pkg, (const char*)arg, colstr->nc);
         } else {
           cwr_printf(LOG_INFO, "%s%s %s%s%s -> %s%s%s\n",
@@ -1980,10 +1988,10 @@ void *thread_pool(void *arg) {
   }
 
   while (1) {
-    /* try to pop off the targets list */
+    /* try to pop off the work queue */
     pthread_mutex_lock(&lock);
-    job = alpm_list_getdata(targs);
-    targs = alpm_list_next(targs);
+    job = alpm_list_getdata(workq);
+    workq = alpm_list_next(workq);
     pthread_mutex_unlock(&lock);
 
     /* make sure we hooked a new job */
@@ -2052,11 +2060,18 @@ int main(int argc, char *argv[]) {
 
   setlocale(LC_ALL, "");
 
+  /* initialize config */
+  memset(&cfg, 0, sizeof cfg);
+  cfg.color = cfg.maxthreads = cfg.timeout = -1;
+  cfg.delim = LIST_DELIM;
+  cfg.logmask = LOG_ERROR|LOG_WARN|LOG_INFO; 
+  cfg.proto = "https";
+
   if ((ret = parse_options(argc, argv)) != 0) {
     return ret;
   }
 
-  if (!opmask) {
+  if (!cfg.opmask) {
     fprintf(stderr, "error: no operation specified (use -h for help)\n");
     return 1;
   }
@@ -2066,11 +2081,11 @@ int main(int argc, char *argv[]) {
   }
 
   /* fallback from sentinel values */
-  if (optmaxthreads == -1) {
-    optmaxthreads = THREAD_MAX;
+  if (cfg.maxthreads == -1) {
+    cfg.maxthreads = THREAD_MAX;
   }
-  if (opttimeout == -1) {
-    opttimeout = CONNECT_TIMEOUT;
+  if (cfg.timeout == -1) {
+    cfg.timeout = CONNECT_TIMEOUT;
   }
 
   if ((ret = strings_init()) != 0) {
@@ -2082,7 +2097,7 @@ int main(int argc, char *argv[]) {
   }
 
   cwr_printf(LOG_DEBUG, "initializing curl\n");
-  if (STREQ(optproto, "https")) {
+  if (STREQ(cfg.proto, "https")) {
     ret = curl_global_init(CURL_GLOBAL_SSL);
     openssl_crypto_init();
   } else {
@@ -2099,17 +2114,17 @@ int main(int argc, char *argv[]) {
   }
 
   /* allow specific updates to be provided instead of examining all foreign pkgs */
-  if ((opmask & OP_UPDATE) && !targets) {
-    targets = alpm_find_foreign_pkgs();
+  if ((cfg.opmask & OP_UPDATE) && !cfg.targets) {
+    cfg.targets = alpm_find_foreign_pkgs();
   }
 
-  targs = targets;
-  num_threads = alpm_list_count(targets);
+  workq = cfg.targets;
+  num_threads = alpm_list_count(cfg.targets);
   if (num_threads == 0) {
     fprintf(stderr, "error: no targets specified (use -h for help)\n");
     goto finish;
-  } else if (num_threads > optmaxthreads) {
-    num_threads = optmaxthreads;
+  } else if (num_threads > cfg.maxthreads) {
+    num_threads = cfg.maxthreads;
   }
 
   CALLOC(threads, num_threads, sizeof *threads, goto finish);
@@ -2118,13 +2133,13 @@ int main(int argc, char *argv[]) {
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
   /* override task behavior */
-  if (opmask & OP_UPDATE) {
+  if (cfg.opmask & OP_UPDATE) {
     task.threadfn = task_update;
-  } else if (opmask & OP_INFO) {
-    task.printfn = optformat ? print_pkg_formatted : print_pkg_info;
-  } else if (opmask & (OP_SEARCH|OP_MSEARCH)) {
-    task.printfn = optformat ? print_pkg_formatted : print_pkg_search;
-  } else if (opmask & OP_DOWNLOAD) {
+  } else if (cfg.opmask & OP_INFO) {
+    task.printfn = cfg.format ? print_pkg_formatted : print_pkg_info;
+  } else if (cfg.opmask & (OP_SEARCH|OP_MSEARCH)) {
+    task.printfn = cfg.format ? print_pkg_formatted : print_pkg_search;
+  } else if (cfg.opmask & OP_DOWNLOAD) {
     task.threadfn = task_download;
   }
 
@@ -2152,16 +2167,16 @@ int main(int argc, char *argv[]) {
    * b) update (without download) returns something
    * this is opposing behavior, so just XOR the result on a pure update */
   results = filter_results(results);
-  ret = ((results == NULL) ^ !(opmask & ~OP_UPDATE));
+  ret = ((results == NULL) ^ !(cfg.opmask & ~OP_UPDATE));
   print_results(results, task.printfn);
   alpm_list_free_inner(results, aurpkg_free);
   alpm_list_free(results);
 
 finish:
-  FREE(download_dir);
-  FREELIST(targets);
-  FREELIST(ignored_pkgs);
-  FREELIST(ignored_repos);
+  FREE(cfg.dlpath);
+  FREELIST(cfg.targets);
+  FREELIST(cfg.ignore.pkgs);
+  FREELIST(cfg.ignore.repos);
   FREE(colstr);
 
   openssl_crypto_cleanup();
