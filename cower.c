@@ -261,7 +261,7 @@ static void print_pkg_info(struct aurpkg_t*);
 static void print_pkg_search(struct aurpkg_t*);
 static void print_results(alpm_list_t*, void (*)(struct aurpkg_t*));
 static int resolve_dependencies(CURL*, const char*);
-static int set_download_path(void);
+static int set_working_dir(void);
 static int strings_init(void);
 static char *strtrim(char*);
 static void *task_download(CURL*, void*);
@@ -1629,7 +1629,7 @@ int resolve_dependencies(CURL *curl, const char *pkgname) {
   return 0;
 }
 
-int set_download_path() {
+int set_working_dir() {
   char *resolved;
 
   if (!(cfg.opmask & OP_DOWNLOAD)) {
@@ -2090,7 +2090,7 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  if ((ret = set_download_path()) != 0) {
+  if ((ret = set_working_dir()) != 0) {
     goto finish;
   }
 
