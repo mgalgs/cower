@@ -1650,6 +1650,7 @@ int set_download_path() {
   if (access(cfg.dlpath, W_OK) != 0) {
     cwr_fprintf(stderr, LOG_ERROR, "cannot write to %s: %s\n",
         cfg.dlpath, strerror(errno));
+    FREE(cfg.dlpath);
     return 1;
   }
 
@@ -2169,14 +2170,14 @@ int main(int argc, char *argv[]) {
   alpm_list_free_inner(results, aurpkg_free);
   alpm_list_free(results);
 
+  openssl_crypto_cleanup();
+
 finish:
   FREE(cfg.dlpath);
   FREELIST(cfg.targets);
   FREELIST(cfg.ignore.pkgs);
   FREELIST(cfg.ignore.repos);
   FREE(colstr);
-
-  openssl_crypto_cleanup();
 
   cwr_printf(LOG_DEBUG, "releasing curl\n");
   curl_global_cleanup();
