@@ -2085,6 +2085,7 @@ int main(int argc, char *argv[]) {
   /* fallback from sentinel values */
   cfg.maxthreads = cfg.maxthreads == UNSET ? THREAD_DEFAULT : cfg.maxthreads;
   cfg.timeout = cfg.timeout == UNSET ? TIMEOUT_DEFAULT : cfg.timeout;
+  cfg.color = cfg.color == UNSET ? 0 : cfg.color;
 
   if ((ret = strings_init()) != 0) {
     return ret;
