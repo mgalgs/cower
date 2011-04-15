@@ -287,6 +287,7 @@ struct {
   int getdeps;
   int maxthreads;
   int quiet;
+  int skiprepos;
   long timeout;
 
   alpm_list_t *targets;
@@ -371,7 +372,8 @@ int alpm_init() {
       section = strdup(ptr);
       section[strlen(section) - 1] = '\0';
 
-      if (!STREQ(section, "options") && !alpm_list_find_str(cfg.ignore.repos, section)) {
+      if (!STREQ(section, "options") && !cfg.skiprepos &&
+          !alpm_list_find_str(cfg.ignore.repos, section)) {
         alpm_db_register_sync(section);
         cwr_printf(LOG_DEBUG, "registering alpm db: %s\n", section);
       }
@@ -1118,7 +1120,7 @@ int parse_options(int argc, char *argv[]) {
     {"format",      required_argument,  0, OP_FORMAT},
     {"help",        no_argument,        0, 'h'},
     {"ignore",      required_argument,  0, OP_IGNOREPKG},
-    {"ignorerepo",  required_argument,  0, OP_IGNOREREPO},
+    {"ignorerepo",  optional_argument,  0, OP_IGNOREREPO},
     {"listdelim",   required_argument,  0, OP_LISTDELIM},
     {"nossl",       no_argument,        0, OP_NOSSL},
     {"quiet",       no_argument,        0, 'q'},
@@ -1205,10 +1207,14 @@ int parse_options(int argc, char *argv[]) {
         }
         break;
       case OP_IGNOREREPO:
-        for (token = strtok(optarg, ","); token; token = strtok(NULL, ",")) {
-          if (!alpm_list_find_str(cfg.ignore.repos, token)) {
-            cwr_printf(LOG_DEBUG, "ignoring repos: %s\n", token);
-            cfg.ignore.repos = alpm_list_add(cfg.ignore.repos, strdup(token));
+        if (!optarg) {
+          cfg.skiprepos = 1;
+        } else {
+          for (token = strtok(optarg, ","); token; token = strtok(NULL, ",")) {
+            if (!alpm_list_find_str(cfg.ignore.repos, token)) {
+              cwr_printf(LOG_DEBUG, "ignoring repos: %s\n", token);
+              cfg.ignore.repos = alpm_list_add(cfg.ignore.repos, strdup(token));
+            }
           }
         }
         break;
@@ -2026,7 +2032,7 @@ void usage() {
       "  -f, --force             overwrite existing files when downloading\n"
       "  -h, --help              display this help and exit\n"
       "      --ignore <pkg>      ignore a package upgrade (can be used more than once)\n"
-      "      --ignorerepo <repo> ignore a binary repo (can be used more than once)\n"
+      "      --ignorerepo <repo> ignore some or all binary repos\n"
       "      --nossl             do not use https connections\n"
       "  -t, --target <dir>      specify an alternate download directory\n"
       "      --threads <num>     limit number of threads created\n"
