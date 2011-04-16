@@ -1247,6 +1247,10 @@ int parse_options(int argc, char *argv[]) {
     }
   }
 
+  if (!cfg.opmask) {
+    return 3;
+  }
+
   /* check for invalid operation combos */
   if (((cfg.opmask & OP_INFO) && (cfg.opmask & ~OP_INFO)) ||
      ((cfg.opmask & OP_SEARCH) && (cfg.opmask & ~OP_SEARCH)) ||
@@ -2075,13 +2079,15 @@ int main(int argc, char *argv[]) {
   cfg.logmask = LOG_ERROR|LOG_WARN|LOG_INFO; 
   cfg.proto = "https";
 
-  if ((ret = parse_options(argc, argv)) != 0) {
-    return ret;
-  }
-
-  if (!cfg.opmask) {
-    fprintf(stderr, "error: no operation specified (use -h for help)\n");
-    return 1;
+  ret = parse_options(argc, argv);
+  switch (ret) {
+    case 0: /* everything's cool */
+      break;
+    case 3:
+      fprintf(stderr, "error: no operation specified (use -h for help)\n");
+    case 1: /* these provide their own error mesg */
+    case 2:
+      return ret;
   }
 
   if ((ret = parse_configfile() != 0)) {
