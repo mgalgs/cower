@@ -47,7 +47,7 @@
 #include <openssl/crypto.h>
 #include <yajl/yajl_parse.h>
 
-/* macros */
+/* macros {{{ */
 #define ALLOC_FAIL(s) do { cwr_fprintf(stderr, LOG_ERROR, "could not allocate %zd bytes\n", s); } while(0)
 #define MALLOC(p, s, action) do { p = calloc(1, s); if(!p) { ALLOC_FAIL(s); action; } } while(0)
 #define CALLOC(p, l, s, action) do { p = calloc(l, s); if(!p) { ALLOC_FAIL(s); action; } } while(0)
@@ -130,8 +130,9 @@
 
 #define REGEX_OPTS            REG_ICASE|REG_EXTENDED|REG_NOSUB|REG_NEWLINE
 #define REGEX_CHARS           "^.+*?$[](){}|\\"
+/* }}} */
 
-/* enums */
+/* typedefs and objects {{{ */
 typedef enum __loglevel_t {
   LOG_INFO    = 1,
   LOG_ERROR   = (1 << 1),
@@ -221,8 +222,9 @@ struct openssl_mutex_t {
   pthread_mutex_t *lock;
   long *lock_count;
 };
+/* }}} */
 
-/* function declarations */
+/* function prototypes {{{ */
 static alpm_list_t *alpm_find_foreign_pkgs(void);
 static int alpm_init(void);
 static int alpm_pkg_is_foreign(pmpkg_t*);
@@ -270,8 +272,9 @@ static void *task_update(CURL*, void*);
 static void *thread_pool(void*);
 static void usage(void);
 static size_t yajl_parse_stream(void*, size_t, size_t, void*);
+/* }}} */
 
-/* runtime configuration */
+/* runtime configuration {{{ */
 struct {
   char *dlpath;
   const char *delim;
@@ -295,9 +298,9 @@ struct {
     alpm_list_t *pkgs;
     alpm_list_t *repos;
   } ignore;
-} cfg;
+} cfg; /* }}} */
 
-/* globals */
+/* globals {{{ */
 struct strings_t *colstr;
 pmdb_t *db_local;
 alpm_list_t *workq;
@@ -324,9 +327,9 @@ static const char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
                                 "emulators", "games", "gnome", "i18n", "kde", "lib",
                                 "modules", "multimedia", "network", "office",
                                 "science", "system", "x11", "xfce", "kernels" };
+/* }}} */
 
-/* function implementations */
-int alpm_init() {
+int alpm_init() { /* {{{ */
   int ret = 0;
   FILE *fp;
   char line[PATH_MAX];
@@ -401,9 +404,9 @@ int alpm_init() {
   free(section);
   fclose(fp);
   return ret;
-}
+} /* }}} */
 
-alpm_list_t *alpm_find_foreign_pkgs() {
+alpm_list_t *alpm_find_foreign_pkgs() { /* {{{ */
   const alpm_list_t *i;
   alpm_list_t *ret = NULL;
 
@@ -416,9 +419,9 @@ alpm_list_t *alpm_find_foreign_pkgs() {
   }
 
   return ret;
-}
+} /* }}} */
 
-int alpm_pkg_is_foreign(pmpkg_t *pkg) {
+int alpm_pkg_is_foreign(pmpkg_t *pkg) { /* {{{ */
   const alpm_list_t *i;
   const char *pkgname;
 
@@ -431,9 +434,9 @@ int alpm_pkg_is_foreign(pmpkg_t *pkg) {
   }
 
   return 1;
-}
+} /* }}} */
 
-const char *alpm_provides_pkg(const char *pkgname) {
+const char *alpm_provides_pkg(const char *pkgname) { /* {{{ */
   const alpm_list_t *i;
   pmdb_t *db;
 
@@ -445,9 +448,9 @@ const char *alpm_provides_pkg(const char *pkgname) {
   }
 
   return NULL;
-}
+} /* }}} */
 
-int archive_extract_file(const struct response_t *file) {
+int archive_extract_file(const struct response_t *file) { /* {{{ */
   struct archive *archive;
   struct archive_entry *entry;
   const int archive_flags = ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_TIME;
@@ -472,16 +475,16 @@ int archive_extract_file(const struct response_t *file) {
   archive_read_finish(archive);
 
   return ret;
-}
+} /* }}} */
 
-int aurpkg_cmp(const void *p1, const void *p2) {
+int aurpkg_cmp(const void *p1, const void *p2) { /* {{{ */
   struct aurpkg_t *pkg1 = (struct aurpkg_t*)p1;
   struct aurpkg_t *pkg2 = (struct aurpkg_t*)p2;
 
   return strcmp((const char*)pkg1->name, (const char*)pkg2->name);
-}
+} /* }}} */
 
-void aurpkg_free(void *pkg) {
+void aurpkg_free(void *pkg) { /* {{{ */
   struct aurpkg_t *it;
 
   if (!pkg) {
@@ -506,17 +509,17 @@ void aurpkg_free(void *pkg) {
   FREELIST(it->replaces);
 
   FREE(it);
-}
+} /* }}} */
 
-struct aurpkg_t *aurpkg_new() {
+struct aurpkg_t *aurpkg_new() { /* {{{ */
   struct aurpkg_t *pkg;
 
   CALLOC(pkg, 1, sizeof *pkg, return NULL);
 
   return pkg;
-}
+} /* }}} */
 
-int cwr_asprintf(char **string, const char *format, ...) {
+int cwr_asprintf(char **string, const char *format, ...) { /* {{{ */
   int ret = 0;
   va_list args;
 
@@ -529,9 +532,9 @@ int cwr_asprintf(char **string, const char *format, ...) {
   }
 
   return ret;
-}
+} /* }}} */
 
-int cwr_fprintf(FILE *stream, loglevel_t level, const char *format, ...) {
+int cwr_fprintf(FILE *stream, loglevel_t level, const char *format, ...) { /* {{{ */
   int ret;
   va_list args;
 
@@ -540,9 +543,9 @@ int cwr_fprintf(FILE *stream, loglevel_t level, const char *format, ...) {
   va_end(args);
 
   return ret;
-}
+} /* }}} */
 
-int cwr_printf(loglevel_t level, const char *format, ...) {
+int cwr_printf(loglevel_t level, const char *format, ...) { /* {{{ */
   int ret;
   va_list args;
 
@@ -551,9 +554,9 @@ int cwr_printf(loglevel_t level, const char *format, ...) {
   va_end(args);
 
   return ret;
-}
+} /* }}} */
 
-int cwr_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list args) {
+int cwr_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list args) { /* {{{ */
   const char *prefix;
   char bufout[128];
 
@@ -584,9 +587,9 @@ int cwr_vfprintf(FILE *stream, loglevel_t level, const char *format, va_list arg
   snprintf(bufout, 128, "%s %s", prefix, format);
 
   return vfprintf(stream, bufout, args);
-}
+} /* }}} */
 
-CURL *curl_init_easy_handle(CURL *handle) {
+CURL *curl_init_easy_handle(CURL *handle) { /* {{{ */
   if (!handle) {
     return NULL;
   }
@@ -603,9 +606,9 @@ CURL *curl_init_easy_handle(CURL *handle) {
   }
 
   return handle;
-}
+} /* }}} */
 
-char *curl_get_url_as_buffer(CURL *curl, const char *url) {
+char *curl_get_url_as_buffer(CURL *curl, const char *url) { /* {{{ */
   long httpcode;
   struct response_t response;
   CURLcode curlstat;
@@ -633,9 +636,9 @@ char *curl_get_url_as_buffer(CURL *curl, const char *url) {
 
 finish:
   return response.data;
-}
+} /* }}} */
 
-size_t curl_write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
+size_t curl_write_response(void *ptr, size_t size, size_t nmemb, void *stream) { /* {{{ */
   size_t realsize = size * nmemb;
   struct response_t *mem = (struct response_t*)stream;
 
@@ -647,9 +650,9 @@ size_t curl_write_response(void *ptr, size_t size, size_t nmemb, void *stream) {
   }
 
   return realsize;
-}
+} /* }}} */
 
-alpm_list_t *filter_results(alpm_list_t *list) {
+alpm_list_t *filter_results(alpm_list_t *list) { /* {{{ */
   const alpm_list_t *i, *j;
   alpm_list_t *filterlist = NULL;
 
@@ -684,9 +687,9 @@ alpm_list_t *filter_results(alpm_list_t *list) {
   }
 
   return alpm_list_msort(filterlist, alpm_list_count(filterlist), aurpkg_cmp);
-}
+} /* }}} */
 
-int getcols() {
+int getcols() { /* {{{ */
   struct winsize win;
 
   if (!isatty(fileno(stdin))) {
@@ -698,9 +701,9 @@ int getcols() {
   }
 
   return 0;
-}
+} /* }}} */
 
-char *get_file_as_buffer(const char *path) {
+char *get_file_as_buffer(const char *path) { /* {{{ */
   FILE *fp;
   char *buf;
   long fsize, nread;
@@ -726,10 +729,9 @@ char *get_file_as_buffer(const char *path) {
   }
 
   return buf;
-}
+} /* }}} */
 
-/* borrowed from pacman */
-void indentprint(const char *str, int indent) {
+void indentprint(const char *str, int indent) { /* {{{ */
   wchar_t *wcstr;
   const wchar_t *p;
   int len, cidx, cols;
@@ -791,9 +793,9 @@ void indentprint(const char *str, int indent) {
     p++;
   }
   free(wcstr);
-}
+} /* }}} */
 
-int json_end_map(void *ctx) {
+int json_end_map(void *ctx) { /* {{{ */
   struct yajl_parser_t *parse_struct = (struct yajl_parser_t*)ctx;
 
   if (--parse_struct->json_depth > 0) {
@@ -802,18 +804,18 @@ int json_end_map(void *ctx) {
   }
 
   return 1;
-}
+} /* }}} */
 
-int json_map_key(void *ctx, const unsigned char *data, unsigned int size) {
+int json_map_key(void *ctx, const unsigned char *data, unsigned int size) { /* {{{ */
   struct yajl_parser_t *parse_struct = (struct yajl_parser_t*)ctx;
 
   strncpy(parse_struct->curkey, (const char*)data, size);
   parse_struct->curkey[size] = '\0';
 
   return 1;
-}
+} /* }}} */
 
-int json_start_map(void *ctx) {
+int json_start_map(void *ctx) { /* {{{ */
   struct yajl_parser_t *parse_struct = (struct yajl_parser_t*)ctx;
 
   if (parse_struct->json_depth++ >= 1) {
@@ -821,9 +823,9 @@ int json_start_map(void *ctx) {
   }
 
   return 1;
-}
+} /* }}} */
 
-int json_string(void *ctx, const unsigned char *data, unsigned int size) {
+int json_string(void *ctx, const unsigned char *data, unsigned int size) { /* {{{ */
   struct yajl_parser_t *parse_struct = (struct yajl_parser_t*)ctx;
   const char *val = (const char*)data;
 
@@ -853,9 +855,9 @@ int json_string(void *ctx, const unsigned char *data, unsigned int size) {
   }
 
   return 1;
-}
+} /* }}} */
 
-void openssl_crypto_cleanup() {
+void openssl_crypto_cleanup() { /* {{{ */
   int i;
 
   if (!STREQ(cfg.proto, "https")) {
@@ -870,9 +872,9 @@ void openssl_crypto_cleanup() {
 
   OPENSSL_free(openssl_lock.lock);
   OPENSSL_free(openssl_lock.lock_count);
-}
+} /* }}} */
 
-void openssl_crypto_init() {
+void openssl_crypto_init() { /* {{{ */
   int i;
 
   openssl_lock.lock = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
@@ -884,9 +886,9 @@ void openssl_crypto_init() {
 
   CRYPTO_set_id_callback(openssl_thread_id);
   CRYPTO_set_locking_callback(openssl_thread_cb);
-}
+} /* }}} */
 
-void openssl_thread_cb(int mode, int type, const char *file, int line) {
+void openssl_thread_cb(int mode, int type, const char *file, int line) { /* {{{ */
   (void)type; (void)file; (void)line;
 
   if (mode & CRYPTO_LOCK) {
@@ -895,16 +897,16 @@ void openssl_thread_cb(int mode, int type, const char *file, int line) {
   } else {
     pthread_mutex_unlock(&(openssl_lock.lock[type]));
   }
-}
+} /* }}} */
 
-unsigned long openssl_thread_id(void) {
+unsigned long openssl_thread_id(void) { /* {{{ */
   unsigned long ret;
 
   ret = (unsigned long)pthread_self();
   return(ret);
-}
+} /* }}} */
 
-alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *array, pkgdetail_t type) {
+alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *array, pkgdetail_t type) { /* {{{ */
   char *ptr, *token;
 
   if (!array) {
@@ -968,9 +970,9 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *array, pkgdetail_t typ
   }
 
   return deplist;
-}
+} /* }}} */
 
-int parse_configfile() {
+int parse_configfile() { /* {{{ */
   char *xdg_config_home, *home, *config_path;
   char line[PATH_MAX];
   int ret = 0;
@@ -1100,9 +1102,9 @@ int parse_configfile() {
 finish:
   fclose(fp);
   return ret;
-}
+} /* }}} */
 
-int parse_options(int argc, char *argv[]) {
+int parse_options(int argc, char *argv[]) { /* {{{ */
   int opt, option_index = 0;
 
   static struct option opts[] = {
@@ -1270,9 +1272,9 @@ int parse_options(int argc, char *argv[]) {
   }
 
   return 0;
-}
+} /* }}} */
 
-void pkgbuild_get_extinfo(char *pkgbuild, alpm_list_t **details[]) {
+void pkgbuild_get_extinfo(char *pkgbuild, alpm_list_t **details[]) { /* {{{ */
   char *lineptr;
 
   for (lineptr = pkgbuild; lineptr; lineptr = strchr(lineptr, '\n')) {
@@ -1319,9 +1321,9 @@ void pkgbuild_get_extinfo(char *pkgbuild, alpm_list_t **details[]) {
       lineptr = arrayend;
     }
   }
-}
+} /* }}} */
 
-int print_escaped(const char *delim) {
+int print_escaped(const char *delim) { /* {{{ */
   const char *f;
   int out = 0;
 
@@ -1364,9 +1366,9 @@ int print_escaped(const char *delim) {
   }
 
   return(out);
-}
+} /* }}} */
 
-void print_extinfo_list(alpm_list_t *list, const char *fieldname, const char *delim, int wrap) {
+void print_extinfo_list(alpm_list_t *list, const char *fieldname, const char *delim, int wrap) { /* {{{ */
   const alpm_list_t *next, *i;
   size_t cols, count = 0;
 
@@ -1392,9 +1394,9 @@ void print_extinfo_list(alpm_list_t *list, const char *fieldname, const char *de
     }
   }
   putchar('\n');
-}
+} /* }}} */
 
-void print_pkg_formatted(struct aurpkg_t *pkg) {
+void print_pkg_formatted(struct aurpkg_t *pkg) { /* {{{ */
   const char *p, *end;
   char fmt[32], buf[64];
   int len;
@@ -1480,9 +1482,9 @@ void print_pkg_formatted(struct aurpkg_t *pkg) {
   }
 
   return;
-}
+} /* }}} */
 
-void print_pkg_info(struct aurpkg_t *pkg) {
+void print_pkg_info(struct aurpkg_t *pkg) { /* {{{ */
   pmpkg_t *ipkg;
 
   printf(PKG_REPO "     : %saur%s\n", colstr->repo, colstr->nc);
@@ -1530,9 +1532,9 @@ void print_pkg_info(struct aurpkg_t *pkg) {
 
   indentprint(pkg->desc, INFO_INDENT);
   printf("\n\n");
-}
+} /* }}} */
 
-void print_pkg_search(struct aurpkg_t *pkg) {
+void print_pkg_search(struct aurpkg_t *pkg) { /* {{{ */
   if (cfg.quiet) {
     printf("%s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
   } else {
@@ -1553,9 +1555,9 @@ void print_pkg_search(struct aurpkg_t *pkg) {
     indentprint(pkg->desc, SRCH_INDENT);
     putchar('\n');
   }
-}
+} /* }}} */
 
-void print_results(alpm_list_t *results, void (*printfn)(struct aurpkg_t*)) {
+void print_results(alpm_list_t *results, void (*printfn)(struct aurpkg_t*)) { /* {{{ */
   const alpm_list_t *i;
   struct aurpkg_t *prev = NULL;
 
@@ -1577,9 +1579,9 @@ void print_results(alpm_list_t *results, void (*printfn)(struct aurpkg_t*)) {
     }
     prev = pkg;
   }
-}
+} /* }}} */
 
-int resolve_dependencies(CURL *curl, const char *pkgname) {
+int resolve_dependencies(CURL *curl, const char *pkgname) { /* {{{ */
   const alpm_list_t *i;
   alpm_list_t *deplist = NULL;
   char *filename, *pkgbuild;
@@ -1637,9 +1639,9 @@ int resolve_dependencies(CURL *curl, const char *pkgname) {
   FREELIST(deplist);
 
   return 0;
-}
+} /* }}} */
 
-int set_working_dir() {
+int set_working_dir() { /* {{{ */
   char *resolved;
 
   if (!(cfg.opmask & OP_DOWNLOAD)) {
@@ -1672,9 +1674,9 @@ int set_working_dir() {
   cwr_printf(LOG_DEBUG, "working directory set to: %s\n", cfg.dlpath);
 
   return 0;
-}
+} /* }}} */
 
-int strings_init() {
+int strings_init() { /* {{{ */
   MALLOC(colstr, sizeof *colstr, return 1);
 
   if (cfg.color > 0) {
@@ -1704,10 +1706,9 @@ int strings_init() {
   cfg.delim = (cfg.extinfo && cfg.format) ? cfg.delim : LIST_DELIM;
 
   return 0;
-}
+} /* }}} */
 
-/* borrowed from pacman */
-char *strtrim(char *str) {
+char *strtrim(char *str) { /* {{{ */
   char *pch = str;
 
   if (!str || *str == '\0') {
@@ -1732,9 +1733,9 @@ char *strtrim(char *str) {
   *++pch = '\0';
 
   return str;
-}
+} /* }}} */
 
-void *task_download(CURL *curl, void *arg) {
+void *task_download(CURL *curl, void *arg) { /* {{{ */
   alpm_list_t *queryresult = NULL;
   CURLcode curlstat;
   const char *db;
@@ -1824,9 +1825,9 @@ finish:
   FREE(response.data);
 
   return queryresult;
-}
+} /* }}} */
 
-void *task_query(CURL *curl, void *arg) {
+void *task_query(CURL *curl, void *arg) { /* {{{ */
   alpm_list_t *pkglist = NULL;
   CURLcode curlstat;
   struct yajl_handle_t *yajl_hand = NULL;
@@ -1929,9 +1930,9 @@ finish:
   FREE(url);
 
   return pkglist;
-}
+} /* }}} */
 
-void *task_update(CURL *curl, void *arg) {
+void *task_update(CURL *curl, void *arg) { /* {{{ */
   pmpkg_t *pmpkg;
   struct aurpkg_t *aurpkg;
   void *dlretval, *qretval;
@@ -1983,9 +1984,9 @@ finish:
   alpm_list_free_inner(qretval, aurpkg_free);
   alpm_list_free(qretval);
   return NULL;
-}
+} /* }}} */
 
-void *thread_pool(void *arg) {
+void *thread_pool(void *arg) { /* {{{ */
   alpm_list_t *ret = NULL;
   CURL *curl;
   void *job;
@@ -2017,9 +2018,9 @@ void *thread_pool(void *arg) {
   curl_easy_cleanup(curl);
 
   return ret;
-}
+} /* }}} */
 
-void usage() {
+void usage() { /* {{{ */
   fprintf(stderr, "cower %s\n"
       "Usage: cower <operations> [options] target...\n\n", COWER_VERSION);
   fprintf(stderr,
@@ -2048,9 +2049,9 @@ void usage() {
       "      --listdelim <delim> change list format delimeter\n"
       "  -q, --quiet             output less\n"
       "  -v, --verbose           output more\n\n");
-}
+} /* }}} */
 
-size_t yajl_parse_stream(void *ptr, size_t size, size_t nmemb, void *stream) {
+size_t yajl_parse_stream(void *ptr, size_t size, size_t nmemb, void *stream) { /* {{{ */
   struct yajl_handle_t *hand;
   size_t realsize = size * nmemb;
 
@@ -2058,7 +2059,7 @@ size_t yajl_parse_stream(void *ptr, size_t size, size_t nmemb, void *stream) {
   yajl_parse(hand, ptr, realsize);
 
   return realsize;
-}
+} /* }}} */
 
 int main(int argc, char *argv[]) {
   alpm_list_t *results = NULL, *thread_return = NULL;
