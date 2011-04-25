@@ -245,9 +245,9 @@ static char *get_file_as_buffer(const char*);
 static int getcols(void);
 static void indentprint(const char*, int);
 static int json_end_map(void*);
-static int json_map_key(void*, const unsigned char*, unsigned int);
+static int json_map_key(void*, const unsigned char*, size_t);
 static int json_start_map(void*);
-static int json_string(void*, const unsigned char*, unsigned int);
+static int json_string(void*, const unsigned char*, size_t);
 static void openssl_crypto_cleanup(void);
 static void openssl_crypto_init(void);
 static unsigned long openssl_thread_id(void);
@@ -307,17 +307,17 @@ alpm_list_t *workq;
 struct openssl_mutex_t openssl_lock;
 
 static yajl_callbacks callbacks = {
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  json_string,
-  json_start_map,
-  json_map_key,
-  json_end_map,
-  NULL,
-  NULL
+  NULL,             /* null */
+  NULL,             /* boolean */
+  NULL,             /* integer */
+  NULL,             /* double */
+  NULL,             /* number */
+  json_string,      /* string */
+  json_start_map,   /* start_map */
+  json_map_key,     /* map_key */
+  json_end_map,     /* end_map */
+  NULL,             /* start_array */
+  NULL              /* end_array */
 };
 
 static char const *digits = "0123456789";
@@ -806,7 +806,7 @@ int json_end_map(void *ctx) { /* {{{ */
   return 1;
 } /* }}} */
 
-int json_map_key(void *ctx, const unsigned char *data, unsigned int size) { /* {{{ */
+int json_map_key(void *ctx, const unsigned char *data, size_t size) { /* {{{ */
   struct yajl_parser_t *parse_struct = (struct yajl_parser_t*)ctx;
 
   strncpy(parse_struct->curkey, (const char*)data, size);
@@ -825,7 +825,7 @@ int json_start_map(void *ctx) { /* {{{ */
   return 1;
 } /* }}} */
 
-int json_string(void *ctx, const unsigned char *data, unsigned int size) { /* {{{ */
+int json_string(void *ctx, const unsigned char *data, size_t size) { /* {{{ */
   struct yajl_parser_t *parse_struct = (struct yajl_parser_t*)ctx;
   const char *val = (const char*)data;
 
@@ -1871,7 +1871,7 @@ void *task_query(CURL *curl, void *arg) { /* {{{ */
   MALLOC(parse_struct, sizeof *parse_struct, return NULL);
   parse_struct->pkglist = NULL;
   parse_struct->json_depth = 0;
-  yajl_hand = yajl_alloc(&callbacks, NULL, NULL, (void*)parse_struct);
+  yajl_hand = yajl_alloc(&callbacks, NULL, (void*)parse_struct);
 
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, yajl_parse_stream);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, yajl_hand);
@@ -1889,7 +1889,7 @@ void *task_query(CURL *curl, void *arg) { /* {{{ */
   cwr_printf(LOG_DEBUG, "[%p]: curl_easy_perform %s\n", (void*)pthread_self(), url);
   curlstat = curl_easy_perform(curl);
 
-  yajl_parse_complete(yajl_hand);
+  yajl_complete_parse(yajl_hand);
   yajl_free(yajl_hand);
 
   if (curlstat != CURLE_OK) {
