@@ -1889,9 +1889,6 @@ void *task_query(CURL *curl, void *arg) { /* {{{ */
   cwr_printf(LOG_DEBUG, "[%p]: curl_easy_perform %s\n", (void*)pthread_self(), url);
   curlstat = curl_easy_perform(curl);
 
-  yajl_complete_parse(yajl_hand);
-  yajl_free(yajl_hand);
-
   if (curlstat != CURLE_OK) {
     cwr_fprintf(stderr, LOG_ERROR, "curl: %s\n", curl_easy_strerror(curlstat));
     goto finish;
@@ -1902,6 +1899,8 @@ void *task_query(CURL *curl, void *arg) { /* {{{ */
     cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with http%ld\n", httpcode);
     goto finish;
   }
+
+  yajl_complete_parse(yajl_hand);
 
   pkglist = parse_struct->pkglist;
 
@@ -1925,6 +1924,7 @@ void *task_query(CURL *curl, void *arg) { /* {{{ */
   }
 
 finish:
+  yajl_free(yajl_hand);
   curl_free(escaped);
   FREE(parse_struct);
   FREE(url);
