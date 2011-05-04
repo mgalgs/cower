@@ -1622,8 +1622,8 @@ int resolve_dependencies(CURL *curl, const char *pkgname) { /* {{{ */
     pthread_mutex_unlock(&alock);
 
     if (sanitized) {
-      alpm_list_t *pkgcache = alpm_db_get_pkgcache(db_local);
       pthread_mutex_lock(&flock);
+      alpm_list_t *pkgcache = alpm_db_get_pkgcache(db_local);
       pmpkg_t *satisfier = alpm_find_satisfier(pkgcache, depend);
       pthread_mutex_unlock(&flock);
       if (satisfier) {
