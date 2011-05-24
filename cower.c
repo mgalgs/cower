@@ -1837,8 +1837,6 @@ void *task_query(CURL *curl, void *arg) { /* {{{ */
   int span = 0;
   struct yajl_parser_t *parse_struct;
 
-  curl = curl_init_easy_handle(curl);
-
   /* find a valid chunk of search string */
   if (cfg.opmask & OP_SEARCH) {
     for (argstr = arg; *argstr; argstr++) {
@@ -1873,6 +1871,7 @@ void *task_query(CURL *curl, void *arg) { /* {{{ */
   parse_struct->json_depth = 0;
   yajl_hand = yajl_alloc(&callbacks, NULL, (void*)parse_struct);
 
+  curl = curl_init_easy_handle(curl);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, yajl_parse_stream);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, yajl_hand);
 
