@@ -127,6 +127,10 @@ timeouts.
 
 Output more. This primarily affects the update operation.
 
+=item B<-V, --version>
+
+Display version and exit.
+
 =back
 
 =head1 FORMATTING

@@ -157,7 +157,8 @@ enum {
   OP_LISTDELIM,
   OP_NOSSL,
   OP_THREADS,
-  OP_TIMEOUT
+  OP_TIMEOUT,
+  OP_VERSION
 };
 
 typedef enum __pkgdetail_t {
@@ -271,6 +272,7 @@ static void *task_query(CURL*, void*);
 static void *task_update(CURL*, void*);
 static void *thread_pool(void*);
 static void usage(void);
+static void version(void);
 static size_t yajl_parse_stream(void*, size_t, size_t, void*);
 /* }}} */
 
@@ -1130,10 +1132,11 @@ int parse_options(int argc, char *argv[]) { /* {{{ */
     {"threads",     required_argument,  0, OP_THREADS},
     {"timeout",     required_argument,  0, OP_TIMEOUT},
     {"verbose",     no_argument,        0, 'v'},
+    {"version",     no_argument,        0, 'V'},
     {0, 0, 0, 0}
   };
 
-  while ((opt = getopt_long(argc, argv, "cdfhimqst:uv", opts, &option_index)) != -1) {
+  while ((opt = getopt_long(argc, argv, "cdfhimqst:uvV", opts, &option_index)) != -1) {
     char *token;
 
     switch (opt) {
@@ -1194,6 +1197,9 @@ int parse_options(int argc, char *argv[]) { /* {{{ */
       case 'v':
         cfg.logmask |= LOG_VERBOSE;
         break;
+      case 'V':
+        version();
+        return 2;
       case OP_DEBUG:
         cfg.logmask |= LOG_DEBUG;
         break;
@@ -2040,7 +2046,8 @@ void usage() { /* {{{ */
       "      --nossl             do not use https connections\n"
       "  -t, --target <dir>      specify an alternate download directory\n"
       "      --threads <num>     limit number of threads created\n"
-      "      --timeout <num>     specify connection timeout in seconds\n\n");
+      "      --timeout <num>     specify connection timeout in seconds\n"
+      "  -V, --version           display version\n\n");
   fprintf(stderr, " Output options:\n"
       "  -c, --color[=WHEN]      use colored output. WHEN is `never', `always', or `auto'\n"
       "      --debug             show debug output\n"
@@ -2048,6 +2055,19 @@ void usage() { /* {{{ */
       "      --listdelim <delim> change list format delimeter\n"
       "  -q, --quiet             output less\n"
       "  -v, --verbose           output more\n\n");
+} /* }}} */
+
+void version() { /* {{{ */
+  printf("\n  " COWER_VERSION "\n");
+  printf("     \\\n"
+         "      \\\n"
+         "        ,__, |    |\n"
+         "        (oo)\\|    |___\n"
+         "        (__)\\|    |   )\\_\n"
+         "             |    |_w |  \\\n"
+         "             |    |  ||   *\n"
+         "\n"
+         "             Cower....\n");
 } /* }}} */
 
 size_t yajl_parse_stream(void *ptr, size_t size, size_t nmemb, void *stream) { /* {{{ */
