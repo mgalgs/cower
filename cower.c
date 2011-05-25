@@ -2064,10 +2064,10 @@ void version() { /* {{{ */
          "        ,__, |    |\n"
          "        (oo)\\|    |___\n"
          "        (__)\\|    |   )\\_\n"
-         "             |    |_w |  \\\n"
+         "          U  |    |_w |  \\\n"
          "             |    |  ||   *\n"
          "\n"
-         "             Cower....\n");
+         "             Cower....\n\n");
 } /* }}} */
 
 size_t yajl_parse_stream(void *ptr, size_t size, size_t nmemb, void *stream) { /* {{{ */
