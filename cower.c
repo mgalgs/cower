@@ -994,7 +994,7 @@ int parse_configfile() { /* {{{ */
 
   fp = fopen(config_path, "r");
   if (!fp) {
-    cwr_printf(LOG_DEBUG, "config file not found. skipping parsing");
+    cwr_printf(LOG_DEBUG, "config file not found. skipping parsing\n");
     return 0; /* not an error, just nothing to do here */
   }
 
