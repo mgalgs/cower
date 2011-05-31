@@ -626,14 +626,14 @@ char *curl_get_url_as_buffer(CURL *curl, const char *url) { /* {{{ */
 
   curlstat = curl_easy_perform(curl);
   if (curlstat != CURLE_OK) {
-    cwr_fprintf(stderr, LOG_ERROR, "curl: %s\n", curl_easy_strerror(curlstat));
+    cwr_fprintf(stderr, LOG_ERROR, "%s: %s\n", url, curl_easy_strerror(curlstat));
     goto finish;
   }
 
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
   if (!(httpcode == 200 || httpcode == 404)) {
-    cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with http%ld\n",
-        httpcode);
+    cwr_fprintf(stderr, LOG_ERROR, "%s: server responded with http%ld\n",
+        url, httpcode);
   }
 
 finish:
@@ -1799,7 +1799,7 @@ void *task_download(CURL *curl, void *arg) { /* {{{ */
   curlstat = curl_easy_perform(curl);
 
   if (curlstat != CURLE_OK) {
-    cwr_fprintf(stderr, LOG_ERROR, "curl: %s\n", curl_easy_strerror(curlstat));
+    cwr_fprintf(stderr, LOG_ERROR, "[%s]: %s\n", (const char*)arg, curl_easy_strerror(curlstat));
     goto finish;
   }
 
@@ -1809,8 +1809,8 @@ void *task_download(CURL *curl, void *arg) { /* {{{ */
     case 200:
       break;
     default:
-      cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with http%ld\n",
-          httpcode);
+      cwr_fprintf(stderr, LOG_ERROR, "[%s]: server responded with http%ld\n",
+          (const char*)arg, httpcode);
       goto finish;
   }
   cwr_printf(LOG_INFO, "%s%s%s downloaded to %s\n",
@@ -1818,7 +1818,8 @@ void *task_download(CURL *curl, void *arg) { /* {{{ */
 
   ret = archive_extract_file(&response);
   if (ret != ARCHIVE_EOF && ret != ARCHIVE_OK) {
-    cwr_fprintf(stderr, LOG_ERROR, "failed to extract tarball\n");
+    cwr_fprintf(stderr, LOG_ERROR, "[%s]: failed to extract tarball\n",
+        (const char*)arg);
     goto finish;
   }
 
@@ -1895,13 +1896,15 @@ void *task_query(CURL *curl, void *arg) { /* {{{ */
   curlstat = curl_easy_perform(curl);
 
   if (curlstat != CURLE_OK) {
-    cwr_fprintf(stderr, LOG_ERROR, "curl: %s\n", curl_easy_strerror(curlstat));
+    cwr_fprintf(stderr, LOG_ERROR, "[%s]: %s\n", (const char*)arg,
+        curl_easy_strerror(curlstat));
     goto finish;
   }
 
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpcode);
   if (httpcode >= 300) {
-    cwr_fprintf(stderr, LOG_ERROR, "curl: server responded with http%ld\n", httpcode);
+    cwr_fprintf(stderr, LOG_ERROR, "[%s]: server responded with http%ld\n",
+        (const char*)arg, httpcode);
     goto finish;
   }
 
