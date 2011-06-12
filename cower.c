@@ -56,6 +56,16 @@
 #define STR_STARTS_WITH(x,y)  (strncmp((x),(y), strlen(y)) == 0)
 #define NCFLAG(val, flag)     (!cfg.color && (val)) ? (flag) : ""
 
+#ifndef PACMAN_ROOT
+  #define PACMAN_ROOT         "/"
+#endif
+#ifndef PACMAN_DBPATH
+  #define PACMAN_DBPATH       "/var/lib/pacman"
+#endif
+#ifndef PACMAN_CONFIG
+  #define PACMAN_CONFIG       "/etc/pacman.conf"
+#endif
+
 #define COWER_USERAGENT       "cower/3.x"
 
 #define AUR_PKGBUILD_PATH     "%s://aur.archlinux.org/packages/%s/PKGBUILD"
@@ -232,8 +242,8 @@ struct openssl_mutex_t {
 
 /* function prototypes {{{ */
 static alpm_list_t *alpm_find_foreign_pkgs(void);
-static int alpm_init(void);
-static int alpm_pkg_is_foreign(pmpkg_t*);
+static alpm_handle_t *alpm_init(void);
+static int alpm_pkg_is_foreign(alpm_pkg_t*);
 static const char *alpm_provides_pkg(const char*);
 static int archive_extract_file(const struct response_t*);
 static int aurpkg_cmp(const void*, const void*);
@@ -309,7 +319,8 @@ struct {
 
 /* globals {{{ */
 struct strings_t *colstr;
-pmdb_t *db_local;
+alpm_handle_t *pmhandle;
+alpm_db_t *db_local;
 alpm_list_t *workq;
 struct openssl_mutex_t openssl_lock;
 
@@ -336,55 +347,44 @@ static const char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
                                 "science", "system", "x11", "xfce", "kernels" };
 /* }}} */
 
-int alpm_init() { /* {{{ */
-  int ret = 0;
+alpm_handle_t *alpm_init() { /* {{{ */
   FILE *fp;
   char line[PATH_MAX];
   char *ptr, *section = NULL;
+  enum _alpm_errno_t err;
 
   cwr_printf(LOG_DEBUG, "initializing alpm\n");
-  ret = alpm_initialize();
-  if (ret != 0) {
-    return ret;
+  pmhandle = alpm_initialize(PACMAN_ROOT, PACMAN_DBPATH, &err);
+  if (!pmhandle) {
+    fprintf(stderr, "failed to initialize alpm: %s\n", alpm_strerror(err));
+    return NULL;
   }
 
-  ret = alpm_option_set_dbpath("/var/lib/pacman");
-  if (ret != 0) {
-    return ret;
-  }
-  cwr_printf(LOG_DEBUG, "setting alpm DBPath to: %s\n", alpm_option_get_dbpath());
-
-  db_local = alpm_option_get_localdb();
-  if (!db_local) {
-    return 1;
-  }
-
-  fp = fopen("/etc/pacman.conf", "r");
+  fp = fopen(PACMAN_CONFIG, "r");
   if (!fp) {
-    return 1;
+    return pmhandle;
   }
 
-  /* only light error checking happens here. this is pacman's job, not mine */
   while (fgets(line, PATH_MAX, fp)) {
     strtrim(line);
 
-    if (strlen(line) == 0 || line[0] == '#') {
+    if (!strlen(line) || line[0] == '#') {
       continue;
     }
     if ((ptr = strchr(line, '#'))) {
       *ptr = '\0';
+      strtrim(ptr);
     }
 
     if (line[0] == '[' && line[strlen(line) - 1] == ']') {
-      ptr = &line[1];
       free(section);
+      section = strndup(&line[1], strlen(line) - 2);
+    }
 
-      section = strdup(ptr);
-      section[strlen(section) - 1] = '\0';
-
-      if (!STREQ(section, "options") && !cfg.skiprepos &&
-          !alpm_list_find_str(cfg.ignore.repos, section)) {
-        alpm_db_register_sync(section);
+    if (strcmp(section, "options") != 0) {
+      if (!cfg.skiprepos && !alpm_list_find_str(cfg.ignore.repos, section)) {
+        alpm_db_register_sync(pmhandle, section,
+            ALPM_SIG_DATABASE | ALPM_SIG_DATABASE_OPTIONAL);
         cwr_printf(LOG_DEBUG, "registering alpm db: %s\n", section);
       }
     } else {
@@ -394,10 +394,7 @@ int alpm_init() { /* {{{ */
       strsep(&ptr, "=");
       strtrim(key);
       strtrim(ptr);
-      if (STREQ(key, "DBPath")) {
-        cwr_printf(LOG_DEBUG, "setting alpm DBPath to: %s\n", ptr);
-        alpm_option_set_dbpath(ptr);
-      } else if (STREQ(key, "IgnorePkg")) {
+      if (STREQ(key, "IgnorePkg")) {
         for (token = strtok(ptr, " "); token; token = strtok(NULL, ",")) {
           if (!alpm_list_find_str(cfg.ignore.pkgs, token)) {
             cwr_printf(LOG_DEBUG, "ignoring package: %s\n", token);
@@ -408,9 +405,12 @@ int alpm_init() { /* {{{ */
     }
   }
 
+  db_local = alpm_option_get_localdb(pmhandle);
+
   free(section);
   fclose(fp);
-  return ret;
+
+  return pmhandle;
 } /* }}} */
 
 alpm_list_t *alpm_find_foreign_pkgs() { /* {{{ */
@@ -418,7 +418,7 @@ alpm_list_t *alpm_find_foreign_pkgs() { /* {{{ */
   alpm_list_t *ret = NULL;
 
   for (i = alpm_db_get_pkgcache(db_local); i; i = alpm_list_next(i)) {
-    pmpkg_t *pkg = alpm_list_getdata(i);
+    alpm_pkg_t *pkg = alpm_list_getdata(i);
 
     if (alpm_pkg_is_foreign(pkg)) {
       ret = alpm_list_add(ret, strdup(alpm_pkg_get_name(pkg)));
@@ -428,13 +428,13 @@ alpm_list_t *alpm_find_foreign_pkgs() { /* {{{ */
   return ret;
 } /* }}} */
 
-int alpm_pkg_is_foreign(pmpkg_t *pkg) { /* {{{ */
+int alpm_pkg_is_foreign(alpm_pkg_t *pkg) { /* {{{ */
   const alpm_list_t *i;
   const char *pkgname;
 
   pkgname = alpm_pkg_get_name(pkg);
 
-  for (i = alpm_option_get_syncdbs(); i; i = alpm_list_next(i)) {
+  for (i = alpm_option_get_syncdbs(pmhandle); i; i = alpm_list_next(i)) {
     if (alpm_db_get_pkg(alpm_list_getdata(i), pkgname)) {
       return 0;
     }
@@ -445,9 +445,9 @@ int alpm_pkg_is_foreign(pmpkg_t *pkg) { /* {{{ */
 
 const char *alpm_provides_pkg(const char *pkgname) { /* {{{ */
   const alpm_list_t *i;
-  pmdb_t *db;
+  alpm_db_t *db;
 
-  for (i = alpm_option_get_syncdbs(); i; i = alpm_list_next(i)) {
+  for (i = alpm_option_get_syncdbs(pmhandle); i; i = alpm_list_next(i)) {
     db = alpm_list_getdata(i);
     if (alpm_find_satisfier(alpm_db_get_pkgcache(db), pkgname)) {
       return alpm_db_get_name(db);
@@ -1509,7 +1509,7 @@ void print_pkg_formatted(struct aurpkg_t *pkg) { /* {{{ */
 } /* }}} */
 
 void print_pkg_info(struct aurpkg_t *pkg) { /* {{{ */
-  pmpkg_t *ipkg;
+  alpm_pkg_t *ipkg;
 
   printf(PKG_REPO "     : %saur%s\n", colstr->repo, colstr->nc);
   printf(NAME "           : %s%s%s", colstr->pkg, pkg->name, colstr->nc);
@@ -1562,7 +1562,7 @@ void print_pkg_search(struct aurpkg_t *pkg) { /* {{{ */
   if (cfg.quiet) {
     printf("%s%s%s\n", colstr->pkg, pkg->name, colstr->nc);
   } else {
-    pmpkg_t *ipkg;
+    alpm_pkg_t *ipkg;
     printf("%saur/%s%s%s %s%s%s%s (%s)", colstr->repo, colstr->nc, colstr->pkg,
         pkg->name, pkg->ood ? colstr->ood : colstr->utd, pkg->ver,
         NCFLAG(pkg->ood, " <!>"), colstr->nc, pkg->votes);
@@ -1652,7 +1652,7 @@ int resolve_dependencies(CURL *curl, const char *pkgname) { /* {{{ */
     if (sanitized) {
       pthread_mutex_lock(&flock);
       alpm_list_t *pkgcache = alpm_db_get_pkgcache(db_local);
-      pmpkg_t *satisfier = alpm_find_satisfier(pkgcache, depend);
+      alpm_pkg_t *satisfier = alpm_find_satisfier(pkgcache, depend);
       pthread_mutex_unlock(&flock);
       if (satisfier) {
         cwr_printf(LOG_DEBUG, "%s is already satisified\n", depend);
@@ -1970,7 +1970,7 @@ finish:
 } /* }}} */
 
 void *task_update(CURL *curl, void *arg) { /* {{{ */
-  pmpkg_t *pmpkg;
+  alpm_pkg_t *pmpkg;
   struct aurpkg_t *aurpkg;
   void *dlretval, *qretval;
 
@@ -2172,7 +2172,8 @@ int main(int argc, char *argv[]) {
     goto finish;
   }
 
-  if ((ret = alpm_init()) != 0) {
+  pmhandle = alpm_init();
+  if (!pmhandle) {
     cwr_fprintf(stderr, LOG_ERROR, "failed to initialize alpm library\n");
     goto finish;
   }
@@ -2252,7 +2253,7 @@ finish:
   curl_global_cleanup();
 
   cwr_printf(LOG_DEBUG, "releasing alpm\n");
-  alpm_release();
+  alpm_release(pmhandle);
 
   return ret;
 }
