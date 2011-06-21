@@ -2071,6 +2071,7 @@ void usage() { /* {{{ */
       "      --timeout <num>     specify connection timeout in seconds\n"
       "  -V, --version           display version\n\n");
   fprintf(stderr, " Output options:\n"
+      "  -b, --brief             show output in a more script friendly format\n"
       "  -c, --color[=WHEN]      use colored output. WHEN is `never', `always', or `auto'\n"
       "      --debug             show debug output\n"
       "      --format <string>   print package output according to format string\n"
