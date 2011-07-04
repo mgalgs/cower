@@ -1,40 +1,36 @@
 # cower - a simple AUR downloader
 
-include config.mk
+OUT        = cower
+VERSION    = $(shell git describe)
 
-SRC = cower.c
-OBJ = ${SRC:.c=.o}
+SRC        = ${wildcard *.c}
+OBJ        = ${SRC:.c=.o}
+DISTFILES  = Makefile README.pod bash_completion config cower.c
 
-DISTFILES = Makefile README.pod bash_completion config cower.c
+PREFIX    ?= /usr/local
+MANPREFIX ?= ${PREFIX}/share/man
 
-all: cower doc
+CPPFLAGS  := -DCOWER_VERSION=\"${VERSION}\" ${CPPFLAGS}
+CFLAGS    := --std=c99 -g -pedantic -Wall -Wextra -Werror ${CPPFLAGS} ${CFLAGS}
+LDFLAGS   := -lcurl -lalpm -lyajl -larchive -pthread ${LDFLAGS}
 
-.c.o:
-	${CC} -c ${CFLAGS} $<
+all: ${OUT} doc
 
-${OBJ}: config.mk
-cower: ${OBJ}
+${OUT}: ${OBJ}
 	${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 doc: cower.1
 cower.1: README.pod
 	pod2man --section=1 --center="Cower Manual" --name="COWER" --release="cower ${VERSION}" $< > $@
 
+strip: ${OUT}
+	strip --strip-all ${OUT}
+
 install: cower cower.1
 	install -D -m755 cower ${DESTDIR}${PREFIX}/bin/cower
 	install -D -m644 cower.1 ${DESTDIR}${MANPREFIX}/man1/cower.1
 	install -D -m644 bash_completion ${DESTDIR}/etc/bash_completion.d/cower
-	install -D -m644 config ${DESTDIR}/usr/share/cower/config
-
-dist: clean
-	mkdir cower-${VERSION}
-	cp ${DISTFILES} cower-${VERSION}
-	sed "s/^VERSION = .*/VERSION = ${VERSION}/" config.mk > cower-${VERSION}/config.mk
-	tar cf - cower-${VERSION} | gzip -9 > cower-${VERSION}.tar.gz
-	rm -rf cower-${VERSION}
-
-strip: cower
-	strip --strip-all cower
+	install -D -m644 config ${DESTDIR}${PREFIX}/share/cower/config
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
@@ -44,14 +40,23 @@ uninstall:
 	@echo removing bash completion
 	rm -f ${DESTDIR}/etc/bash_completion.d/cower
 	@echo removing sample config
-	rm -f ${DESTDIR}/usr/share/cower/config
+	rm -f ${DESTDIR}${PREFIX}/share/cower/config
 
-cscope: cscope.out
-cscope.out:
-	cscope -b
+dist: clean
+	mkdir cower-${VERSION}
+	cp ${DISTFILES} cower-${VERSION}
+	sed "s/\(^VERSION *\)= .*/\1= ${VERSION}/" Makefile > cower-${VERSION}/Makefile
+	tar czf cower-${VERSION}.tar.gz cower-${VERSION}
+	rm -rf cower-${VERSION}
+
+distcheck: clean dist cower
+	tar xf cower-${VERSION}.tar.gz
+	cd cower-${VERSION} && \
+		${MAKE}
+	rm -rf cower-${VERSION}
 
 clean:
-	rm -f *.o cower cower.1 cscope.out
+	${RM} ${OUT} ${OBJ} cower.1
 
-.PHONY: all clean dist doc install uninstall
+.PHONY: clean dist doc install uninstall
 
