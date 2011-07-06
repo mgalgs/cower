@@ -1609,8 +1609,7 @@ int resolve_dependencies(CURL *curl, const char *pkgname) { /* {{{ */
   const alpm_list_t *i;
   alpm_list_t *deplist = NULL;
   char *filename, *pkgbuild;
-  static pthread_mutex_t flock = PTHREAD_MUTEX_INITIALIZER;
-  static pthread_mutex_t alock = PTHREAD_MUTEX_INITIALIZER;
+  static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
   void *retval;
 
   curl = curl_init_easy_handle(curl);
@@ -1637,9 +1636,10 @@ int resolve_dependencies(CURL *curl, const char *pkgname) { /* {{{ */
 
     *(sanitized + strcspn(sanitized, "<>=")) = '\0';
 
-    pthread_mutex_lock(&alock);
     if (!alpm_list_find_str(cfg.targets, sanitized)) {
+      pthread_mutex_lock(&lock);
       cfg.targets = alpm_list_add(cfg.targets, sanitized);
+      pthread_mutex_unlock(&lock);
     } else {
       if (cfg.logmask & LOG_BRIEF &&
               !alpm_find_satisfier(alpm_db_get_pkgcache(db_local), depend)) {
@@ -1647,14 +1647,9 @@ int resolve_dependencies(CURL *curl, const char *pkgname) { /* {{{ */
       }
       FREE(sanitized);
     }
-    pthread_mutex_unlock(&alock);
 
     if (sanitized) {
-      pthread_mutex_lock(&flock);
-      alpm_list_t *pkgcache = alpm_db_get_pkgcache(db_local);
-      alpm_pkg_t *satisfier = alpm_find_satisfier(pkgcache, depend);
-      pthread_mutex_unlock(&flock);
-      if (satisfier) {
+      if (alpm_find_satisfier(alpm_db_get_pkgcache(db_local), depend)) {
         cwr_printf(LOG_DEBUG, "%s is already satisified\n", depend);
       } else {
         retval = task_download(curl, sanitized);
@@ -1768,22 +1763,19 @@ void *task_download(CURL *curl, void *arg) { /* {{{ */
   CURLcode curlstat;
   const char *db;
   char *url, *escaped;
-  const void *self;
   int ret;
   long httpcode;
   struct response_t response;
   struct stat st;
-  static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+  static pthread_mutex_t alpmlock = PTHREAD_MUTEX_INITIALIZER;
 
   curl = curl_init_easy_handle(curl);
 
-  self = (const void*)pthread_self();
-
-  pthread_mutex_lock(&lock);
-  cwr_printf(LOG_DEBUG, "[%p]: locking alpm mutex\n", self);
+  pthread_mutex_lock(&alpmlock);
+  //cwr_printf(LOG_DEBUG, "[%p]: locking alpm mutex\n", self);
   db = alpm_provides_pkg(arg);
-  cwr_printf(LOG_DEBUG, "[%p]: unlocking alpm mutex\n", self);
-  pthread_mutex_unlock(&lock);
+  //cwr_printf(LOG_DEBUG, "[%p]: unlocking alpm mutex\n", self);
+  pthread_mutex_unlock(&alpmlock);
 
   if (db) {
     cwr_fprintf(stderr, LOG_BRIEF, BRIEF_WARN "\t%s\t", (const char*)arg);
@@ -1984,11 +1976,8 @@ void *task_update(CURL *curl, void *arg) { /* {{{ */
   qretval = task_query(curl, arg);
   aurpkg = alpm_list_getdata(qretval);
   if (aurpkg) {
-    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-    pthread_mutex_lock(&lock);
     pmpkg = alpm_db_get_pkg(db_local, arg);
-    pthread_mutex_unlock(&lock);
 
     if (!pmpkg) {
       cwr_fprintf(stderr, LOG_WARN, "skipping uninstalled package %s\n",
