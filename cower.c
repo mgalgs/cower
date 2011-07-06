@@ -2198,6 +2198,9 @@ int main(int argc, char *argv[]) {
     task.threadfn = task_download;
   }
 
+  /* filthy, filthy hack: prepopulate the package cache */
+  alpm_db_get_pkgcache(db_local);
+
   for (n = 0; n < num_threads; n++) {
     ret = pthread_create(&threads[n], &attr, thread_pool, &task);
     if (ret != 0) {
