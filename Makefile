@@ -5,7 +5,7 @@ VERSION    = $(shell git describe)
 
 SRC        = ${wildcard *.c}
 OBJ        = ${SRC:.c=.o}
-DISTFILES  = Makefile README.pod bash_completion config cower.c
+DISTFILES  = Makefile README.pod bash_completion zsh_completion config cower.c
 
 PREFIX    ?= /usr/local
 MANPREFIX ?= ${PREFIX}/share/man
@@ -30,6 +30,7 @@ install: cower cower.1
 	install -D -m755 cower ${DESTDIR}${PREFIX}/bin/cower
 	install -D -m644 cower.1 ${DESTDIR}${MANPREFIX}/man1/cower.1
 	install -D -m644 bash_completion ${DESTDIR}/etc/bash_completion.d/cower
+	install -D -m644 zsh_completion ${DESTDIR}${PREFIX}/share/zsh/site-functions/_cower
 	install -D -m644 config ${DESTDIR}${PREFIX}/share/cower/config
 
 uninstall:
@@ -39,6 +40,8 @@ uninstall:
 	rm -f ${DESTDIR}/${PREFIX}/man1/cower.1
 	@echo removing bash completion
 	rm -f ${DESTDIR}/etc/bash_completion.d/cower
+	@echo removing zsh completion
+	rm -f ${DESTDIR}${PREFIX}/share/zsh/site-functions/_cower
 	@echo removing sample config
 	rm -f ${DESTDIR}${PREFIX}/share/cower/config
 

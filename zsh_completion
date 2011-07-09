@@ -1,0 +1,77 @@
+#compdef cower
+
+typeset -A opt_args
+setopt extendedglob
+
+_cower_opts_commands=(
+  '-d[Download target(s)]'
+  '-i[Show info for target(s)]'
+  '-m[Show packages maintained by target(s)]'
+  '-s[Search for target(s)]'
+  '-u[Check for updates against AUR]'
+  '-h[Display usage]'
+)
+
+_cower_opts_general=(
+  '-f[Overwrite existing files when downloading]'
+  '--ignore[Ignore a package upgrade]:package:
+          _cower_completions_installed_packages'
+  '--ignorerepo[Ignore some or all binary repos]:repositories:
+          _cower_completions_repositories'
+  '--nossl[Do not use https connections]'
+  '-t[Specify an alternate download directory]:target:_files -/'
+  '--threads+[Limit number of threads created]:number of threads'
+  '--timeout+[Specify connection timeout in seconds]:timeout'
+)
+
+_cower_opts_output=(
+  '-c[Use colored output]'
+  '--debug[Show debug output]'
+  '--format[Print package output according to format string]'
+  '--listdelim[Change list format delimeter]'
+  '-q[Output less]'
+  '-v[Output more]'
+)
+
+_cower_action_none() {
+  _arguments -s : \
+    "$_cower_opts_commands[@]"
+}
+
+# provides completions for installed packages
+_cower_completions_installed_packages() {
+  local -a cmd packages packages_long
+  packages_long=(/var/lib/pacman/local/*(/))
+  packages=( ${${packages_long#/var/lib/pacman/local/}%-*-*} )
+  compadd "$@" -a packages
+}
+
+_cower_completions_repositories() {
+  local -a cmd repositories
+  repositories=(${(o)${${${(M)${(f)"$(</etc/pacman.conf)"}:#\[*}/\[/}/\]/}:#options})
+  # Uniq the array
+  typeset -U repositories
+  compadd "$@" -a repositories
+}
+
+_cower() {
+  case $words[2] in
+    -[ims]*) _arguments -s : \
+      "$_cower_opts_general[@]" \
+      "$_cower_opts_output[@]"
+      ;;
+    -u*) _arguments -s -w : \
+      "$_cower_opts_general[@]" \
+      "$_cower_opts_output[@]" \
+      '*-d[Download AUR dependencies]' 
+      ;;
+    -d*) _arguments -s : \
+      "$_cower_opts_general[@]" \
+      "$_cower_opts_output[@]" \
+      '*-d[Download updates]' \
+      ;;
+    -) _cower_action_none ;;
+    *) return 1 ;;
+  esac
+}
+_cower "$@"
