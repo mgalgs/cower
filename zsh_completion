@@ -1,7 +1,6 @@
 #compdef cower
 
 typeset -A opt_args
-setopt extendedglob
 
 _cower_opts_commands=(
   '-d[Download target(s)]'
@@ -14,27 +13,25 @@ _cower_opts_commands=(
 
 _cower_opts_general=(
   '-f[Overwrite existing files when downloading]'
-  '--ignore[Ignore a package upgrade]:package:
+  '*--ignore[Ignore a package upgrade]:package:
           _cower_completions_installed_packages'
-  '--ignorerepo[Ignore some or all binary repos]:repositories:
+  '*--ignorerepo[Ignore some or all binary repos]:repositories:
           _cower_completions_repositories'
   '--nossl[Do not use https connections]'
   '-t[Specify an alternate download directory]:target:_files -/'
-  '--threads+[Limit number of threads created]:number of threads'
-  '--timeout+[Specify connection timeout in seconds]:timeout'
+  '--threads[Limit number of threads created]:number of threads'
+  '--timeout[Specify connection timeout in seconds]:timeout'
 )
 
 _cower_opts_output=(
   '-c[Use colored output]'
   '--debug[Show debug output]'
-  '--format[Print package output according to format string]'
-  '--listdelim[Change list format delimeter]'
   '-q[Output less]'
   '-v[Output more]'
 )
 
 _cower_action_none() {
-  _arguments -s : \
+  _arguments -s -w : \
     "$_cower_opts_commands[@]"
 }
 
@@ -54,24 +51,53 @@ _cower_completions_repositories() {
   compadd "$@" -a repositories
 }
 
+_cower_completions_aur() {
+  local -a aur_packages
+  aur_packages=($(_call_program packages $service -sq $words[CURRENT] 2>/dev/null))
+  compadd "$@" -a aur_packages
+}
+
+_cower_completions_format() {
+  arguments=(%c %d %i %l %n %o %p %t %u %v %%)
+  if [[ $words = *-i*i* ]]; then
+    arguments+=(%C %D %M %O %P %R)
+  fi
+  compadd "$@" -a arguments
+}
+
 _cower() {
   case $words[2] in
-    -[ims]*) _arguments -s : \
+    -[ms]*) _arguments -s -w : \
       "$_cower_opts_general[@]" \
-      "$_cower_opts_output[@]"
+      "$_cower_opts_output[@]" \
+      '--format[Print package output according to format string]:string:
+          _cower_completions_format'
+      ;;
+    -i*) _arguments -s -w : \
+      "$_cower_opts_general[@]" \
+      "$_cower_opts_output[@]" \
+      '*-i[Show more info]' \
+      '*:package:_cower_completions_aur' \
+      '--listdelim[Change list format delimeter]' \
+      '--format[Print package output according to format string]:string:
+          _cower_completions_format'
+      ;;
+    -d*) _arguments -s -w : \
+      "$_cower_opts_general[@]" \
+      "$_cower_opts_output[@]" \
+      '*-d[Download AUR dependencies]' \
+      '*:package:_cower_completions_aur'
       ;;
     -u*) _arguments -s -w : \
       "$_cower_opts_general[@]" \
       "$_cower_opts_output[@]" \
-      '*-d[Download AUR dependencies]' 
-      ;;
-    -d*) _arguments -s : \
-      "$_cower_opts_general[@]" \
-      "$_cower_opts_output[@]" \
-      '*-d[Download updates]' \
+      '*-d[Download updates]'
       ;;
     -) _cower_action_none ;;
     *) return 1 ;;
   esac
 }
+
 _cower "$@"
+
+# vim: set et sw=2 ts=2 ft=zsh :
