@@ -697,17 +697,26 @@ alpm_list_t *filter_results(alpm_list_t *list) { /* {{{ */
 } /* }}} */
 
 int getcols() { /* {{{ */
+  int termwidth = -1;
+  const int default_tty = 80;
+  const int default_notty = 0;
+
+  if(!isatty(fileno(stdout))) {
+    return default_notty;
+  }
+
+#ifdef TIOCGSIZE
+  struct ttysize win;
+  if(ioctl(1, TIOCGSIZE, &win) == 0) {
+    termwidth = win.ts_cols;
+  }
+#elif defined(TIOCGWINSZ)
   struct winsize win;
-
-  if (!isatty(fileno(stdin))) {
-    return 80;
+  if(ioctl(1, TIOCGWINSZ, &win) == 0) {
+    termwidth = win.ws_col;
   }
-
-  if (ioctl(1, TIOCGWINSZ, &win) == 0) {
-    return win.ws_col;
-  }
-
-  return 0;
+#endif
+  return termwidth <= 0 ? default_tty : termwidth;
 } /* }}} */
 
 char *get_file_as_buffer(const char *path) { /* {{{ */
