@@ -953,7 +953,7 @@ alpm_list_t *parse_bash_array(alpm_list_t *deplist, char *array, pkgdetail_t typ
     return deplist;
   }
 
-  for (token = strtok(array, " \n"); token; token = strtok(NULL, " \n")) {
+  for (token = strtok(array, " \t\n"); token; token = strtok(NULL, " \t\n")) {
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
     /* found an embedded comment. skip to the next line */
