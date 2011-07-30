@@ -105,6 +105,10 @@ See the FORMATTING section.
 
 Avoid usage of secure http connections to the AUR.
 
+=item B<-n, --comments>
+
+Print comments from the AUR web interface (implies -ii).
+
 =item B<-q, --quiet>
 
 Output less.

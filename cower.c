@@ -104,6 +104,9 @@
 #define PKG_OOD               "Out of Date"
 #define PKG_DESC              "Description"
 
+#define COMMENT_BEG_DELIM     "class=\"comment-header\">"
+#define COMMENT_END_DELIM     "</blockquote>"
+
 #define INFO_INDENT           17
 #define SRCH_INDENT           4
 #define LIST_DELIM            "  "
@@ -154,6 +157,12 @@ typedef enum __operation_t {
   OP_MSEARCH  = (1 << 4)
 } operation_t;
 
+typedef enum __html_strip_state_t {
+  READING_TAG,
+  NOT_READING_TAG
+} html_strip_state_t;
+
+
 enum {
   OP_DEBUG = 1000,
   OP_FORMAT,
@@ -186,6 +195,8 @@ struct strings_t {
   const char *ood;
   const char *utd;
   const char *nc;
+  const char *comment;
+  const char *commentheader;
 };
 
 struct aurpkg_t {
@@ -199,6 +210,7 @@ struct aurpkg_t {
   int cat;
   int ood;
 
+  alpm_list_t *comments;
   alpm_list_t *depends;
   alpm_list_t *makedepends;
   alpm_list_t *optdepends;
@@ -228,6 +240,11 @@ struct openssl_mutex_t {
   pthread_mutex_t *lock;
   long *lock_count;
 };
+
+struct html_character_codes_t {
+  char *name_code;
+  char *glyph;
+};
 /* }}} */
 
 /* function prototypes {{{ */
@@ -247,6 +264,7 @@ static int cwr_fprintf(FILE*, loglevel_t, const char*, ...) __attribute__((forma
 static int cwr_printf(loglevel_t, const char*, ...) __attribute__((format(printf,2,3)));
 static int cwr_vfprintf(FILE*, loglevel_t, const char*, va_list) __attribute__((format(printf,3,0)));
 static alpm_list_t *filter_results(alpm_list_t*);
+static alpm_list_t *get_aur_comments(char*);
 static char *get_file_as_buffer(const char*);
 static int getcols(void);
 static void indentprint(const char*, int);
@@ -271,6 +289,8 @@ static void print_results(alpm_list_t*, void (*)(struct aurpkg_t*));
 static int resolve_dependencies(CURL*, const char*);
 static int set_working_dir(void);
 static int strings_init(void);
+static char *strip_and_sanitize_html(char*);
+static char *strreplace(const char *, const char *, const char *);
 static char *strtrim(char*);
 static void *task_download(CURL*, void*);
 static void *task_query(CURL*, void*);
@@ -298,6 +318,7 @@ struct {
   int maxthreads;
   int quiet;
   int skiprepos;
+  int printcomments;
   long timeout;
 
   alpm_list_t *targets;
@@ -334,6 +355,20 @@ static const char *aur_cat[] = { NULL, "None", "daemons", "devel", "editors",
                                 "emulators", "games", "gnome", "i18n", "kde", "lib",
                                 "modules", "multimedia", "network", "office",
                                 "science", "system", "x11", "xfce", "kernels" };
+
+static const struct html_character_codes_t html_character_codes[] = {
+  {"&quot;", "\""},
+  {"&lt;", "<"},
+  {"&gt;", ">"},
+  {"&ndash;", "-"},
+  {"&mdash;", "--"},
+  {"&lsquo;", "\'"},
+  {"&rsquo;", "\'"},
+  {"&ldquo;", "\""},
+  {"&rdquo;", "\""},
+  {"&amp;", "&"}, /* do him last just to be safe */
+  {NULL, NULL}
+};
 /* }}} */
 
 int alpm_init() { /* {{{ */
@@ -508,6 +543,7 @@ void aurpkg_free(void *pkg) { /* {{{ */
   FREE(it->lic);
   FREE(it->votes);
 
+  FREELIST(it->comments);
   FREELIST(it->depends);
   FREELIST(it->makedepends);
   FREELIST(it->optdepends);
@@ -695,6 +731,28 @@ alpm_list_t *filter_results(alpm_list_t *list) { /* {{{ */
 
   return alpm_list_msort(filterlist, alpm_list_count(filterlist), aurpkg_cmp);
 } /* }}} */
+
+alpm_list_t *get_aur_comments(char *buf) { /* {{{ */
+  char *this_comment, *comment_beg, *comment_end;
+  alpm_list_t *list = NULL;
+
+  for (comment_beg = strstr(buf, COMMENT_BEG_DELIM);
+       comment_beg;
+       comment_beg = strstr(comment_end, COMMENT_BEG_DELIM)) {
+    comment_end = strstr(comment_beg, COMMENT_END_DELIM);
+
+    /* we have the beginning and ending of the comment. now strip out
+     * all the html tags and save the comment: */
+    comment_beg += strlen(COMMENT_BEG_DELIM);
+    CALLOC(this_comment, comment_end - comment_beg + 1, sizeof(char), return NULL);
+    strncpy(this_comment, comment_beg, comment_end - comment_beg);
+    this_comment = strip_and_sanitize_html(this_comment);
+
+    list = alpm_list_add(list, this_comment);
+  }
+  return list;
+} /* }}} */
+
 
 int getcols() { /* {{{ */
   int termwidth = -1;
@@ -1141,6 +1199,7 @@ int parse_options(int argc, char *argv[]) { /* {{{ */
     {"ignore",      required_argument,  0, OP_IGNOREPKG},
     {"ignorerepo",  optional_argument,  0, OP_IGNOREREPO},
     {"listdelim",   required_argument,  0, OP_LISTDELIM},
+    {"comments",    no_argument,        0, 'n'},
     {"nossl",       no_argument,        0, OP_NOSSL},
     {"quiet",       no_argument,        0, 'q'},
     {"target",      required_argument,  0, 't'},
@@ -1151,7 +1210,7 @@ int parse_options(int argc, char *argv[]) { /* {{{ */
     {0, 0, 0, 0}
   };
 
-  while ((opt = getopt_long(argc, argv, "bcdfhimqst:uvV", opts, &option_index)) != -1) {
+  while ((opt = getopt_long(argc, argv, "bcdfhimnqst:uvV", opts, &option_index)) != -1) {
     char *token;
 
     switch (opt) {
@@ -1206,6 +1265,10 @@ int parse_options(int argc, char *argv[]) { /* {{{ */
       case 'h':
         usage();
         return 1;
+      case 'n':
+        cfg.printcomments = 1;
+        cfg.extinfo = 1;
+        break;
       case 'q':
         cfg.quiet = 1;
         break;
@@ -1556,6 +1619,25 @@ void print_pkg_info(struct aurpkg_t *pkg) { /* {{{ */
 
   indentprint(pkg->desc, INFO_INDENT);
   printf("\n\n");
+
+  if (cfg.extinfo && cfg.printcomments) {
+    const alpm_list_t *i;
+    if (alpm_list_count(pkg->comments) == 0) {
+      printf("%sNo comments%s\n\n", colstr->commentheader, colstr->nc);
+    } else {
+      for (i = pkg->comments; i; i = i->next) {
+        char *comment_header, *end_of_first_line, *the_comment;
+        the_comment = alpm_list_getdata(i);
+        end_of_first_line = strchr(the_comment, '\n');
+        CALLOC(comment_header, end_of_first_line - the_comment + 1, sizeof(char), return);
+        strncpy(comment_header, the_comment, end_of_first_line - the_comment);
+        printf("%s%s%s", colstr->commentheader, comment_header, colstr->nc);
+        printf("%s%s%s\n", colstr->comment, end_of_first_line, colstr->nc);
+        free(comment_header);
+      }
+    }
+  }
+
 } /* }}} */
 
 void print_pkg_search(struct aurpkg_t *pkg) { /* {{{ */
@@ -1717,6 +1799,8 @@ int strings_init() { /* {{{ */
     colstr->ood = BOLDRED;
     colstr->utd = BOLDGREEN;
     colstr->nc = NC;
+    colstr->commentheader = BOLDYELLOW;
+    colstr->comment = "\n---";
   } else {
     colstr->error = "error:";
     colstr->warn = "warning:";
@@ -1727,6 +1811,8 @@ int strings_init() { /* {{{ */
     colstr->ood = "";
     colstr->utd = "";
     colstr->nc = "";
+    colstr->commentheader = "";
+    colstr->comment = "\n---";
   }
 
   /* guard against delim being something other than LIST_DELIM if extinfo
@@ -1735,6 +1821,126 @@ int strings_init() { /* {{{ */
 
   return 0;
 } /* }}} */
+
+/**
+ * Strips html tags from input string, returning the result. Also
+ * removes superfluous whitespace and replaces special html
+ * characters.
+ */
+char *strip_and_sanitize_html(char *html) { /* {{{ */
+  int i, output_ind=0, len;
+  char *output;
+  html_strip_state_t html_state;
+  struct html_character_codes_t html_code_mapping;
+
+  len = strlen(html);
+  CALLOC(output, len+1, sizeof(char), return NULL);
+
+  /* Finite state machine with 2 states: reading a tag or not. We
+   * ignore the possibility of an html attribute containing the
+   * character '>' */
+  html_state = NOT_READING_TAG;
+  for (i = 0; i < len; ++i) {
+    if (html_state == READING_TAG) {
+      if (html[i] == '>') /* end of this tag */
+        html_state = NOT_READING_TAG;
+    } else {
+      if (html[i] == '<') /* here's a new tag */
+        html_state = READING_TAG;
+      else
+        /* we discard two newlines in a row and all tabs */
+        if (!(html[i] == '\t' || (output_ind > 0 &&
+                                  output[output_ind-1] == '\n' && html[i] == '\n')))
+          output[output_ind++] = html[i];
+    }
+  }
+  output[output_ind] = '\0';
+  free(html);
+
+  /* Clean up some special html characters */
+  i=0;
+  for (;;) {
+    html_code_mapping = html_character_codes[i++];
+    if (html_code_mapping.name_code == NULL) break;
+
+    /* avoid the mallocs and frees associated with string replace if possible: */
+    if (strstr(output, html_code_mapping.name_code) != NULL) {
+      char *output_before = output;
+      output = strreplace(output, html_code_mapping.name_code, html_code_mapping.glyph);
+      FREE(output_before);
+    }
+  }
+
+  return output;
+} /* }}} */
+
+/**
+ * String replace. The pointer that is returned should be free'd by
+ * the user.
+ */
+char *strreplace(const char *st,
+                 const char *replace,
+                 const char *replace_with) { /* {{{ */
+    char *ret, *found, *replace_, *replace_with_, *st_, *tmp, *last, *writing;
+    size_t newlen;
+    int len_replace, len_replace_with, len_st, cnt;
+
+    len_replace      = strlen(replace);
+    len_replace_with = strlen(replace_with);
+    len_st           = strlen(st);
+
+    MALLOC(replace_, (size_t)len_replace + 1, return NULL);
+    MALLOC(replace_with_, (size_t)len_replace_with + 1, return NULL);
+    MALLOC(st_, (size_t)len_st + 1, return NULL);
+    strcpy(st_, st); /* what we won't do for const... */
+    found         = strstr(st_, replace);
+    if (found == NULL) {
+        /* can't assign directly due to const: */
+        ret = (char *) malloc(strlen(st_)+1);
+        strcpy(ret, st_);
+        goto finishup;
+    }
+
+    strcpy(replace_, replace);
+    strcpy(replace_with_, replace_with);
+
+    tmp = st_;
+    for (cnt = 0; ; cnt++) {
+        found = strstr(tmp, replace);
+        if (found == NULL) break;
+        tmp = found + len_replace;
+    }
+
+    newlen = len_st - (cnt * len_replace) + (cnt * len_replace_with) + 1;
+    MALLOC(ret, newlen, return NULL);
+
+    tmp = last = st_;
+    writing = ret;
+    for (int i=0; i < cnt; i++) {
+        /* write the good piece */
+        tmp = strstr(last, replace);
+        memcpy(writing, last, tmp - last);
+        /* update where we're writing and where we just matched */
+        writing += tmp - last;
+        last = tmp + len_replace;
+        /* write the replacement string */
+        memcpy(writing, replace_with, len_replace_with);
+        /* update where we're writing */
+        writing += len_replace_with;
+    }
+    if (writing < ret + newlen) {
+        /* finish it out */
+        memcpy(writing, last, st_ + len_st - last);
+    }
+    ret[newlen-1] = '\0';
+
+finishup:
+    FREE(replace_);
+    FREE(replace_with_);
+    FREE(st_);
+    return ret;
+} /* }}} */
+
 
 char *strtrim(char *str) { /* {{{ */
   char *pch = str;
@@ -1943,7 +2149,7 @@ void *task_query(CURL *curl, void *arg) { /* {{{ */
 
   if (pkglist && cfg.extinfo) {
     struct aurpkg_t *aurpkg;
-    char *pburl, *pkgbuild;
+    char *pburl, *pkgbuild, *aurpkgurl, *aurpkgpage;
 
     aurpkg = alpm_list_getdata(pkglist);
 
@@ -1958,6 +2164,10 @@ void *task_query(CURL *curl, void *arg) { /* {{{ */
 
     pkgbuild_get_extinfo(pkgbuild, pkg_details);
     free(pkgbuild);
+
+    cwr_asprintf(&aurpkgurl, AUR_PKG_URL_FORMAT "%s", cfg.proto, aurpkg->id);
+    aurpkgpage = curl_get_url_as_buffer(curl, aurpkgurl);
+    aurpkg->comments = get_aur_comments(aurpkgpage);
   }
 
 finish:
@@ -2076,6 +2286,7 @@ void usage() { /* {{{ */
       "      --ignore <pkg>      ignore a package upgrade (can be used more than once)\n"
       "      --ignorerepo <repo> ignore some or all binary repos\n"
       "      --nossl             do not use https connections\n"
+      "  -n, --comments          print comments from the AUR web interface (implies -ii)\n"
       "  -t, --target <dir>      specify an alternate download directory\n"
       "      --threads <num>     limit number of threads created\n"
       "      --timeout <num>     specify connection timeout in seconds\n"
@@ -2258,3 +2469,7 @@ finish:
 }
 
 /* vim: set et sw=2: */
+/* Local Variables: */
+/* c-basic-offset:2 */
+/* indent-tabs-mode:nil */
+/* End: */
